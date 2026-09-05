@@ -106,8 +106,12 @@ projects` team) for future env var management and deployment.
   "don't prematurely create every future table" and "only establish the
   foundation needed for subsequent phases"; since Phase 1 (not Phase 0)
   introduces Users/Organisations, the schema currently defines only the
-  generator/datasource, with migrations proven out once real Phase 1
-  models exist.
+  generator/datasource. End-to-end connectivity against the live Supabase
+  Postgres instance is confirmed on both paths — `prisma migrate dev`
+  (via `DIRECT_URL`) and the app runtime's pooled connection through
+  `@prisma/adapter-pg` (via `DATABASE_URL`, `src/server/db.ts`) — with no
+  pending schema diff, since there are no models yet. The first real
+  migration lands with Phase 1's models.
 - **Supabase provisioned manually**, not via the Vercel Marketplace
   integration — the marketplace flow required accepting Supabase's
   marketplace terms interactively in a browser, which wasn't done in this
