@@ -39,8 +39,13 @@ other than Prisma.
   - `pg`. It also uses the new `prisma-client` generator (TS output to
     `src/generated/prisma`), not the legacy `prisma-client-js` generator, and
     the new `prisma7.config.ts` config file instead of a `datasource url` in
-    `schema.prisma`. See `.claude/skills/prisma-upgrade-v7/` for the full
-    migration reference if this ever needs revisiting.
+    `schema.prisma`. See the [official v7 upgrade
+    guide](https://www.prisma.io/docs/orm/more/upgrades/to-v7) if this ever
+    needs revisiting. Note that `prisma7.config.ts`'s `datasource.url` has no
+    `directUrl` field in 7.10.0 — it's set to `DIRECT_URL` and used only by
+    the CLI (migrate/introspect/studio); the app itself connects via the
+    `@prisma/adapter-pg` adapter using the pooled `DATABASE_URL` (see
+    `src/server/db.ts`).
 - **shadcn/ui's `cn` helper ships as the standalone `cn` npm package** in
   the current shadcn CLI output (`src/lib/utils.ts` re-exports it) rather
   than a hand-rolled `clsx` + `tailwind-merge` combination. Same behavior,
