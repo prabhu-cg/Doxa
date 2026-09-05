@@ -43,11 +43,59 @@ Hiding a button is not authorization.
   tenant scope inside the handler, don't assume the route path implies
   authorization.
 
-## What Phase 0 does and doesn't set up
+## How Phase 1 implements it
 
-Phase 0 documents this rule and prepares the environment/client plumbing
-(`src/server/supabase/server-client.ts`, `src/server/db.ts`) that Phase 1's
-actual membership checks will run through. It does not implement
-Organisation, Space, Board, or Item models, RLS policies, or membership
-checks yet — those are Phase 1 (auth/tenancy) and Phase 2 (core Doxa)
-concerns.
+- `src/features/profile/queries.ts` — `requireCurrentProfile()` derives the
+  user from a server-verified Supabase session (`getUser()`, not
+  `getSession()`) and guarantees a `Profile` row exists.
+- `src/features/organizations/queries.ts` —
+  `getMembershipForSlug(slug, userId)` looks up the organisation by slug
+  and independently checks membership; it returns `null` for **both** "no
+  such org" and "org exists, not a member" — deliberately indistinguishable,
+  so a request can't be used to enumerate organisations the caller isn't
+  in. `requireOrganizationMembership(slug)` is the guard every
+  `/org/[slug]/**` layout and page calls; a `null` result renders Next's
+  plain `notFound()` 404, never a redirect that would reveal anything.
+- `src/features/organizations/permissions.ts` — role checks
+  (`canUpdateOrganization`, `canDeleteOrganization`,
+  `canLeaveOrganization`) are centralized here, not scattered as
+  `role === 'ADMIN'` checks in Server Actions.
+- Tested directly in
+  `src/features/organizations/organizations.integration.test.ts` (a real
+  member vs. a real non-member vs. a nonexistent slug — same `null` shape
+  for the latter two) and end-to-end in `e2e/organizations.spec.ts`
+  ("cross-tenant access prevention": a second user with zero
+  organisations of their own hits a known-valid org slug directly and
+  gets a 404, never the organisation's name or data).
+
+## Row Level Security: deliberately not used for these tables
+
+Organisations/Memberships/Profiles are read and written exclusively
+through Prisma, over the pooled connection string — never through a
+Supabase client `.from(...)` call. Postgres RLS policies are enforced for
+roles going through PostgREST with a user JWT; Prisma's connection uses
+the `postgres` role directly, which bypasses RLS regardless of what
+policies exist. Adding RLS policies here would be a false sense of
+security with no actual enforcement, so application-layer checks (above)
+are the _only_ enforcement — not a backstop to RLS, as originally
+sketched in Phase 0. Revisit if a future phase ever queries these tables
+via the Supabase client directly (e.g. Realtime subscriptions).
+
+## Known gap: no DB-level FK from profiles to auth.users
+
+`Profile.id` equals the corresponding Supabase `auth.users.id` by
+convention, not a Prisma-managed foreign key. This was attempted (Prisma
+`multiSchema` + a stub `auth.users` model) and reverted: once Supabase's
+`auth` schema is listed in the datasource, `prisma migrate dev`'s drift
+detection compares the _entire_ real auth schema (dozens of
+Supabase-owned tables) against our migration history and offers to
+**reset the database** to reconcile — not safe to run against a live
+Supabase project. Referential integrity going forward (auth user →
+profile) is instead provided by a database trigger
+(`prisma/migrations/*_add_auth_profiles_organizations/migration.sql`)
+that auto-creates a Profile row on signup — verified working in this
+phase. There is no cascade the other direction: deleting an auth user
+does **not** cascade-delete their Profile/Memberships (confirmed by
+testing), since there's no FK to hang a cascade off. Account deletion
+isn't a Phase 1 feature; when it is built, it must explicitly delete the
+Profile (which cascades to Memberships) alongside the auth user.

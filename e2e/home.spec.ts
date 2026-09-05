@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("home page renders the Doxa placeholder", async ({ page }) => {
+test("unauthenticated visitors are redirected from the root to sign in", async ({
+  page,
+}) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Doxa" })).toBeVisible();
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });

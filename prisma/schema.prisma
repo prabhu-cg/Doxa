@@ -1,10 +1,21 @@
 // Prisma schema for Doxa.
 //
-// Phase 0 establishes the Prisma toolchain only — connection, generator,
-// and migration wiring against Supabase Postgres. Domain models (User
-// profile mirror, Organisation, OrganisationMembership, ...) are introduced
-// starting Phase 1, per the phased build plan. Do not add tables here ahead
-// of the phase that defines them.
+// Phase 0 established the toolchain only. Phase 1 adds the auth/tenancy
+// foundation: Profile (mirrors the Supabase-managed auth.users row, no
+// credentials duplicated), Organization, and Membership.
+//
+// Profile.id is NOT declared as a Prisma relation to auth.users, and the
+// datasource does NOT list Supabase's "auth" schema. That was tried and
+// reverted: once `auth` is a tracked schema, `prisma migrate dev`'s drift
+// detection compares the ENTIRE real auth schema (dozens of Supabase-owned
+// tables) against our migration history and offers to reset the database
+// to "fix" the mismatch — which would drop Supabase's live auth data. Not
+// safe against a real Supabase project. Instead, a hand-written, unmanaged
+// trigger (see prisma/migrations/*_add_auth_profiles_organizations/
+// migration.sql) auto-creates a Profile row when a Supabase auth user
+// signs up; there is deliberately no DB-level FK/cascade back from
+// profiles to auth.users; see docs/multi-tenancy.md for the trade-off.
+// Do not add tables for later phases (Spaces, Boards, Items, ...) here yet.
 
 generator client {
   provider = "prisma-client"
@@ -13,4 +24,56 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/// Mirrors the subset of a Supabase auth user relevant to the app. Row is
+/// created automatically by a database trigger when a user signs up (see
+/// migration SQL) — application code never inserts this directly. `id`
+/// equals the corresponding `auth.users.id`, by convention rather than a
+/// Prisma-managed foreign key (see the note at the top of this file).
+model Profile {
+  id          String   @id @db.Uuid
+  displayName String
+  username    String?  @unique
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@map("profiles")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+/// A user's role within one organisation. `(organizationId, userId)` is
+/// unique — one membership per user per org.
+model Membership {
+  id             String         @id @default(cuid())
+  organizationId String
+  userId         String         @db.Uuid
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("memberships")
 }
