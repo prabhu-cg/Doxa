@@ -63,7 +63,7 @@ export function LoginForm({ next }: { next?: string }) {
         >
           Forgot password?
         </Link>
-        <Link href="/register" className="hover:text-foreground underline">
+        <Link href="/signup" className="hover:text-foreground underline">
           Create an account
         </Link>
       </div>

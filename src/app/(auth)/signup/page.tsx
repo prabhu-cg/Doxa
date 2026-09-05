@@ -6,11 +6,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RegisterForm } from "./register-form";
+import { SignUpForm } from "./signup-form";
 
-export const metadata: Metadata = { title: "Create account" };
+export const metadata: Metadata = {
+  title: "Sign up",
+  description: "Create your Doxa account and start free.",
+};
 
-export default function RegisterPage() {
+export default function SignUpPage() {
   return (
     <Card>
       <CardHeader>
@@ -20,7 +23,7 @@ export default function RegisterPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <RegisterForm />
+        <SignUpForm />
       </CardContent>
     </Card>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { clientEnv } from "@/lib/env/client";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -14,13 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_NAME = "Doxa";
+const DEFAULT_DESCRIPTION =
+  "Doxa helps organisations collect feedback, understand what matters, prioritise with confidence, and communicate better decisions.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(clientEnv.NEXT_PUBLIC_APP_URL),
   title: {
-    default: "Doxa",
-    template: "%s · Doxa",
+    default: "Doxa — Turn community input into better decisions",
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Collect, discuss, understand, prioritise, decide and communicate — feedback and decision management for teams.",
+  description: DEFAULT_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: "Doxa — Turn community input into better decisions",
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Doxa — Turn community input into better decisions",
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

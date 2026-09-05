@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 type FormValues = { email: string; password: string; confirmPassword: string };
 
-export function RegisterForm() {
+export function SignUpForm() {
   const [rootError, setRootError] = useState<string | null>(null);
   const [checkEmail, setCheckEmail] = useState<string | null>(null);
   const {

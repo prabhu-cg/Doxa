@@ -4,8 +4,9 @@ A generic community feedback, prioritisation and decision platform:
 **Collect → Discuss → Understand → Prioritise → Decide → Communicate.**
 
 This repository is being built in sequential, phase-gated prompts.
-**Phase 0 (foundation) and Phase 1 (auth & tenancy) are complete.**
-Spaces, boards, items, and every later-phase feature are not yet built.
+**Phase 0 (foundation), Phase 1 (auth & tenancy), and Phase 0.5 (marketing
+site) are complete.** Spaces, boards, items, and every later-phase feature
+are not yet built.
 
 ## Stack
 
@@ -52,6 +53,83 @@ pnpm dev
 | `pnpm db:generate`             | Regenerate Prisma client       |
 | `pnpm db:migrate`              | Create/apply a migration (dev) |
 | `pnpm db:studio`               | Prisma Studio                  |
+
+## What was implemented (Phase 0.5 — marketing site)
+
+- **Public routes**: `/`, `/features`, `/pricing`, `/why-doxa`, `/about`,
+  `/contact`, `/privacy`, `/terms`, `/security`, plus `/login` and
+  `/signup` (renamed from Phase 1's `/register` to match the marketing
+  copy). All under `src/app/(marketing)/` with a shared
+  `MarketingHeader`/`MarketingFooter` layout, except the auth pages which
+  keep Phase 1's centered-card layout.
+- **Routing split**: `/` is now the public homepage, not an authenticated
+  redirect — the authenticated entry point moved to `/app`. `src/proxy.ts`
+  was inverted to allowlist the _protected_ surface instead of the public
+  one, since most of the site is public now. See "Public site vs.
+  authenticated app" in `docs/architecture.md`.
+- **Homepage**: hero (with a `BoardPreview` mockup built from real
+  shadcn primitives — votes, comments, priority, and one "Decided ·
+  Planned" item, not a generic screenshot), problem, the six-step core
+  loop, "votes are a signal, not a decision" differentiation, feature
+  highlights (each honestly marked live or planned), generic-by-design,
+  simple-by-default, a dedicated decisions section, use cases, a
+  community→decision workflow diagram, a pricing preview, and a final
+  CTA. Composed from ~11 colocated section components
+  (`src/app/(marketing)/_sections/`) plus shared, reusable ones
+  (`src/components/marketing/`: `Hero`, `SectionHeading`, `FeatureCard`/
+  `FeatureGrid`, `StepCard`, `UseCaseCard`, `PricingCard`, `CTASection`,
+  `FAQ`, three more product-preview mockups).
+- **Honesty about what's live**: only Organisations (creation, roles,
+  settings) is marked as shipped anywhere on the site — every other
+  capability (voting, boards, prioritisation, decisions, roadmaps, AI,
+  API, etc.) is explicitly labeled "Planned." No fabricated customers,
+  testimonials, user counts, logos, or certifications anywhere — the
+  security page explicitly states Doxa holds no SOC 2/ISO 27001/HIPAA
+  certification, and the legal pages are structured placeholders with an
+  explicit TODO banner for legal review.
+- **Pricing architecture**: Free/Pro/Business plan data lives in one
+  shared `src/lib/pricing-plans.ts` (consumed by both the homepage preview
+  and the full `/pricing` page) with placeholder `priceLabel`s ("$0",
+  "Coming soon") — a later phase wires real Stripe prices in without
+  restructuring the comparison table, `PricingCard`, or FAQ.
+- **Contact form**: `src/features/contact/` (Zod schema, Server Action).
+  Sends via Resend when `RESEND_API_KEY` + `RESEND_FROM_EMAIL` +
+  `CONTACT_NOTIFICATION_EMAIL` are configured; otherwise logs
+  server-side and still reports success to the visitor — the seam a
+  later phase connects real delivery through without touching the form.
+- **Analytics abstraction**: `src/lib/analytics.ts` defines the event
+  names from the brief (`marketing_cta_clicked`, `signup_started`,
+  `signup_completed`, `pricing_viewed`, `contact_submitted`) and a
+  `trackEvent()` that's a dev-only console log today — wired up on
+  contact-form submission as a working example. Not instrumented on
+  every marketing CTA link, to avoid forcing otherwise-static Server
+  Components into Client Components for a no-op.
+- **SEO**: per-page `metadata` (title/description/canonical/OG/Twitter),
+  a shared `metadataBase` and title template in the root layout,
+  `src/app/sitemap.ts` and `src/app/robots.ts` (Next's file-convention
+  equivalents of `/sitemap.xml` and `/robots.txt`, which disallow the
+  authenticated app surface). JSON-LD structured data
+  (`WebSite`/`Organization`/`SoftwareApplication` on the homepage,
+  `FAQPage` on `/pricing`, matching content actually on those pages) via
+  a small `JsonLd` component.
+- **Accessibility fixes found along the way**: fixed a second shadcn gap —
+  `Button`/`SheetClose`/`DialogClose` force `role="button"` onto whatever
+  they render via the `render` prop, even a real `<a>` — wrong semantics
+  for a link styled as a button, and it broke the mobile menu and CTA
+  link clicks. Replaced every such usage with a new `LinkButton`
+  (`src/components/link-button.tsx`) that applies `buttonVariants` to a
+  plain `Link` instead. Reduced-motion CSS added to `globals.css`.
+  Mobile nav (Sheet-based) verified with a real viewport-resized e2e test.
+- **Testing**: `e2e/marketing.spec.ts` — every public route renders with
+  its expected heading, header nav + footer links resolve, the mobile
+  menu opens and navigates, the full "Home → Features → Pricing → Start
+  Free → Signup" journey, contact form validation (empty fields) and
+  successful submission, and SEO checks (title/meta description,
+  `/sitemap.xml` contents, `/robots.txt` contents). Contact form Zod
+  schema also covered by a Vitest unit test
+  (`src/features/contact/schema.test.ts`). `e2e/home.spec.ts` (Phase
+  0/1's smoke test) updated to check `/app`'s redirect instead of `/`,
+  since `/` is no longer an auth-gated route.
 
 ## What was implemented (Phase 1 — auth & tenancy)
 
@@ -142,6 +220,23 @@ projects` team) for future env var management and deployment.
 
 ## Assumptions made (flag if any are wrong)
 
+- **`/register` renamed to `/signup`, and `/` now means the public
+  homepage** — Phase 0.5 explicitly lists `/signup` as a required route
+  and `/` as the marketing homepage, which conflicts with Phase 1's
+  routing (`/register`, and `/` as the authenticated redirect). Resolved
+  by renaming the route and moving the authenticated entry point to
+  `/app` — see "Public site vs. authenticated app" in
+  `docs/architecture.md`. This is a routing change, not an architecture
+  or auth-logic change.
+- **No OG/Twitter image** — metadata includes title/description for
+  social sharing cards but no image, since generating one would mean
+  fabricating a product screenshot that doesn't reflect a real,
+  implemented UI. A later phase can add a proper OG image (static asset
+  or `opengraph-image.tsx`) once there's real product UI to depict.
+- **Analytics events aren't wired into every CTA** — see "What was
+  implemented (Phase 0.5)" above; `trackEvent()` exists and is
+  demonstrated on the contact form, not on every link, to keep the rest
+  of the site as Server Components.
 - **Dark mode primary color**: the reference app's captured dark-mode
   tokens used a near-white primary button and an apparently-unused blue
   `--sidebar-primary`, which read as an unfinished/inconsistent dark theme
@@ -178,11 +273,18 @@ add supabase` remains available later if that's preferred.
 - **No RLS-based "who can see this org" filtering; app-layer checks only**
   by design — see `docs/multi-tenancy.md`.
 
-## Not implemented in this phase (by design)
+## Not implemented (by design)
 
 Spaces, boards, items, voting, comments, roadmap, AI, billing,
-integrations — see the phased build plan for what's next. Also
-explicitly out of scope for Phase 1: social login (only email/password),
-member invitations (the only way into an org right now is creating it —
-membership beyond the creator isn't wired up until a later phase adds
-invites), and organisation branding/settings beyond the name (Phase 5).
+integrations — see the phased build plan for what's next. Also out of
+scope: social login (only email/password), member invitations (the only
+way into an org right now is creating it), and organisation
+branding/settings beyond the name (Phase 5).
+
+**Phase 0.5 specifically did not implement**: real pricing (Stripe or
+otherwise — placeholder plan copy only), a documentation/help site,
+customer stories or case studies (would require real customers), any AI
+capability, an API or webhooks, a wired-up analytics provider (PostHog or
+otherwise), or a favicon/OG image asset. See "What was implemented (Phase
+0.5)" above for what the pricing architecture, contact form, and
+analytics abstraction leave ready for those to plug into later.

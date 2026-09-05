@@ -48,7 +48,7 @@ export async function signUp(input: {
 /** Only ever redirect to a same-app relative path — never follow an
  * externally-supplied `next` value as-is, or it becomes an open redirect. */
 function safeNextPath(next: string | undefined): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/app";
   return next;
 }
 
@@ -120,5 +120,5 @@ export async function updatePassword(input: {
   });
   if (error) return { success: false, error: error.message };
 
-  redirect("/");
+  redirect("/app");
 }

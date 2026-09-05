@@ -1,10 +1,9 @@
-import Link from "next/link";
 import {
   listMembersForOrganization,
   requireOrganizationMembership,
 } from "@/features/organizations/queries";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 
 export default async function OrganizationDashboardPage({
   params,
@@ -27,11 +26,9 @@ export default async function OrganizationDashboardPage({
             role: <Badge variant="secondary">{membership.role}</Badge>
           </p>
         </div>
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<Link href={`/org/${slug}/settings`}>Settings</Link>}
-        />
+        <LinkButton variant="outline" href={`/org/${slug}/settings`}>
+          Settings
+        </LinkButton>
       </div>
       <p className="text-muted-foreground text-sm">
         Spaces, boards and items begin in Phase 2 — this is just the

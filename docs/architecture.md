@@ -65,10 +65,32 @@ See `docs/multi-tenancy.md`, `docs/security-principles.md` and
 `docs/coding-conventions.md` for the rules that govern how these pieces are
 implemented.
 
-## What Phase 0 built vs. deferred
+## Public site vs. authenticated app
 
-Phase 0 establishes tooling, project structure, environment/config
-validation, the design token baseline, and the Prisma/Supabase connection
-plumbing. It does not implement sign-in, protected routes, organisations,
-spaces, boards, or items — those begin at Phase 1. See the root `README.md`
-"What was implemented" section for the concrete list.
+`/` is the public marketing homepage (route group `src/app/(marketing)/`,
+its own header/footer layout) — not an authenticated redirect. The
+authenticated app's entry point is `/app`
+(`src/app/app/page.tsx`), which resolves a signed-in user to their
+onboarding flow or their first organisation, exactly like `/` did in
+Phase 1. This split exists because Phase 0.5 added a real public site at
+`/`; `src/proxy.ts`'s route protection was inverted to match — it now
+allowlists the _protected_ surface (`/app`, `/onboarding`, `/org`,
+`/profile`) rather than the public one, since most of the site is public.
+Signed-in users hitting `/login` or `/signup` are redirected to `/app`,
+not `/`.
+
+## What each phase built
+
+- **Phase 0** — tooling, project structure, environment/config validation,
+  design token baseline, Prisma/Supabase connection plumbing.
+- **Phase 1** — Supabase Auth, Profile/Organization/Membership models,
+  tenant isolation, the authenticated app shell (`/app`, `/onboarding`,
+  `/org/[slug]`, `/profile`).
+- **Phase 0.5** — the public marketing site (`/`, `/features`, `/pricing`,
+  `/why-doxa`, `/about`, `/contact`, `/privacy`, `/terms`, `/security`),
+  SEO metadata, sitemap/robots, and the `/login`+`/signup` entry points
+  linked from it (`/signup` renamed from Phase 1's `/register` to match
+  the marketing site's copy).
+
+Spaces, Boards, and Items are not yet implemented — see the root
+`README.md` for each phase's concrete "what was implemented" list.

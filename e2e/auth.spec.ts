@@ -18,7 +18,7 @@ test.describe("registration", () => {
     page,
   }) => {
     const email = `doxa-e2e-register-${Date.now()}@doxa-e2e-mail.com`;
-    await page.goto("/register");
+    await page.goto("/signup");
     await page.getByLabel("Email").fill(email);
     await page
       .getByLabel("Password", { exact: true })
@@ -31,7 +31,7 @@ test.describe("registration", () => {
   });
 
   test("rejects mismatched passwords client-side", async ({ page }) => {
-    await page.goto("/register");
+    await page.goto("/signup");
     await page.getByLabel("Email").fill(`doxa-e2e-${Date.now()}@example.com`);
     await page
       .getByLabel("Password", { exact: true })

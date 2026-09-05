@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("unauthenticated visitors are redirected from the root to sign in", async ({
+test("unauthenticated visitors to the app entry point are redirected to sign in", async ({
   page,
 }) => {
-  await page.goto("/");
-  await expect(page).toHaveURL(/\/login/);
+  await page.goto("/app");
+  await expect(page).toHaveURL(/\/login\?next=%2Fapp/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });

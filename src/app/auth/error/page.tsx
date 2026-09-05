@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 
 export const metadata: Metadata = { title: "Authentication error" };
 
@@ -12,10 +11,7 @@ export default function AuthErrorPage() {
         That link is invalid or has expired. Try signing in again, or request a
         new link.
       </p>
-      <Button
-        nativeButton={false}
-        render={<Link href="/login">Back to sign in</Link>}
-      />
+      <LinkButton href="/login">Back to sign in</LinkButton>
     </main>
   );
 }

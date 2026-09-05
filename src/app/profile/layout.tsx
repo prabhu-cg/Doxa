@@ -11,7 +11,7 @@ export default async function ProfileLayout({
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex items-center px-6 py-4">
-        <Link href="/" className="text-lg font-extrabold tracking-tight">
+        <Link href="/app" className="text-lg font-extrabold tracking-tight">
           Doxa
         </Link>
       </header>

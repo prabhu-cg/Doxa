@@ -129,5 +129,5 @@ export async function leaveOrganization(slug: string): Promise<ActionResult> {
   }
 
   await db.membership.delete({ where: { id: membership.id } });
-  redirect("/");
+  redirect("/app");
 }
