@@ -1,0 +1,16 @@
+// Prisma schema for Doxa.
+//
+// Phase 0 establishes the Prisma toolchain only — connection, generator,
+// and migration wiring against Supabase Postgres. Domain models (User
+// profile mirror, Organisation, OrganisationMembership, ...) are introduced
+// starting Phase 1, per the phased build plan. Do not add tables here ahead
+// of the phase that defines them.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
