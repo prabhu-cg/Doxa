@@ -32,21 +32,23 @@ const USE_CASES = [
 
 export function UseCasesSection() {
   return (
-    <section className="border-t py-16 sm:py-20">
-      <SectionHeading
-        eyebrow="Use cases"
-        title="One platform. Many ways to use it."
-        description="Doxa doesn't assume who's using it or what they call an Item."
-      />
-      <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
-        {USE_CASES.map((useCase) => (
-          <UseCaseCard
-            key={useCase.title}
-            icon={useCase.icon}
-            title={useCase.title}
-            description={useCase.description}
-          />
-        ))}
+    <section className="bg-background border-t">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <SectionHeading
+          eyebrow="Use cases"
+          title="One platform. Many ways to use it."
+          description="Doxa doesn't assume who's using it or what they call an Item."
+        />
+        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
+          {USE_CASES.map((useCase) => (
+            <UseCaseCard
+              key={useCase.title}
+              icon={useCase.icon}
+              title={useCase.title}
+              description={useCase.description}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

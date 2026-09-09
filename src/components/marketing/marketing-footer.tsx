@@ -1,65 +1,41 @@
 import Link from "next/link";
 
-const FOOTER_SECTIONS = [
-  {
-    title: "Product",
-    links: [
-      { href: "/features", label: "Features" },
-      { href: "/pricing", label: "Pricing" },
-      { href: "/why-doxa", label: "Why Doxa" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-      { href: "/security", label: "Security" },
-    ],
-  },
+const FOOTER_LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ];
 
 export function MarketingFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-          <div className="col-span-2 sm:col-span-1">
-            <span className="text-lg font-extrabold tracking-tight">Doxa</span>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Community input → better decisions.
-            </p>
-          </div>
-          {FOOTER_SECTIONS.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-semibold">{section.title}</h3>
-              <ul className="mt-3 space-y-2.5">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+    <footer className="bg-background border-t">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-10 sm:flex-row sm:justify-between sm:px-6">
+        <Link
+          href="/"
+          aria-label="Doxa home"
+          className="flex items-center gap-3"
+        >
+          <img src="/doxa-logo.svg" alt="" className="h-9 w-auto shrink-0" />
+          <span className="text-base font-bold tracking-tight">Doxa</span>
+        </Link>
+
+        <p className="text-muted-foreground text-center text-sm">
+          © {year} Doxa. Listen. Understand. Decide.
+        </p>
+
+        <nav className="flex items-center gap-5 text-sm" aria-label="Footer">
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-muted-foreground hover:text-foreground underline-offset-4 transition-colors hover:underline"
+            >
+              {link.label}
+            </Link>
           ))}
-        </div>
-        <div className="text-muted-foreground mt-10 border-t pt-6 text-sm">
-          © {year} Doxa. All rights reserved.
-        </div>
+        </nav>
       </div>
     </footer>
   );

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "@/features/auth/schema";
 import { updatePassword } from "@/features/auth/actions";
 import { FormField } from "@/components/form-field";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 
 type FormValues = { password: string; confirmPassword: string };
@@ -32,9 +32,8 @@ export function ResetPasswordForm() {
         htmlFor="password"
         error={errors.password?.message}
       >
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.password}
           {...register("password")}
@@ -45,9 +44,8 @@ export function ResetPasswordForm() {
         htmlFor="confirmPassword"
         error={errors.confirmPassword?.message}
       >
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.confirmPassword}
           {...register("confirmPassword")}

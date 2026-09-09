@@ -86,23 +86,25 @@ const FEATURES = [
 
 export function FeatureHighlightsSection() {
   return (
-    <section className="border-t py-16 sm:py-20">
-      <SectionHeading
-        eyebrow="What's in Doxa"
-        title="Everything the loop needs"
-        description="Organisation setup is live today. The rest is what Doxa is designed to support as it's built out."
-      />
-      <FeatureGrid className="mx-auto mt-10 max-w-5xl" columns={3}>
-        {FEATURES.map((feature) => (
-          <FeatureCard
-            key={feature.title}
-            icon={feature.icon}
-            title={feature.title}
-            description={feature.description}
-            planned={feature.planned}
-          />
-        ))}
-      </FeatureGrid>
+    <section className="bg-background border-t">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <SectionHeading
+          eyebrow="What's in Doxa"
+          title="Everything the loop needs"
+          description="Organisation setup is live today. The rest is what Doxa is designed to support as it's built out."
+        />
+        <FeatureGrid className="mx-auto mt-10 max-w-5xl" columns={3}>
+          {FEATURES.map((feature) => (
+            <FeatureCard
+              key={feature.title}
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+              planned={feature.planned}
+            />
+          ))}
+        </FeatureGrid>
+      </div>
     </section>
   );
 }

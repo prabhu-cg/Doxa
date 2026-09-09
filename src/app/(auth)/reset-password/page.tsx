@@ -37,7 +37,7 @@ export default async function ResetPasswordPage() {
   }
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
         <CardTitle>Set a new password</CardTitle>
       </CardHeader>

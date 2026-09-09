@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function SecurityPage() {
   return (
-    <LegalPageShell title="Security">
+    <LegalPageShell title="Security" lastUpdated="9 September 2026">
       <h2>Our approach</h2>
       <p>
         Doxa is built with tenant isolation and server-side authorization as

@@ -36,7 +36,7 @@ const priorityVariant = {
  */
 export function PrioritizationPreview() {
   return (
-    <Card className="w-full max-w-md shadow-lg" aria-hidden="true">
+    <Card size="sm" className="w-full max-w-md shadow-lg" aria-hidden="true">
       <CardHeader>
         <CardTitle className="text-sm font-medium">Prioritisation</CardTitle>
       </CardHeader>

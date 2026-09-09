@@ -40,7 +40,7 @@ const items = [
  */
 export function BoardPreview() {
   return (
-    <Card className="w-full max-w-md shadow-lg" aria-hidden="true">
+    <Card size="sm" className="w-full max-w-md shadow-lg" aria-hidden="true">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-sm font-medium">
           <span>Feature requests</span>

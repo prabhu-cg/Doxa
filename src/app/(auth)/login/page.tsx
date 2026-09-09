@@ -18,7 +18,7 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>Welcome back to Doxa.</CardDescription>

@@ -95,80 +95,80 @@ function ComparisonCell({ value }: { value: boolean | string }) {
 
 export default function PricingPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-      <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: FAQ_ITEMS.map((item) => ({
-            "@type": "Question",
-            name: item.question,
-            acceptedAnswer: { "@type": "Answer", text: item.answer },
-          })),
-        }}
-      />
-      <SectionHeading
-        eyebrow="Pricing"
-        title="Start free. Upgrade when you need more."
-        description="Final pricing for Pro and Business hasn't been set yet — start on Free today."
-      />
-
-      <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
-        {PRICING_PLANS.map((plan) => (
-          <PricingCard key={plan.name} plan={plan} />
-        ))}
-      </div>
-
-      <div className="mx-auto mt-20 max-w-4xl">
-        <h2 className="text-center text-2xl font-bold tracking-tight">
-          Compare plans
-        </h2>
-        <div className="mt-8">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Feature</TableHead>
-                <TableHead className="text-center">Free</TableHead>
-                <TableHead className="text-center">Pro</TableHead>
-                <TableHead className="text-center">Business</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {COMPARISON_ROWS.map((row) => (
-                <TableRow key={row.label}>
-                  <TableCell className="font-medium">{row.label}</TableCell>
-                  <TableCell className="text-center">
-                    <ComparisonCell value={row.free} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <ComparisonCell value={row.pro} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <ComparisonCell value={row.business} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      <div className="mt-20">
-        <h2 className="text-center text-2xl font-bold tracking-tight">
-          Frequently asked questions
-        </h2>
-        <div className="mt-8">
-          <FAQ items={FAQ_ITEMS} />
-        </div>
-      </div>
-
-      <div className="mt-20">
-        <CTASection
-          title="Start free today."
-          ctaLabel="Start Free"
-          ctaHref="/signup"
+    <>
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQ_ITEMS.map((item) => ({
+              "@type": "Question",
+              name: item.question,
+              acceptedAnswer: { "@type": "Answer", text: item.answer },
+            })),
+          }}
         />
+        <SectionHeading
+          eyebrow="Pricing"
+          title="Start free. Upgrade when you need more."
+          description="Final pricing for Pro and Business hasn't been set yet — start on Free today."
+        />
+
+        <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
+          {PRICING_PLANS.map((plan) => (
+            <PricingCard key={plan.name} plan={plan} />
+          ))}
+        </div>
+
+        <div className="mx-auto mt-20 max-w-4xl">
+          <h2 className="text-center text-2xl font-bold tracking-tight">
+            Compare plans
+          </h2>
+          <div className="mt-8">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Feature</TableHead>
+                  <TableHead className="text-center">Free</TableHead>
+                  <TableHead className="text-center">Pro</TableHead>
+                  <TableHead className="text-center">Business</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {COMPARISON_ROWS.map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell className="font-medium">{row.label}</TableCell>
+                    <TableCell className="text-center">
+                      <ComparisonCell value={row.free} />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <ComparisonCell value={row.pro} />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <ComparisonCell value={row.business} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        <div className="mt-20">
+          <h2 className="text-center text-2xl font-bold tracking-tight">
+            Frequently asked questions
+          </h2>
+          <div className="mt-8">
+            <FAQ items={FAQ_ITEMS} />
+          </div>
+        </div>
       </div>
-    </div>
+      <CTASection
+        variant="banner"
+        title="Start free today."
+        ctaLabel="Start Free"
+        ctaHref="/signup"
+      />
+    </>
   );
 }

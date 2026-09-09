@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Mail } from "lucide-react";
 import { signUpSchema } from "@/features/auth/schema";
 import { signUp } from "@/features/auth/actions";
 import { FormField } from "@/components/form-field";
-import { Input } from "@/components/ui/input";
+import { IconInput } from "@/components/auth/icon-input";
+import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 
 type FormValues = { email: string; password: string; confirmPassword: string };
@@ -47,10 +49,16 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      <FormField label="Email" htmlFor="email" error={errors.email?.message}>
-        <Input
+      <FormField
+        label="Email address"
+        htmlFor="email"
+        error={errors.email?.message}
+      >
+        <IconInput
+          icon={Mail}
           id="email"
           type="email"
+          placeholder="you@example.com"
           autoComplete="email"
           aria-invalid={!!errors.email}
           {...register("email")}
@@ -61,9 +69,8 @@ export function SignUpForm() {
         htmlFor="password"
         error={errors.password?.message}
       >
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.password}
           {...register("password")}
@@ -74,9 +81,8 @@ export function SignUpForm() {
         htmlFor="confirmPassword"
         error={errors.confirmPassword?.message}
       >
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.confirmPassword}
           {...register("confirmPassword")}

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
         <CardDescription>

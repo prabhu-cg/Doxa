@@ -45,22 +45,24 @@ const STEPS = [
 
 export function LoopSection() {
   return (
-    <section className="border-t py-16 sm:py-20">
-      <SectionHeading
-        eyebrow="The loop"
-        title="One loop, from input to outcome"
-        description="Doxa is built around a single loop, not a pile of disconnected features."
-      />
-      <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <StepCard
-            key={step.title}
-            index={index + 1}
-            icon={step.icon}
-            title={step.title}
-            description={step.description}
-          />
-        ))}
+    <section className="bg-background border-t">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <SectionHeading
+          eyebrow="The loop"
+          title="One loop, from input to outcome"
+          description="Doxa is built around a single loop, not a pile of disconnected features."
+        />
+        <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <StepCard
+              key={step.title}
+              index={index + 1}
+              icon={step.icon}
+              title={step.title}
+              description={step.description}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

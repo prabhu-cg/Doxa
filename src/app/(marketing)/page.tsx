@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <>
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -74,14 +74,13 @@ export default function HomePage() {
       <UseCasesSection />
       <HowItWorksSection />
       <PricingPreviewSection />
-      <div className="border-t py-16 sm:py-20">
-        <CTASection
-          title="Give every voice a clearer path to action."
-          description="Start collecting input today — add prioritisation and decisions when you're ready."
-          ctaLabel="Start Free"
-          ctaHref="/signup"
-        />
-      </div>
-    </div>
+      <CTASection
+        variant="banner"
+        title="Give every voice a clearer path to action."
+        description="Start collecting input today — add prioritisation and decisions when you're ready."
+        ctaLabel="Start Free"
+        ctaHref="/signup"
+      />
+    </>
   );
 }
