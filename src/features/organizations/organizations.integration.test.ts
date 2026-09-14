@@ -6,6 +6,8 @@ import { getMembershipForSlug, countOwners } from "./queries";
 import {
   canDeleteOrganization,
   canLeaveOrganization,
+  canManageMembers,
+  canRemoveMember,
   canUpdateOrganization,
   hasAtLeastRole,
 } from "./permissions";
@@ -129,5 +131,28 @@ describe("organizations tenant isolation and role enforcement", () => {
       where: { organizationId: tempOrg.id },
     });
     expect(remaining).toHaveLength(0);
+  });
+
+  describe("member removal (moderation)", () => {
+    it("only admins+ can manage members at all", () => {
+      expect(canManageMembers("MEMBER")).toBe(false);
+      expect(canManageMembers("ADMIN")).toBe(true);
+      expect(canManageMembers("OWNER")).toBe(true);
+    });
+
+    it("an admin can remove a member or another admin, but never an owner", () => {
+      expect(canRemoveMember("ADMIN", "MEMBER", 1)).toBe(true);
+      expect(canRemoveMember("ADMIN", "ADMIN", 1)).toBe(true);
+      expect(canRemoveMember("ADMIN", "OWNER", 1)).toBe(false);
+    });
+
+    it("an owner can remove another owner only if it isn't the last one", () => {
+      expect(canRemoveMember("OWNER", "OWNER", 2)).toBe(true);
+      expect(canRemoveMember("OWNER", "OWNER", 1)).toBe(false);
+    });
+
+    it("a plain member can never remove anyone", () => {
+      expect(canRemoveMember("MEMBER", "MEMBER", 2)).toBe(false);
+    });
   });
 });

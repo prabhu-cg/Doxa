@@ -4,9 +4,11 @@ A generic community feedback, prioritisation and decision platform:
 **Collect → Discuss → Understand → Prioritise → Decide → Communicate.**
 
 This repository is being built in sequential, phase-gated prompts.
-**Phase 0 (foundation), Phase 1 (auth & tenancy), and Phase 0.5 (marketing
-site) are complete.** Spaces, boards, items, and every later-phase feature
-are not yet built.
+**Phase 0 (foundation), Phase 1 (auth & tenancy), Phase 0.5 (marketing
+site), Phase 2 (Spaces/Boards/Items), and Phase 3 (community interaction:
+voting, comments, followers, mentions, activity, notifications, search,
+moderation) are complete.** Roadmap views, decisions, AI, billing, and
+integrations are not yet built.
 
 ## Stack
 
@@ -53,6 +55,177 @@ pnpm dev
 | `pnpm db:generate`             | Regenerate Prisma client       |
 | `pnpm db:migrate`              | Create/apply a migration (dev) |
 | `pnpm db:studio`               | Prisma Studio                  |
+
+## What was implemented (Phase 3 — community interaction layer)
+
+The core loop this phase adds: **Submit → Discuss → Vote → Follow.**
+
+- **Data model**: six new tables, each cascading through the Item they
+  belong to (`prisma/migrations/20260914200329_phase3_*`):
+  - `Vote` — `(itemId, userId)` is `@@unique`. That constraint is what
+    actually enforces "one active vote per user per Item" and "prevent
+    duplicate votes" under concurrency — two racing inserts both reach
+    Postgres, one commits, the other's unique-violation is caught and
+    treated as a no-op by `addVote`. Vote counts are computed on read
+    (`_count` on the relation), never denormalized onto Item, so they
+    can't drift.
+  - `Comment` — self-referencing `parentId` gives one level of threaded
+    replies (a reply to a reply collapses onto the same top-level
+    thread — kept flat on purpose, per the brief's "don't build an
+    overly complex discussion system"). Deletion is always soft
+    (`deletedAt` + `body` cleared) so a removed comment doesn't leave a
+    hole in its thread; it renders as "[deleted]" instead.
+  - `CommentMention` — `@mention` parsing happens once, at write time
+    (`features/comments/mentions.ts`), only resolving usernames that
+    belong to the same organisation; the result is stored as real rows,
+    not re-derived from `body` text on every read.
+  - `ItemFollower` — same `@@unique` add/remove-a-row shape as Vote. An
+    Item's author is auto-followed on creation, and any commenter is
+    auto-followed on their first comment, so notifications reach the
+    people actually involved without an explicit follow step first.
+  - `ItemActivity` — an append-only history entry per meaningful event
+    (created, edited, status changed, vote added/removed, comment
+    added, archived/restored). Deliberately excludes low-signal UI
+    events (opening the item, changing a filter).
+  - `Notification` — carries `organizationId` directly for tenant-scoped
+    reads, plus enough context (recipient, type, actor, item/comment)
+    that an email-delivery job can consume it later without a rework —
+    no email sending in this phase, in-app only.
+- **Voting**: `features/votes/` — `addVote`/`removeVote` Server Actions,
+  gated the same as submitting an Item (any org member). The Item page's
+  vote button is optimistic and reconciles from the server response.
+- **Comments**: `features/comments/` — create, edit-own, delete
+  (self or admin+ moderation), one level of replies. `canEditComment` is
+  author-only even for admins — editing someone else's words reads
+  differently from removing them, so moderation only ever deletes.
+- **Followers**: `features/followers/` — explicit follow/unfollow, plus
+  the auto-follow behavior above (`features/followers/ensure.ts`).
+- **Mentions**: structural, via `CommentMention` — see the data model
+  section above.
+- **Activity**: `features/activity/` — `logActivity` is called from
+  inside the same transaction as the mutation it records (item create,
+  item update, archive/restore, vote, comment) so an activity entry
+  can never exist without — or separately from — the write it describes.
+- **Notifications**: `features/notifications/` — `notifyCommentAdded`
+  (a reply's parent-comment author gets the more specific
+  `COMMENT_REPLY`; every other follower gets `ITEM_COMMENT`; nobody gets
+  both for the same comment), `notifyMentions` (`MENTION`), and
+  `notifyStatusChanged` (`ITEM_STATUS_CHANGED`, to followers other than
+  whoever changed it). A bell in the app header (`AppShell` →
+  `NotificationBell`) shows an unread count and a dropdown list; opening
+  one marks it read.
+- **Search & filtering**: `boardFiltersSchema` (`features/items/schema.ts`)
+  gained `tag` and `sort` (`newest` / `most-voted` / `recently-updated`);
+  `listItemsForBoard` filters by tag slug and orders by the chosen sort
+  (`most-voted` uses `orderBy: { votes: { _count: "desc" } }`, not a
+  denormalized counter). Both the admin and public board pages, and
+  `ItemCard`, surface vote/comment counts.
+- **Moderation**: admins+ can delete any comment (see Comments above),
+  archive Items (already existed from Phase 2 — `canArchiveItem` already
+  allowed admin+), and now remove a member from the organisation entirely
+  (`features/organizations/actions.ts#removeMember`,
+  `canRemoveMember` — an admin can't remove an owner; an owner can't
+  remove the last owner; nobody removes themselves this way, that's
+  "Leave organisation").
+- **The Item page** (`/org/[slug]/boards/[boardSlug]/items/[itemSlug]`)
+  is the redesigned surface for all of the above: title, description,
+  type, status, and tags stay in the same compact header block as
+  Phase 2; votes and following sit in one row right below it; comments
+  and activity are split into two tabs (`Discussion` / `Activity`) so
+  neither crowds the page by default. The public, unauthenticated Item
+  page (`/b/[orgSlug]/[boardSlug]/[itemSlug]`) gained read-only
+  vote/comment/follower counts, not interactive controls — see
+  "Assumptions made" below.
+- **Tests**: `features/{votes,comments,followers,activity,
+notifications}/*.integration.test.ts` (added to the existing
+  `items.integration.test.ts` and `organizations.integration.test.ts`
+  suites where the fixtures already existed) cover the concurrent-vote
+  race, mention resolution and its org-scoping, notification dedup logic,
+  tenant-scoped notification reads, and the new permission matrices —
+  real Prisma queries against the real Supabase instance, same pattern as
+  Phase 2. `e2e/community.spec.ts` covers the actual Server Action + UI
+  wiring end to end: submit → vote → follow → comment-with-mention →
+  activity → notification, comment moderation, tenant isolation on the
+  Item page, and search/filter/sort on the board page.
+
+## What was implemented (Phase 2 — Spaces, Boards, Items)
+
+- **Data model**: `Space` → `Board` → `Item`, plus `ItemType`, `Status`,
+  `Category`, and `Tag` as per-organisation data tables — never a
+  hard-coded "Feature Request" enum (`prisma/schema.prisma`). `ItemType`
+  and `Status` are soft-archived (`archivedAt`) so historical Items keep
+  their meaning even after an org retires a type/status; `Category`/`Tag`
+  are lightweight hard-delete labels (`Item.categoryId` goes `null` on
+  delete, `ItemTag` join rows cascade). `Board` carries an explicit
+  `status` enum (`ACTIVE`/`ARCHIVED`, matching the brief's own wording)
+  separately from `visibility` (`PUBLIC`/`PRIVATE`). `Item` has both
+  `archivedAt` (author/admin can restore) and a reserved-but-unused
+  `deletedAt` (future moderation hook) per the brief's "archived/deleted
+  state" field.
+- **Default seeding**: creating an organisation (`createOrganization` /
+  `completeOnboarding` in `src/features/organizations/actions.ts`) now
+  also seeds the six default Item Types (Feature/Idea/Bug/Improvement/
+  Suggestion/Requirement, `src/features/item-types/defaults.ts`) and six
+  default Statuses (Open/Under Review/Planned/In Progress/Completed/
+  Declined, `src/features/statuses/defaults.ts`, "Open" marked as the
+  default new-Item status) in the same `create` call — no separate
+  migration/backfill step, and organisations can rename/reorder/archive
+  every one of them afterwards.
+- **Feature modules**: `src/features/{spaces,boards,item-types,statuses,
+categories,tags,items}/` each follow the Phase 1 shape
+  (`schema.ts`/`queries.ts`/`actions.ts`/`permissions.ts`, plus `slug.ts`
+  where slugs are generated). A shared `src/lib/slug.ts`
+  (`slugify`/`generateUniqueSlug`) replaces the Phase 1 one-off in
+  `features/organizations/slug.ts`, which now calls it too. Every Server
+  Action re-derives the organisation from a slug via
+  `requireOrganizationMembership`/`requireBoardForOrgMember` and
+  re-verifies any client-supplied id (space/item-type/status/category)
+  actually belongs to that organisation before using it — never trusting a
+  `<select>` value at face value. See `docs/multi-tenancy.md`.
+- **Permissions**: space/board/item-type/status/category/tag management is
+  owner/admin-only (`hasAtLeastRole(role, "ADMIN")`, reusing Phase 1's
+  capability-matrix pattern); any member can submit an Item to a board
+  they can see; editing/archiving an Item is allowed for its author or an
+  admin+ (`src/features/items/permissions.ts`).
+- **Public experience**: `/b/[orgSlug]/[boardSlug]` and
+  `/b/[orgSlug]/[boardSlug]/[itemSlug]` are new top-level routes,
+  deliberately outside `/org` so `src/lib/supabase/middleware.ts`'s
+  protected-prefix allowlist doesn't need to change. `getVisibleBoard`/
+  `getVisibleItem` (`src/features/boards/queries.ts`,
+  `src/features/items/queries.ts`) return the same `null` for "doesn't
+  exist," "archived," and "PRIVATE and you're not an authorised member" —
+  the public-route version of the Phase 1 IDOR-hardening pattern. Search
+  and item type/status/category filters are a plain `GET` `<form>`
+  (`src/components/item-filters.tsx`) — no client JS required to browse or
+  filter a board.
+- **Admin experience**: `/org/[slug]/spaces`, `/org/[slug]/boards`
+  (list/create/settings/archive-restore for both), `/org/[slug]/boards/
+[boardSlug]/items` (list with the same filters, create, edit, archive/
+  restore), and `/org/[slug]/settings/{item-types,statuses,categories,
+tags}` (inline create/rename/archive-or-delete list managers, linked
+  from the existing org settings page).
+- **Testing**: `src/features/items/items.integration.test.ts` (tenant
+  isolation for the Space/Board/Item hierarchy — cross-org board/item
+  access, archived/deleted exclusion, search filtering — against the real
+  Supabase Postgres instance, same pattern as Phase 1's
+  `organizations.integration.test.ts`) and `src/lib/slug.test.ts` (pure
+  unit tests for the shared slug helper). `e2e/spaces-boards-items.spec.ts`
+  covers the admin golden path (space → public board → item, verified
+  visible on the public route unauthenticated), default item-type/status
+  seeding via the real onboarding flow, and the security scenarios from
+  the brief: an anonymous or non-member visitor 404s on a PRIVATE board,
+  an archived PUBLIC board 404s, a non-member 404s on the admin board
+  route, and a board slug guessed against the wrong organisation 404s.
+- **Fixed along the way (pre-existing, not Phase 2 code)**: the Phase
+  0.5 `PasswordInput` component's show/hide toggle button has an
+  `aria-label` containing the substring "password" ("Show password"),
+  which broke every e2e test's `getByLabel("Password")` login helper via
+  Playwright's substring matching — fixed by matching `{ exact: true }` in
+  `e2e/auth.spec.ts`, `e2e/organizations.spec.ts`, and the new spec.
+  Base UI's `<Select.Value>` doesn't resolve a value to its item's label
+  text until the popup has been opened at least once (it shows the raw
+  value beforehand) — every `<Select>` usage now passes an `items` map so
+  the trigger always shows the right label immediately.
 
 ## What was implemented (Phase 0.5 — marketing site)
 
@@ -220,6 +393,37 @@ projects` team) for future env var management and deployment.
 
 ## Assumptions made (flag if any are wrong)
 
+- **Item description is plain text, not Tiptap rich text** — Tiptap is
+  installed (`docs/tech-stack.md`) and `docs/security-principles.md` names
+  Items as where it would first appear, but the Phase 2 brief's own Item
+  field list just says "description," and a WYSIWYG editor plus its
+  sanitization-library choice is real added scope. Deferred to whichever
+  phase actually needs rich formatting (comments are the more likely
+  first real use case); `Item.description` is a plain `String?` today.
+- **No per-board restriction on which Item Types/Statuses/Categories
+  apply** — every active one in the organisation is available on every
+  board, matching "simple by default" in `docs/architecture.md`. `Board`
+  does carry a reserved `settings Json` column for this kind of
+  per-board configuration later (see the Phase 2 section above).
+- **Item creation requires an authenticated org member, even on a PUBLIC
+  board** — the brief's Public Experience section only asks for
+  view/browse/search/open without an account; ITEM CRUD's "users with
+  permission can create" reads as membership-gated. Anonymous public
+  submission (if wanted later) is a distinct, larger decision (spam/rate
+  limiting) left to a future phase.
+- **Category is single-select per Item, Tags are multi-select** — the
+  brief's CATEGORIES AND TAGS section only says Items "can have multiple
+  tags," implying (by omission) a single category, which also matches how
+  most feedback tools use "category" vs. "tag."
+- **Two pre-existing e2e failures found, not fixed** (both predate this
+  phase and are unrelated to Spaces/Boards/Items): `e2e/auth.spec.ts`'s
+  "shows a check-your-email message" test, and `e2e/marketing.spec.ts`'s
+  "header nav links go to the right pages" test. Neither touches code this
+  phase changed (signup confirmation flow; marketing header nav) — the
+  first looks like a Supabase project setting (email confirmation
+  on/off), the second like a flake introduced by the prior "Brand
+  identity, marketing site redesign" commit. Worth a look, but fixing them
+  isn't a Spaces/Boards/Items change.
 - **`/register` renamed to `/signup`, and `/` now means the public
   homepage** — Phase 0.5 explicitly lists `/signup` as a required route
   and `/` as the marketing homepage, which conflicts with Phase 1's
@@ -272,14 +476,64 @@ add supabase` remains available later if that's preferred.
   single form (name + org name).
 - **No RLS-based "who can see this org" filtering; app-layer checks only**
   by design — see `docs/multi-tenancy.md`.
+- **Voting, commenting, and following require an authenticated org
+  member, even on a PUBLIC board** — same reasoning as Phase 2's item
+  creation. The public `/b/[orgSlug]/[boardSlug]/[itemSlug]` page shows
+  read-only vote/comment/follower counts and points visitors at signing
+  in; the interactive controls live on the `/org/[slug]/...` Item page.
+- **Comment body is plain text, not Tiptap rich text** — the Phase 2
+  README already named comments as "the more likely first real use case"
+  for rich text once it lands; this phase's own brief just says
+  "comments," so `Comment.body` is a plain `String` for now, matching
+  `Item.description`'s existing deferral.
+- **One level of comment threading, not arbitrary nesting** — the brief
+  explicitly says "if the architecture permits it cleanly" and warns
+  against an overly complex discussion system. A reply to a reply
+  collapses onto the same top-level thread rather than growing a deeper
+  tree — see the `Comment.parentId` note in `prisma/schema.prisma`.
+- **Comment moderation clears the body, not just hides it** — "manage
+  inappropriate content" reads as actually removing the content, not a
+  client-side-only hide; `deletedAt` + an emptied `body` accomplishes
+  that while keeping the row (and reply structure) intact.
+- **Vote/comment/follow counts are computed on read, not denormalized**
+  — `_count` on the Prisma relation, so they can never drift out of sync
+  with the underlying rows; see the top-of-file note in
+  `prisma/schema.prisma`.
+- **No email notifications** — the brief says "prepare the architecture
+  for email notifications later," not build them. `Notification` carries
+  everything an email job would need (recipient, type, actor, item);
+  actually sending email (via Resend, already in the stack per
+  `docs/tech-stack.md`) is left to whichever phase asks for it.
+- **"Manage users where appropriate" (moderation) implemented as removing
+  a member from the organisation** — Phase 1 never built member
+  invitation or removal at all (see "Not implemented" below), so this
+  phase adds the removal half via `removeMember`/`canRemoveMember`,
+  scoped by the same owner/admin rules as everywhere else in
+  `features/organizations/permissions.ts`.
 
 ## Not implemented (by design)
 
-Spaces, boards, items, voting, comments, roadmap, AI, billing,
-integrations — see the phased build plan for what's next. Also out of
-scope: social login (only email/password), member invitations (the only
-way into an org right now is creating it), and organisation
-branding/settings beyond the name (Phase 5).
+Roadmap views, decisions, AI, billing, integrations — see the phased
+build plan for what's next. Also out of scope: social login (only
+email/password), member invitations (the only way into an org right now
+is creating it — Phase 3 adds removing a member, not inviting one), and
+organisation branding/settings beyond the name (Phase 5).
+
+**Phase 2 specifically did not implement** (explicitly out of scope per
+its own brief): voting, comments, notifications, roadmap, or AI on top of
+the new Item model. Also not built: rich text (see "Assumptions made"
+above), per-board Item Type/Status restriction, anonymous public Item
+submission, file attachments (named as a Phase 2+ concern in
+`docs/security-principles.md`, not requested in this phase's brief), and
+moving a Board between Spaces after creation.
+
+**Phase 3 specifically did not implement** (explicitly out of scope per
+its own brief): advanced prioritisation, AI, billing, or integrations.
+Also not built: email delivery for notifications (see "Assumptions made"
+above), arbitrary-depth comment threading, anonymous/public voting or
+commenting, rate limiting on votes/comments (same deferral as Phase 2 —
+still just a principle in `docs/security-principles.md`), and member
+invitations (this phase can remove a member, not add one by email).
 
 **Phase 0.5 specifically did not implement**: real pricing (Stripe or
 otherwise — placeholder plan copy only), a documentation/help site,

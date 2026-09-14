@@ -12,7 +12,13 @@ import {
   updateOrganizationSchema,
 } from "./schema";
 import { generateUniqueOrganizationSlug } from "./slug";
-import { canLeaveOrganization, canUpdateOrganization } from "./permissions";
+import {
+  canLeaveOrganization,
+  canRemoveMember,
+  canUpdateOrganization,
+} from "./permissions";
+import { DEFAULT_ITEM_TYPES } from "@/features/item-types/defaults";
+import { DEFAULT_STATUSES } from "@/features/statuses/defaults";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -38,6 +44,8 @@ export async function createOrganization(input: {
       memberships: {
         create: { userId: profile.id, role: "OWNER" },
       },
+      itemTypes: { create: DEFAULT_ITEM_TYPES },
+      statuses: { create: DEFAULT_STATUSES },
     },
   });
 
@@ -79,6 +87,8 @@ export async function completeOnboarding(input: {
         memberships: {
           create: { userId: user.id, role: "OWNER" },
         },
+        itemTypes: { create: DEFAULT_ITEM_TYPES },
+        statuses: { create: DEFAULT_STATUSES },
       },
     }),
   ]);
@@ -130,4 +140,44 @@ export async function leaveOrganization(slug: string): Promise<ActionResult> {
 
   await db.membership.delete({ where: { id: membership.id } });
   redirect("/app");
+}
+
+/** Basic moderation: an admin+ removes another member from the
+ * organisation entirely (not just from one board). See canRemoveMember
+ * for who can remove whom. */
+export async function removeMember(
+  slug: string,
+  membershipId: string,
+): Promise<ActionResult> {
+  const { profile, membership } = await requireOrganizationMembership(slug);
+  const organizationId = membership.organization.id;
+
+  const target = await db.membership.findFirst({
+    where: { id: membershipId, organizationId },
+  });
+  if (!target) {
+    return {
+      success: false,
+      error: "That member is no longer in this organisation",
+    };
+  }
+  if (target.userId === profile.id) {
+    return {
+      success: false,
+      error: 'Use "Leave organisation" to remove yourself',
+    };
+  }
+
+  const ownerCount = await countOwners(organizationId);
+  if (!canRemoveMember(membership.role, target.role, ownerCount)) {
+    return {
+      success: false,
+      error: "You don't have permission to remove this member",
+    };
+  }
+
+  await db.membership.delete({ where: { id: target.id } });
+
+  revalidatePath(`/org/${slug}/settings`);
+  return { success: true };
 }

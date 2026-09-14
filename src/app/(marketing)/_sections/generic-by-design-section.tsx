@@ -33,10 +33,7 @@ export function GenericByDesignSection() {
               key={label}
               className="border-border bg-card flex flex-col items-center gap-2 rounded-xl border p-5 text-center"
             >
-              <Icon
-                className="text-primary size-5"
-                aria-hidden="true"
-              />
+              <Icon className="text-primary size-5" aria-hidden="true" />
               <span className="text-sm font-medium">{label}</span>
             </div>
           ))}

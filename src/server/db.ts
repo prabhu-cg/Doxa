@@ -1,7 +1,12 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient, type Prisma } from "@/generated/prisma/client";
 import { serverEnv } from "@/lib/env/server";
+
+/** Either the top-level client or an interactive transaction's callback
+ * client — the type a helper needs when it may run standalone or as part
+ * of a larger `db.$transaction(async (tx) => ...)`. */
+export type DbOrTx = PrismaClient | Prisma.TransactionClient;
 
 /**
  * Prisma client singleton. In dev, Next.js hot-reloads modules on every

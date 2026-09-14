@@ -15,7 +15,40 @@
 // migration.sql) auto-creates a Profile row when a Supabase auth user
 // signs up; there is deliberately no DB-level FK/cascade back from
 // profiles to auth.users; see docs/multi-tenancy.md for the trade-off.
-// Do not add tables for later phases (Spaces, Boards, Items, ...) here yet.
+//
+// Phase 2 adds the core information architecture: Space, Board, ItemType,
+// Status, Category, Tag and Item. ItemType and Status are deliberately
+// plain data tables (per-organization rows), never a hard-coded enum —
+// see "Item Types" in docs/architecture.md. They (and Category) use a
+// nullable `archivedAt` to soft-archive without breaking historical Items
+// that still reference them; Tag is a lighter-weight label and is hard
+// deleted instead (ItemTag rows cascade, Item.categoryId is SET NULL).
+// Board gets an explicit `status` enum (ACTIVE/ARCHIVED) rather than
+// `archivedAt`, matching the "status" property named explicitly in the
+// Phase 2 brief for boards.
+//
+// Item has a cascading FK to Organization (via organizationId) alongside
+// restrict-by-default FKs to ItemType/Status (itemTypeId/statusId), which
+// looks like a multi-path-cascade hazard on Organization deletion —
+// verified empirically that Postgres resolves it correctly (it deletes in
+// dependency order within the one cascading DELETE), so no special
+// handling is needed here.
+//
+// Phase 3 adds the community interaction layer: Vote, Comment (with
+// self-referencing `parentId` for one level of threaded replies),
+// CommentMention, ItemFollower, ItemActivity and Notification. All of
+// them cascade-delete through their `itemId` FK (Item -> these tables),
+// same pattern as Phase 2's Item -> ItemTag. Their Profile-referencing
+// FKs (authorId/userId/actorId/mentionedId) deliberately follow Item's
+// existing `author` convention instead — no onDelete specified — since a
+// Profile is only ever deleted directly in test teardown, always after
+// the owning Organization (and therefore these rows) is already gone;
+// see e2e/utils/test-users.ts.
+//
+// Votes are one evidence source, not the prioritisation mechanism itself
+// — no ranking/weighting logic lives in the schema. Vote counts are
+// computed on read (`_count` on the `votes` relation) rather than
+// denormalized onto Item, so they can never drift out of sync.
 
 generator client {
   provider = "prisma-client"
@@ -45,7 +78,15 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships Membership[]
+  memberships         Membership[]
+  items               Item[]
+  votes               Vote[]
+  comments            Comment[]
+  mentionedIn         CommentMention[]
+  itemFollows         ItemFollower[]
+  activities          ItemActivity[]
+  notifications       Notification[]   @relation("NotificationRecipient")
+  notificationsCaused Notification[]   @relation("NotificationActor")
 
   @@map("profiles")
 }
@@ -57,7 +98,15 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Membership[]
+  memberships   Membership[]
+  spaces        Space[]
+  boards        Board[]
+  itemTypes     ItemType[]
+  statuses      Status[]
+  categories    Category[]
+  tags          Tag[]
+  items         Item[]
+  notifications Notification[]
 
   @@map("organizations")
 }
@@ -76,4 +125,350 @@ model Membership {
 
   @@unique([organizationId, userId])
   @@map("memberships")
+}
+
+/// A logical grouping within an organisation (e.g. "Product", "Customer
+/// Feedback"). Contains Boards. Soft-archived via `archivedAt` rather than
+/// deleted, so archiving never orphans its Boards/Items.
+model Space {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  boards       Board[]
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("spaces")
+}
+
+enum BoardVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum BoardStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+/// Where Items are submitted. `visibility` gates whether an unauthenticated
+/// visitor may view it at all (see the public `/b/[org]/[board]` routes);
+/// `status` is the archive lifecycle, kept separate from visibility.
+model Board {
+  id             String          @id @default(cuid())
+  organizationId String
+  spaceId        String
+  name           String
+  slug           String
+  description    String?
+  visibility     BoardVisibility @default(PRIVATE)
+  status         BoardStatus     @default(ACTIVE)
+  /// Reserved for future per-board configuration (e.g. custom submission
+  /// fields, enabled item types). Not yet read or written by application
+  /// logic beyond the default empty object — see the Phase 2 brief's
+  /// "configuration" board property.
+  settings       Json            @default("{}")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  space        Space        @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("boards")
+}
+
+/// A configurable kind of Item (Feature, Bug, Idea, ...) — data, not an
+/// application-level enum, so an organisation can add/rename/archive its
+/// own types. See "Item Types" in docs/architecture.md.
+model ItemType {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  sortOrder      Int       @default(0)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("item_types")
+}
+
+/// A configurable workflow status (Open, Planned, ...) — same "data, not
+/// code" rationale as ItemType. `isDefault` marks the status a new Item
+/// starts in.
+model Status {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  color          String?
+  sortOrder      Int       @default(0)
+  isDefault      Boolean   @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("statuses")
+}
+
+/// A single classification an Item can belong to. Unlike ItemType/Status,
+/// deleting one doesn't threaten historical data — Item.categoryId just
+/// goes null — so this is a plain hard-delete CRUD, no archive state.
+model Category {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("categories")
+}
+
+/// A free-form label. Items can have multiple. Hard-delete, same rationale
+/// as Category.
+model Tag {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        ItemTag[]
+
+  @@unique([organizationId, slug])
+  @@map("tags")
+}
+
+model ItemTag {
+  itemId String
+  tagId  String
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+  @@map("item_tags")
+}
+
+/// The central object in Doxa — never hard-coded as "feature request"; its
+/// shape (type) and workflow (status) are both organisation-configured
+/// data. `archivedAt`/`deletedAt` are deliberately separate: archived
+/// Items are hidden from default views but fully restorable by their
+/// author or an org admin; `deletedAt` is reserved for a future
+/// moderation/hard-delete feature and is never set by Phase 2 code — see
+/// the "archived/deleted state" field in the Phase 2 brief.
+model Item {
+  id             String    @id @default(cuid())
+  organizationId String
+  spaceId        String
+  boardId        String
+  itemTypeId     String
+  statusId       String
+  categoryId     String?
+  authorId       String    @db.Uuid
+  title          String
+  slug           String
+  description    String?
+  archivedAt     DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  space         Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  board         Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  itemType      ItemType       @relation(fields: [itemTypeId], references: [id])
+  status        Status         @relation(fields: [statusId], references: [id])
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author        Profile        @relation(fields: [authorId], references: [id])
+  tags          ItemTag[]
+  votes         Vote[]
+  comments      Comment[]
+  followers     ItemFollower[]
+  activities    ItemActivity[]
+  notifications Notification[]
+
+  @@unique([boardId, slug])
+  @@map("items")
+}
+
+/// One user's vote on one Item — evidence of interest, never the final
+/// prioritisation signal itself (see docs/architecture.md). The
+/// `@@unique` pair is what makes "one active vote per user per Item" and
+/// "prevent duplicate votes" a database guarantee rather than an
+/// application-level race: two concurrent "add vote" requests both race
+/// to insert the same (itemId, userId) row, and the loser gets a unique
+/// constraint violation instead of a duplicate row — see
+/// `features/votes/actions.ts`.
+model Vote {
+  id        String   @id @default(cuid())
+  itemId    String
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  item Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id])
+
+  @@unique([itemId, userId])
+  @@map("votes")
+}
+
+/// A comment on an Item. `parentId` gives one level of threaded replies
+/// (a reply's own `parentId` is deliberately not validated against being
+/// itself a reply — see `features/comments/schema.ts` — replies-to-replies
+/// collapse to the top-level thread in the UI, keeping the discussion
+/// system flat and simple per the Phase 3 brief). Deletion is always
+/// soft (`deletedAt` + `body` cleared) so thread structure survives a
+/// removed comment — the UI renders a "[deleted]" placeholder instead of
+/// leaving a hole where a reply's parent used to be.
+model Comment {
+  id        String    @id @default(cuid())
+  itemId    String
+  authorId  String    @db.Uuid
+  parentId  String?
+  body      String
+  editedAt  DateTime?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  item          Item             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  author        Profile          @relation(fields: [authorId], references: [id])
+  parent        Comment?         @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[]        @relation("CommentReplies")
+  mentions      CommentMention[]
+  notifications Notification[]
+
+  @@index([itemId])
+  @@map("comments")
+}
+
+/// A structured record of an `@mention` inside a Comment — parsed once at
+/// write time (see `features/comments/mentions.ts`) and stored as a real
+/// row, rather than re-parsing the comment body's `@username` text on
+/// every read. Only usernames belonging to the Item's own organisation
+/// resolve to a mention; anything else is left as plain text.
+model CommentMention {
+  id          String   @id @default(cuid())
+  commentId   String
+  mentionedId String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentioned Profile @relation(fields: [mentionedId], references: [id])
+
+  @@unique([commentId, mentionedId])
+  @@map("comment_mentions")
+}
+
+/// A user following an Item, to receive Notifications about it. Same
+/// add/remove-a-row shape as Vote, including the uniqueness guarantee
+/// against duplicate follow rows.
+model ItemFollower {
+  id        String   @id @default(cuid())
+  itemId    String
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  item Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id])
+
+  @@unique([itemId, userId])
+  @@map("item_followers")
+}
+
+enum ActivityType {
+  ITEM_CREATED
+  ITEM_EDITED
+  STATUS_CHANGED
+  VOTE_ADDED
+  VOTE_REMOVED
+  COMMENT_ADDED
+  ITEM_ARCHIVED
+  ITEM_RESTORED
+}
+
+/// An append-only history entry for one Item. Written alongside the
+/// triggering mutation (same transaction where practical — see
+/// `features/activity/log.ts`), never reconstructed after the fact from
+/// other tables. `data` carries just enough type-specific context to
+/// render the entry (e.g. `{ fromStatus, toStatus }` for
+/// STATUS_CHANGED) without a further join. Deliberately excludes
+/// low-signal UI events (opening the item, filtering a board) — see
+/// "Do not record meaningless UI events" in the Phase 3 brief.
+model ItemActivity {
+  id        String       @id @default(cuid())
+  itemId    String
+  actorId   String?      @db.Uuid
+  type      ActivityType
+  data      Json         @default("{}")
+  createdAt DateTime     @default(now())
+
+  item  Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  actor Profile? @relation(fields: [actorId], references: [id])
+
+  @@index([itemId])
+  @@map("item_activities")
+}
+
+enum NotificationType {
+  ITEM_COMMENT
+  COMMENT_REPLY
+  ITEM_STATUS_CHANGED
+  MENTION
+}
+
+/// An in-app notification for one recipient. Deliberately carries
+/// `organizationId` directly (not just derived via `item`/`comment`) so a
+/// recipient's notification centre — and every read of this table — stays
+/// a single tenant-scoped query, matching the rule in
+/// docs/multi-tenancy.md. `readAt` is the only mutable field after
+/// creation. No email delivery in Phase 3: the shape here (recipient,
+/// type, actor, and the item/comment it's about) is exactly what a future
+/// email job would need to consume, so that's additive later, not a
+/// rework of this model.
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String           @db.Uuid
+  type           NotificationType
+  itemId         String?
+  commentId      String?
+  actorId        String?          @db.Uuid
+  data           Json             @default("{}")
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         Profile      @relation("NotificationRecipient", fields: [userId], references: [id])
+  item         Item?        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  comment      Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  actor        Profile?     @relation("NotificationActor", fields: [actorId], references: [id])
+
+  @@index([userId, readAt])
+  @@map("notifications")
 }

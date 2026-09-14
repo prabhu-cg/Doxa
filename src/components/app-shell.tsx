@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { UserMenu } from "@/components/user-menu";
+import {
+  NotificationBell,
+  type NotificationItem,
+} from "@/components/notification-bell";
 
 type OrgOption = { slug: string; name: string };
 
@@ -8,11 +12,15 @@ export function AppShell({
   currentOrganization,
   organizations,
   displayName,
+  notifications,
+  unreadNotificationCount,
   children,
 }: {
   currentOrganization: OrgOption;
   organizations: OrgOption[];
   displayName: string;
+  notifications: NotificationItem[];
+  unreadNotificationCount: number;
   children: React.ReactNode;
 }) {
   return (
@@ -24,7 +32,14 @@ export function AppShell({
           </Link>
           <OrgSwitcher current={currentOrganization} options={organizations} />
         </div>
-        <UserMenu displayName={displayName} />
+        <div className="flex items-center gap-1">
+          <NotificationBell
+            orgSlug={currentOrganization.slug}
+            notifications={notifications}
+            initialUnreadCount={unreadNotificationCount}
+          />
+          <UserMenu displayName={displayName} />
+        </div>
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
     </div>

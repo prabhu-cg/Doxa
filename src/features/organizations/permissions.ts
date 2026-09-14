@@ -39,3 +39,23 @@ export function canLeaveOrganization(
   if (role !== "OWNER") return true;
   return ownerCount > 1;
 }
+
+/** Basic moderation capability: admins+ can remove members (see
+ * canRemoveMember for the per-target rule). */
+export function canManageMembers(role: MembershipRole): boolean {
+  return hasAtLeastRole(role, "ADMIN");
+}
+
+/** An admin can remove a member or another admin, but never an owner —
+ * only an owner can remove another owner, and never the last one (same
+ * "someone has to hold that role" rule as canLeaveOrganization). Removing
+ * yourself isn't covered here — that's "Leave organisation" instead. */
+export function canRemoveMember(
+  actorRole: MembershipRole,
+  targetRole: MembershipRole,
+  ownerCount: number,
+): boolean {
+  if (!hasAtLeastRole(actorRole, "ADMIN")) return false;
+  if (targetRole === "OWNER") return actorRole === "OWNER" && ownerCount > 1;
+  return true;
+}

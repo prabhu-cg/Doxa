@@ -11,8 +11,8 @@ export function Hero() {
           </h1>
           <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg text-balance lg:mx-0">
             Doxa brings feedback, discussion, prioritisation and decisions
-            together — so nothing gets lost, and everyone knows what happened
-            to what they asked for.
+            together — so nothing gets lost, and everyone knows what happened to
+            what they asked for.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
             <LinkButton size="lg" href="/signup">

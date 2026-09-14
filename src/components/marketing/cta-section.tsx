@@ -42,9 +42,7 @@ export function CTASection({
         <p
           className={cn(
             "mx-auto mt-3 max-w-lg text-balance",
-            isBanner
-              ? "text-primary-foreground/80"
-              : "text-muted-foreground",
+            isBanner ? "text-primary-foreground/80" : "text-muted-foreground",
           )}
         >
           {description}
@@ -60,7 +58,9 @@ export function CTASection({
           )}
         >
           {ctaLabel}
-          {isBanner ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
+          {isBanner ? (
+            <ArrowRight className="size-4" aria-hidden="true" />
+          ) : null}
         </LinkButton>
         {secondaryLabel && secondaryHref ? (
           <LinkButton

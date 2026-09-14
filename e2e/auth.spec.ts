@@ -66,7 +66,7 @@ test.describe("login, protected routes, and logout", () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fprofile/);
 
     await page.getByLabel("Email").fill(user.email);
-    await page.getByLabel("Password").fill(user.password);
+    await page.getByLabel("Password", { exact: true }).fill(user.password);
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page).toHaveURL(/\/profile/);
@@ -80,7 +80,7 @@ test.describe("login, protected routes, and logout", () => {
   }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(user.email);
-    await page.getByLabel("Password").fill(user.password);
+    await page.getByLabel("Password", { exact: true }).fill(user.password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).not.toHaveURL(/\/login/);
 

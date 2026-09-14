@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updateBoardSchema } from "@/features/boards/schema";
+import { updateBoard } from "@/features/boards/actions";
+import { FormField } from "@/components/form-field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type FormValues = {
+  name: string;
+  description?: string;
+  visibility: "PUBLIC" | "PRIVATE";
+};
+
+const VISIBILITY_ITEMS = {
+  PRIVATE: "Private — members of this organisation only",
+  PUBLIC: "Public — anyone with the link, no account required",
+};
+
+export function UpdateBoardForm({
+  orgSlug,
+  boardSlug,
+  initialName,
+  initialDescription,
+  initialVisibility,
+}: {
+  orgSlug: string;
+  boardSlug: string;
+  initialName: string;
+  initialDescription: string;
+  initialVisibility: "PUBLIC" | "PRIVATE";
+}) {
+  const [rootError, setRootError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(updateBoardSchema),
+    defaultValues: {
+      name: initialName,
+      description: initialDescription,
+      visibility: initialVisibility,
+    },
+  });
+
+  async function onSubmit(values: FormValues) {
+    setRootError(null);
+    setSaved(false);
+    const result = await updateBoard(orgSlug, boardSlug, values);
+    if (!result.success) {
+      setRootError(result.error);
+      return;
+    }
+    setSaved(true);
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <FormField label="Name" htmlFor="name" error={errors.name?.message}>
+        <Input id="name" aria-invalid={!!errors.name} {...register("name")} />
+      </FormField>
+      <FormField
+        label="Description"
+        htmlFor="description"
+        error={errors.description?.message}
+      >
+        <Textarea
+          id="description"
+          aria-invalid={!!errors.description}
+          {...register("description")}
+        />
+      </FormField>
+      <FormField
+        label="Visibility"
+        htmlFor="visibility"
+        error={errors.visibility?.message}
+      >
+        <Controller
+          control={control}
+          name="visibility"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={VISIBILITY_ITEMS}
+            >
+              <SelectTrigger id="visibility" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PRIVATE">
+                  {VISIBILITY_ITEMS.PRIVATE}
+                </SelectItem>
+                <SelectItem value="PUBLIC">
+                  {VISIBILITY_ITEMS.PUBLIC}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </FormField>
+      {rootError ? (
+        <p className="text-destructive text-sm">{rootError}</p>
+      ) : null}
+      {saved ? <p className="text-muted-foreground text-sm">Saved.</p> : null}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving…" : "Save changes"}
+      </Button>
+    </form>
+  );
+}

@@ -91,6 +91,19 @@ not `/`.
   SEO metadata, sitemap/robots, and the `/login`+`/signup` entry points
   linked from it (`/signup` renamed from Phase 1's `/register` to match
   the marketing site's copy).
+- **Phase 2** — the core information architecture: Space, Board, Item,
+  plus configurable ItemType/Status/Category/Tag (data, not hard-coded
+  choices — see "Item Types" above). Admin management UI under
+  `/org/[slug]/{spaces,boards,settings/*}`, and a public, unauthenticated
+  board/item browsing experience at `/b/[orgSlug]/[boardSlug]`.
+- **Phase 3** — the community interaction layer: Vote, Comment (one level
+  of threaded replies), CommentMention, ItemFollower, ItemActivity, and
+  Notification, all owned by Item. Voting, commenting, and following are
+  membership-gated the same way submitting an Item is (see "Assumptions
+  made" in the root `README.md`) — interactive on the authenticated Item
+  page (`/org/[slug]/boards/[boardSlug]/items/[itemSlug]`), read-only
+  counts on the public one. Basic moderation (delete a comment, remove a
+  member) and board-level search/filter/sort round out the phase.
 
-Spaces, Boards, and Items are not yet implemented — see the root
-`README.md` for each phase's concrete "what was implemented" list.
+Priority, Attachments, and Decision are not yet implemented — see the
+root `README.md` for each phase's concrete "what was implemented" list.

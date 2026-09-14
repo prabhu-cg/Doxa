@@ -7,12 +7,16 @@ import {
 import {
   canUpdateOrganization,
   canLeaveOrganization,
+  canManageMembers,
+  canRemoveMember,
 } from "@/features/organizations/permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { LinkButton } from "@/components/link-button";
 import { UpdateOrganizationForm } from "./update-organization-form";
 import { LeaveOrganizationDialog } from "./leave-organization-dialog";
+import { RemoveMemberControl } from "./remove-member-control";
 
 export const metadata: Metadata = { title: "Organisation settings" };
 
@@ -30,6 +34,7 @@ export default async function OrganizationSettingsPage({
 
   const canEdit = canUpdateOrganization(membership.role);
   const canLeave = canLeaveOrganization(membership.role, ownerCount);
+  const canManage = canManageMembers(membership.role);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
@@ -73,9 +78,58 @@ export default async function OrganizationSettingsPage({
                 {m.user.displayName}
               </span>
               <Badge variant="secondary">{m.role}</Badge>
+              {canManage &&
+              m.userId !== membership.userId &&
+              canRemoveMember(membership.role, m.role, ownerCount) ? (
+                <RemoveMemberControl
+                  slug={slug}
+                  membershipId={m.id}
+                  memberName={m.user.displayName}
+                />
+              ) : null}
             </li>
           ))}
         </ul>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Content configuration</h2>
+        <p className="text-muted-foreground text-sm">
+          Item types, statuses, categories, and tags are per-organisation data,
+          not fixed choices.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/item-types`}
+          >
+            Item types
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/statuses`}
+          >
+            Statuses
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/categories`}
+          >
+            Categories
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/tags`}
+          >
+            Tags
+          </LinkButton>
+        </div>
       </section>
 
       <Separator />

@@ -85,3 +85,150 @@ export async function createTestOrganizationForUser(
 
   return { id: orgId, slug, name };
 }
+
+/** Deleting the organization cascades to every Phase 2 table (Space,
+ * Board, ItemType, Status, Category, Tag, Item, ItemTag) — verified this
+ * resolves correctly even with Item's non-cascading FKs to ItemType/Status
+ * in the mix (see the note at the top of prisma/schema.prisma). */
+export async function deleteTestOrganizationById(organizationId: string) {
+  await withClient((client) =>
+    client.query(`DELETE FROM "organizations" WHERE "id" = $1`, [
+      organizationId,
+    ]),
+  );
+}
+
+/** Sets a test user's username directly — onboarding doesn't collect one
+ * (see README's "Assumptions made"), but @mention resolution needs it. */
+export async function setTestUsername(userId: string, username: string) {
+  await withClient((client) =>
+    client.query(`UPDATE "profiles" SET "username" = $1 WHERE "id" = $2`, [
+      username,
+      userId,
+    ]),
+  );
+}
+
+/** Adds an existing user to an org bypassing the UI — there's no
+ * invitation flow yet (see docs/architecture.md), so tests that need a
+ * second member go straight to the membership table. */
+export async function addTestMembership(
+  organizationId: string,
+  userId: string,
+  role: "OWNER" | "ADMIN" | "MEMBER" = "MEMBER",
+) {
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "memberships" ("id", "organizationId", "userId", "role") VALUES ($1, $2, $3, $4)`,
+      [randomUUID(), organizationId, userId, role],
+    ),
+  );
+}
+
+function slugFrom(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+export async function createTestSpace(organizationId: string, name: string) {
+  const id = randomUUID();
+  const slug = `${slugFrom(name)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "spaces" ("id", "organizationId", "name", "slug", "updatedAt") VALUES ($1, $2, $3, $4, now())`,
+      [id, organizationId, name, slug],
+    ),
+  );
+  return { id, slug, name };
+}
+
+export async function createTestBoard(
+  organizationId: string,
+  spaceId: string,
+  name: string,
+  options: {
+    visibility?: "PUBLIC" | "PRIVATE";
+    status?: "ACTIVE" | "ARCHIVED";
+  } = {},
+) {
+  const id = randomUUID();
+  const slug = `${slugFrom(name)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "boards" ("id", "organizationId", "spaceId", "name", "slug", "visibility", "status", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+      [
+        id,
+        organizationId,
+        spaceId,
+        name,
+        slug,
+        options.visibility ?? "PRIVATE",
+        options.status ?? "ACTIVE",
+      ],
+    ),
+  );
+  return { id, slug, name };
+}
+
+export async function createTestItemType(organizationId: string, name: string) {
+  const id = randomUUID();
+  const slug = `${slugFrom(name)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "item_types" ("id", "organizationId", "name", "slug", "updatedAt") VALUES ($1, $2, $3, $4, now())`,
+      [id, organizationId, name, slug],
+    ),
+  );
+  return { id, slug, name };
+}
+
+export async function createTestStatus(
+  organizationId: string,
+  name: string,
+  isDefault = false,
+) {
+  const id = randomUUID();
+  const slug = `${slugFrom(name)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "statuses" ("id", "organizationId", "name", "slug", "isDefault", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, now())`,
+      [id, organizationId, name, slug, isDefault],
+    ),
+  );
+  return { id, slug, name };
+}
+
+export async function createTestItem(params: {
+  organizationId: string;
+  spaceId: string;
+  boardId: string;
+  itemTypeId: string;
+  statusId: string;
+  authorId: string;
+  title: string;
+  archivedAt?: Date;
+}) {
+  const id = randomUUID();
+  const slug = `${slugFrom(params.title)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "items"
+        ("id", "organizationId", "spaceId", "boardId", "itemTypeId", "statusId", "authorId", "title", "slug", "archivedAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())`,
+      [
+        id,
+        params.organizationId,
+        params.spaceId,
+        params.boardId,
+        params.itemTypeId,
+        params.statusId,
+        params.authorId,
+        params.title,
+        slug,
+        params.archivedAt ?? null,
+      ],
+    ),
+  );
+  return { id, slug, title: params.title };
+}
