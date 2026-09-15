@@ -5,9 +5,10 @@ A generic community feedback, prioritisation and decision platform:
 
 This repository is being built in sequential, phase-gated prompts.
 **Phase 0 (foundation), Phase 1 (auth & tenancy), Phase 0.5 (marketing
-site), Phase 2 (Spaces/Boards/Items), and Phase 3 (community interaction:
+site), Phase 2 (Spaces/Boards/Items), Phase 3 (community interaction:
 voting, comments, followers, mentions, activity, notifications, search,
-moderation) are complete.** Roadmap views, decisions, AI, billing, and
+moderation), and Phase 4 (priority, scoring, decisions, decision history,
+roadmap, admin prioritisation) are complete.** AI, billing, and
 integrations are not yet built.
 
 ## Stack
@@ -55,6 +56,103 @@ pnpm dev
 | `pnpm db:generate`             | Regenerate Prisma client       |
 | `pnpm db:migrate`              | Create/apply a migration (dev) |
 | `pnpm db:studio`               | Prisma Studio                  |
+
+## What was implemented (Phase 4 — priority, scoring, decisions, roadmap)
+
+This phase's core differentiation: **opinions are evidence, not
+automatically decisions.**
+
+- **Data model**: four new tables
+  (`prisma/migrations/20260915193907_phase4_*`):
+  - `Priority` — organisation-controlled data, the exact same "data, not
+    code" pattern as `ItemType`/`Status` (see "Item Types" in
+    `docs/architecture.md`), seeded with None/Low/Medium/High/Critical
+    (`features/priorities/defaults.ts`), "None" marked `isDefault`.
+    `Item.priorityId` is required, defaulting a new Item to the org's
+    default priority exactly the way `statusId` already does. The
+    migration backfills all five default priorities onto every
+    pre-existing organisation and assigns every pre-existing Item to
+    "None" before the column is made `NOT NULL`.
+  - `ScoreCriterion` / `ItemScore` — a flexible, organisation-configured
+    prioritisation model. Criteria (Customer impact, Business value,
+    Strategic alignment, Effort, Urgency, Confidence, or anything else an
+    org defines) are per-organisation rows an org opts into by creating
+    them — zero seeded by default, so no organisation is forced to use
+    any dimension. `ItemScore` is a sparse `(itemId, criterionId)` table
+    (`@@unique`, same upsert-a-row shape as `Vote`) holding a 1-5 value;
+    an Item is never forced to be scored on every configured criterion.
+    The weighted-average score is computed on read
+    (`features/scoring/queries.ts#computeItemScore`) across only the
+    criteria an Item actually has, never denormalized — same
+    never-drifts rationale as vote counts.
+  - `Decision` — a first-class, **append-only** record of what was
+    decided about an Item and why (`type`, `rationale`, optional
+    `targetDate`/`internalNotes`, `createdBy`, `createdAt`). There is
+    deliberately no `updateDecision`/`deleteDecision` — recording a new
+    Decision never overwrites a previous one; an Item's full decision
+    HISTORY is every `Decision` row ordered by `createdAt`, and the
+    CURRENT decision is simply the most recent one
+    (`features/decisions/queries.ts`). This is what "opinions are
+    evidence, not automatically decisions" resolves to structurally:
+    votes/comments/scores never write here directly, only an explicit
+    `recordDecision` call does.
+  - `RoadmapStage` on `Decision` — where (if anywhere) an Item sits on
+    the basic Now/Next/Later roadmap, set explicitly per Decision rather
+    than inferred from `DecisionType`, so an Item never lands on the
+    roadmap just because it got votes.
+  - `ActivityType` gained `PRIORITY_CHANGED` and `DECISION_RECORDED`,
+    logged the same way `STATUS_CHANGED` already is.
+- **Scoring & priority management**: `features/priorities/` and
+  `features/scoring/` (each `schema.ts`/`queries.ts`/`actions.ts`/
+  `permissions.ts`, following the Phase 2 feature-module shape) plus
+  inline create/rename/archive-or-restore managers under
+  `/org/[slug]/settings/{priorities,scoring}`. Managing either is
+  owner/admin-only; scoring an Item (the business-signal input itself)
+  is admin+-only too — deliberately stricter than voting (any member),
+  so a vote can never be mistaken for a business-value score.
+- **Decisions**: `features/decisions/` — `recordDecision` is create-only
+  and admin+-only. The Item page's new "Decision" section shows the
+  current decision plus a collapsible full history; the public Item page
+  shows the current decision's type and rationale (never
+  `internalNotes`, which is admin-only by design) so the "Communicate"
+  step of the core loop has something real to show.
+- **Item page redesign**: explicitly split into COMMUNITY SIGNAL (votes,
+  comments, followers — unchanged from Phase 3, now labeled and
+  captioned "not priority") and BUSINESS SIGNAL (the scoring panel,
+  admin+-only, hidden entirely for an organisation with zero configured
+  criteria) per the brief's "do not imply that vote count equals
+  priority." Priority itself is edited alongside item type/status/
+  category in the existing edit form (author-or-admin, same gate as
+  those fields).
+- **Roadmap**: `features/roadmap/` + `/org/[slug]/roadmap` — a basic
+  three-column Now/Next/Later view built entirely from Item + Decision
+  data (no new roadmap-specific model beyond `RoadmapStage`), visible to
+  any org member. An Item appears only once an owner/admin's Decision
+  explicitly placed it there.
+- **Admin prioritisation**: `features/prioritization/` +
+  `/org/[slug]/prioritization` — "what should we consider next?",
+  admin+-only, spanning every board in the organisation (not one board at
+  a time). Sortable/filterable by votes, priority, status, type,
+  category, and score, with votes and score always shown side by side,
+  never collapsed into one ranking number.
+- **UX**: no scoring UI appears anywhere for an organisation with zero
+  configured criteria (progressive disclosure per the brief's "do not
+  make the UI look like a complicated enterprise scoring system" — a
+  simple org using only Status/votes never sees a scoring control).
+- **Testing**: `features/{priorities,scoring,decisions,roadmap,
+prioritization}/*.integration.test.ts` cover tenant isolation, the
+  weighted-average scoring math (including the zero-weight/unscored-item
+  edge cases), the append-only decision-history guarantee (recording a
+  second decision never overwrites the first; "current" is always the
+  newest), roadmap grouping/sorting/archived-exclusion, and every new
+  permission matrix — real Prisma queries against the real Supabase
+  instance, same pattern as Phases 1-3. Every existing feature's
+  `*.integration.test.ts` fixture that created an `Item` directly was
+  updated for the now-required `priorityId`, and
+  `e2e/spaces-boards-items.spec.ts`'s default-seeding test now also
+  verifies the five default Priorities. `e2e/community.spec.ts` and
+  `e2e/spaces-boards-items.spec.ts` cover the real Server Action + UI
+  paths through item creation with a default priority.
 
 ## What was implemented (Phase 3 — community interaction layer)
 
@@ -393,6 +491,46 @@ projects` team) for future env var management and deployment.
 
 ## Assumptions made (flag if any are wrong)
 
+- **Scoring an Item (the business signal itself) is admin+-only, not
+  open to any member** — the brief distinguishes COMMUNITY SIGNAL from
+  BUSINESS SIGNAL but doesn't say who may set the latter; since scoring
+  represents the organisation's own evaluation (impact, effort, strategic
+  alignment), not community input, it's gated the same as recording a
+  Decision rather than the same as voting.
+- **Recording a Decision is admin+-only** — "a Decision belongs to an
+  Item" doesn't say who may record one; since a Decision represents an
+  organisational commitment ("what was decided and why"), not a
+  member's individual view, it's treated as a moderation-tier action, the
+  same tier as managing statuses/priorities/item types.
+- **The public Item page shows the current Decision's type and
+  rationale, never `internalNotes`** — the brief's own example rationale
+  ("Declined because...") reads as something meant to be communicated
+  back to whoever asked, matching the loop's explicit "Communicate" step
+  in `docs/architecture.md`; `internalNotes` is named "internal" in the
+  brief itself, so it stays admin-only.
+- **Priority is edited via the existing item edit form (author-or-admin),
+  not gated separately from item type/status/category** — the brief says
+  "Priority must be organisation-controlled" (i.e. the available levels
+  are org-configured data, not who may set them on an Item), so it
+  follows the same permission as the fields it sits next to in that form.
+- **Roadmap view is visible to any org member; the admin prioritisation
+  view is admin+-only** — the brief separates "ROADMAP" (a basic view
+  Items can "appear in") from "ADMIN PRIORITISATION" (explicitly named
+  for a "product/admin user" asking "what should we consider next?"),
+  read as different audiences: the roadmap communicates outward, the
+  prioritisation view is the internal working tool.
+- **Roadmap stages are a fixed Now/Next/Later enum, not organisation-
+  configurable** — the brief gives "Now/Next/Later" as "initial roadmap
+  states," but unlike Status/Priority/ItemType (explicitly called out as
+  configurable data), making these configurable too wasn't asked for and
+  would add a fifth org-configurable-list settings page for a "basic"
+  view the brief explicitly says shouldn't become "a complex
+  project-management system."
+- **No email/in-app notification when a Decision is recorded** — Phase 3's
+  `Notification` model could carry a `DECISION_RECORDED` type later
+  (same deferral pattern as `notifyStatusChanged`), but this phase's
+  brief doesn't ask for it, and followers already see it in the Item's
+  Activity tab.
 - **Item description is plain text, not Tiptap rich text** — Tiptap is
   installed (`docs/tech-stack.md`) and `docs/security-principles.md` names
   Items as where it would first appear, but the Phase 2 brief's own Item
@@ -513,11 +651,21 @@ add supabase` remains available later if that's preferred.
 
 ## Not implemented (by design)
 
-Roadmap views, decisions, AI, billing, integrations — see the phased
-build plan for what's next. Also out of scope: social login (only
+AI, billing, integrations, and file attachments — see the phased build
+plan for what's next. Also out of scope: social login (only
 email/password), member invitations (the only way into an org right now
 is creating it — Phase 3 adds removing a member, not inviting one), and
 organisation branding/settings beyond the name (Phase 5).
+
+**Phase 4 specifically did not implement** (explicitly out of scope per
+its own brief): AI or billing. Also not built: email/notification
+delivery for a recorded Decision (Phase 3's `Notification` model could
+carry this later, same deferral pattern as `notifyStatusChanged`), a
+configurable per-organisation roadmap stage list (Now/Next/Later is
+fixed, matching "do not build a complex project-management system"), and
+per-board or per-item-type restriction on which scoring criteria apply
+(every active criterion is available on every Item, same "simple by
+default" reasoning as Phase 2's item types/statuses).
 
 **Phase 2 specifically did not implement** (explicitly out of scope per
 its own brief): voting, comments, notifications, roadmap, or AI on top of

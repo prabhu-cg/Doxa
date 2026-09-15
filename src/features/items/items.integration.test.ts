@@ -42,6 +42,7 @@ describe("Space/Board/Item tenant isolation", () => {
 
   let itemTypeId: string;
   let statusId: string;
+  let priorityId: string;
 
   beforeAll(async () => {
     await db.profile.create({
@@ -75,6 +76,15 @@ describe("Space/Board/Item tenant isolation", () => {
       },
     });
     statusId = status.id;
+    const priority = await db.priority.create({
+      data: {
+        organizationId: orgAId,
+        name: "None",
+        slug: "none",
+        isDefault: true,
+      },
+    });
+    priorityId = priority.id;
 
     const publicBoard = await db.board.create({
       data: {
@@ -158,6 +168,7 @@ describe("Space/Board/Item tenant isolation", () => {
           boardId: publicBoardId,
           itemTypeId,
           statusId,
+          priorityId,
           authorId,
           title: "Add dark mode",
           slug: "add-dark-mode",
@@ -172,6 +183,7 @@ describe("Space/Board/Item tenant isolation", () => {
           boardId: publicBoardId,
           itemTypeId,
           statusId,
+          priorityId,
           authorId,
           title: "Archived idea",
           slug: "archived-idea",
@@ -187,6 +199,7 @@ describe("Space/Board/Item tenant isolation", () => {
           boardId: publicBoardId,
           itemTypeId,
           statusId,
+          priorityId,
           authorId,
           title: "Deleted idea",
           slug: "deleted-idea",
@@ -284,6 +297,7 @@ describe("Space/Board/Item tenant isolation", () => {
           boardId: publicBoardId,
           itemTypeId,
           statusId,
+          priorityId,
           authorId,
           title: "Low vote item",
           slug: "low-vote-item",
@@ -298,6 +312,7 @@ describe("Space/Board/Item tenant isolation", () => {
           boardId: publicBoardId,
           itemTypeId,
           statusId,
+          priorityId,
           authorId,
           title: "High vote item",
           slug: "high-vote-item",

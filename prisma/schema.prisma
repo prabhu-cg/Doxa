@@ -49,6 +49,42 @@
 // — no ranking/weighting logic lives in the schema. Vote counts are
 // computed on read (`_count` on the `votes` relation) rather than
 // denormalized onto Item, so they can never drift out of sync.
+//
+// Phase 4 adds Doxa's main differentiation: opinions are evidence, not
+// automatically decisions. Four additions:
+//
+// - `Priority` — organisation-controlled data, same "data, not code"
+//   rationale as ItemType/Status (see "Item Types" in
+//   docs/architecture.md), seeded with None/Low/Medium/High/Critical.
+//   `sortOrder` doubles as the severity rank used to sort Items by
+//   priority. `Item.priorityId` is required, exactly like
+//   itemTypeId/statusId, defaulting a new Item to the org's `isDefault`
+//   priority ("None") the same way getDefaultStatus already works.
+// - `ScoreCriterion` / `ItemScore` — a flexible, organisation-configured
+//   prioritisation model. Criteria (Customer impact, Business value,
+//   Effort, ...) are per-organisation rows an org opts into, never a
+//   fixed set; `ItemScore` is a sparse (itemId, criterionId) -> value
+//   table, so an Item is never forced to be scored on every dimension.
+//   `weight` feeds a weighted-average computed on read
+//   (features/scoring/queries.ts), never denormalized onto Item — same
+//   never-drifts rationale as vote counts.
+// - `Decision` — a first-class, append-only record of what was decided
+//   about an Item and why. Recording a new Decision never updates or
+//   deletes a previous row: an Item's decision HISTORY is every Decision
+//   row ordered by createdAt, and the CURRENT decision is simply the most
+//   recent one (features/decisions/queries.ts). This is what "opinions
+//   are evidence, not automatically decisions" resolves to structurally
+//   — votes/comments/scores never write here directly, only an explicit
+//   recordDecision call does, and nothing about this table is ever
+//   mutated or deleted by application code.
+// - `RoadmapStage` on Decision — where (if anywhere) an Item sits on the
+//   basic Now/Next/Later roadmap view, set explicitly per Decision rather
+//   than inferred from DecisionType, so "should this appear on the
+//   roadmap" stays a deliberate organisation call, not a side effect.
+//
+// ActivityType gains PRIORITY_CHANGED and DECISION_RECORDED, logged the
+// same way STATUS_CHANGED already is, so an Item's Activity tab stays the
+// single place to see everything that happened to it.
 
 generator client {
   provider = "prisma-client"
@@ -87,6 +123,7 @@ model Profile {
   activities          ItemActivity[]
   notifications       Notification[]   @relation("NotificationRecipient")
   notificationsCaused Notification[]   @relation("NotificationActor")
+  decisionsRecorded   Decision[]
 
   @@map("profiles")
 }
@@ -103,9 +140,12 @@ model Organization {
   boards        Board[]
   itemTypes     ItemType[]
   statuses      Status[]
+  priorities    Priority[]
   categories    Category[]
   tags          Tag[]
   items         Item[]
+  scoreCriteria ScoreCriterion[]
+  decisions     Decision[]
   notifications Notification[]
 
   @@map("organizations")
@@ -229,6 +269,31 @@ model Status {
   @@map("statuses")
 }
 
+/// A configurable priority level (None, Low, Medium, High, Critical by
+/// default) — same "data, not code" rationale as ItemType/Status, so an
+/// organisation can rename/reorder/archive its own levels rather than
+/// being locked into a hard-coded scale. `sortOrder` doubles as the
+/// severity rank (None < Low < ... < Critical) used to sort Items by
+/// priority in the admin prioritisation view.
+model Priority {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  color          String?
+  sortOrder      Int       @default(0)
+  isDefault      Boolean   @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        Item[]
+
+  @@unique([organizationId, slug])
+  @@map("priorities")
+}
+
 /// A single classification an Item can belong to. Unlike ItemType/Status,
 /// deleting one doesn't threaten historical data — Item.categoryId just
 /// goes null — so this is a plain hard-delete CRUD, no archive state.
@@ -274,6 +339,54 @@ model ItemTag {
   @@map("item_tags")
 }
 
+/// An organisation-configured prioritisation dimension (Customer impact,
+/// Business value, Strategic alignment, Effort, Urgency, Confidence, or
+/// anything else an org defines) an Item can optionally be scored
+/// against. Never a fixed set of dimensions — an organisation with none
+/// configured sees no scoring UI at all. `weight` feeds the
+/// weighted-average score computed on read
+/// (features/scoring/queries.ts#computeItemScore); like ItemType/Status,
+/// this is archived rather than deleted so historical ItemScores keep
+/// their meaning.
+model ScoreCriterion {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  weight         Float     @default(1)
+  sortOrder      Int       @default(0)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  scores       ItemScore[]
+
+  @@unique([organizationId, slug])
+  @@map("score_criteria")
+}
+
+/// One Item's score (1-5) against one ScoreCriterion. `@@unique` gives
+/// "at most one score per item per criterion" as a database guarantee,
+/// the same upsert-a-row shape as Vote. This is the BUSINESS SIGNAL half
+/// of an Item's evidence (see docs/architecture.md) — distinct from, and
+/// never implied by, community signal (votes/comments/followers).
+model ItemScore {
+  id          String   @id @default(cuid())
+  itemId      String
+  criterionId String
+  value       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  item      Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  criterion ScoreCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, criterionId])
+  @@map("item_scores")
+}
+
 /// The central object in Doxa — never hard-coded as "feature request"; its
 /// shape (type) and workflow (status) are both organisation-configured
 /// data. `archivedAt`/`deletedAt` are deliberately separate: archived
@@ -288,6 +401,7 @@ model Item {
   boardId        String
   itemTypeId     String
   statusId       String
+  priorityId     String
   categoryId     String?
   authorId       String    @db.Uuid
   title          String
@@ -303,6 +417,7 @@ model Item {
   board         Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
   itemType      ItemType       @relation(fields: [itemTypeId], references: [id])
   status        Status         @relation(fields: [statusId], references: [id])
+  priority      Priority       @relation(fields: [priorityId], references: [id])
   category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   author        Profile        @relation(fields: [authorId], references: [id])
   tags          ItemTag[]
@@ -310,6 +425,8 @@ model Item {
   comments      Comment[]
   followers     ItemFollower[]
   activities    ItemActivity[]
+  scores        ItemScore[]
+  decisions     Decision[]
   notifications Notification[]
 
   @@unique([boardId, slug])
@@ -405,11 +522,13 @@ enum ActivityType {
   ITEM_CREATED
   ITEM_EDITED
   STATUS_CHANGED
+  PRIORITY_CHANGED
   VOTE_ADDED
   VOTE_REMOVED
   COMMENT_ADDED
   ITEM_ARCHIVED
   ITEM_RESTORED
+  DECISION_RECORDED
 }
 
 /// An append-only history entry for one Item. Written alongside the
@@ -433,6 +552,59 @@ model ItemActivity {
 
   @@index([itemId])
   @@map("item_activities")
+}
+
+enum DecisionType {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  DEFERRED
+  DUPLICATE
+}
+
+/// Where (if anywhere) a Decision currently places its Item on the basic
+/// Now/Next/Later roadmap view — set explicitly per Decision rather than
+/// inferred from DecisionType, so "should this appear on the roadmap, and
+/// where" stays a deliberate organisation call, not a side effect of
+/// recording a decision.
+enum RoadmapStage {
+  NOW
+  NEXT
+  LATER
+}
+
+/// A first-class, immutable record of what was decided about an Item and
+/// why. Decisions are append-only: recording a new one never updates or
+/// deletes a previous row, so an Item's full decision HISTORY is every
+/// Decision row for it ordered by createdAt, and the CURRENT decision is
+/// simply the most recent one (see features/decisions/queries.ts — there
+/// is deliberately no update/delete Server Action for this model). This
+/// is what "opinions are evidence, not automatically decisions" resolves
+/// to structurally: votes, comments, and scores never write here
+/// directly, only an explicit recordDecision call does. `rationale` is
+/// required — a Decision without a stated reason defeats the point of
+/// this entity. `internalNotes` is never shown on the public Item page,
+/// unlike `type`/`rationale`/`targetDate`, which communicate the decision
+/// back to the community that raised it.
+model Decision {
+  id             String        @id @default(cuid())
+  organizationId String
+  itemId         String
+  type           DecisionType
+  rationale      String
+  targetDate     DateTime?
+  internalNotes  String?
+  roadmapStage   RoadmapStage?
+  createdById    String        @db.Uuid
+  createdAt      DateTime      @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  item         Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdBy    Profile      @relation(fields: [createdById], references: [id])
+
+  @@index([itemId, createdAt])
+  @@map("decisions")
 }
 
 enum NotificationType {

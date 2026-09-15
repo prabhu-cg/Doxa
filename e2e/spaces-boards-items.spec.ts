@@ -5,6 +5,7 @@ import {
   createTestItem,
   createTestItemType,
   createTestOrganizationForUser,
+  createTestPriority,
   createTestSpace,
   createTestStatus,
   deleteTestOrganization,
@@ -28,11 +29,13 @@ test.describe("admin: creating a space, board and item end to end", () => {
     user = await createConfirmedTestUser();
     org = await createTestOrganizationForUser(user.id, "Golden Path Org");
     // createTestOrganizationForUser bypasses the app (raw SQL), so it
-    // doesn't get the default item types/statuses that createOrganization
-    // seeds for real — add the one of each this test needs directly. The
-    // seeding behavior itself is covered separately, end-to-end, below.
+    // doesn't get the default item types/statuses/priorities that
+    // createOrganization seeds for real — add the one of each this test
+    // needs directly. The seeding behavior itself is covered separately,
+    // end-to-end, below.
     await createTestItemType(org.id, "Feature");
     await createTestStatus(org.id, "Open", true);
+    await createTestPriority(org.id, "None", true);
   });
 
   test.afterAll(async () => {
@@ -106,6 +109,7 @@ test.describe("public board and private board protection", () => {
   let space: Awaited<ReturnType<typeof createTestSpace>>;
   let itemType: Awaited<ReturnType<typeof createTestItemType>>;
   let status: Awaited<ReturnType<typeof createTestStatus>>;
+  let priority: Awaited<ReturnType<typeof createTestPriority>>;
   let publicBoard: Awaited<ReturnType<typeof createTestBoard>>;
   let privateBoard: Awaited<ReturnType<typeof createTestBoard>>;
   let archivedBoard: Awaited<ReturnType<typeof createTestBoard>>;
@@ -117,6 +121,7 @@ test.describe("public board and private board protection", () => {
     space = await createTestSpace(org.id, "Product");
     itemType = await createTestItemType(org.id, "Feature");
     status = await createTestStatus(org.id, "Open", true);
+    priority = await createTestPriority(org.id, "None", true);
     publicBoard = await createTestBoard(org.id, space.id, "Public Roadmap", {
       visibility: "PUBLIC",
     });
@@ -134,6 +139,7 @@ test.describe("public board and private board protection", () => {
       boardId: privateBoard.id,
       itemTypeId: itemType.id,
       statusId: status.id,
+      priorityId: priority.id,
       authorId: owner.id,
       title: "Secret roadmap item",
     });
@@ -247,6 +253,18 @@ test.describe("default item types and statuses are seeded on organisation creati
     await expect(
       page
         .getByText("Open", { exact: true })
+        .locator("..")
+        .getByText("Default"),
+    ).toBeVisible();
+
+    await page.goto(`/org/${orgSlug}/settings/priorities`);
+    for (const name of ["None", "Low", "Medium", "High", "Critical"]) {
+      await expect(page.getByText(name, { exact: true })).toBeVisible();
+    }
+    // "None" starts as the default priority a new Item is assigned.
+    await expect(
+      page
+        .getByText("None", { exact: true })
         .locator("..")
         .getByText("Default"),
     ).toBeVisible();

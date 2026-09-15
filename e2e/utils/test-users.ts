@@ -199,12 +199,30 @@ export async function createTestStatus(
   return { id, slug, name };
 }
 
+export async function createTestPriority(
+  organizationId: string,
+  name: string,
+  isDefault = false,
+) {
+  const id = randomUUID();
+  const slug = `${slugFrom(name)}-${randomUUID().slice(0, 6)}`;
+  await withClient((client) =>
+    client.query(
+      `INSERT INTO "priorities" ("id", "organizationId", "name", "slug", "isDefault", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, now())`,
+      [id, organizationId, name, slug, isDefault],
+    ),
+  );
+  return { id, slug, name };
+}
+
 export async function createTestItem(params: {
   organizationId: string;
   spaceId: string;
   boardId: string;
   itemTypeId: string;
   statusId: string;
+  priorityId: string;
   authorId: string;
   title: string;
   archivedAt?: Date;
@@ -214,8 +232,8 @@ export async function createTestItem(params: {
   await withClient((client) =>
     client.query(
       `INSERT INTO "items"
-        ("id", "organizationId", "spaceId", "boardId", "itemTypeId", "statusId", "authorId", "title", "slug", "archivedAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())`,
+        ("id", "organizationId", "spaceId", "boardId", "itemTypeId", "statusId", "priorityId", "authorId", "title", "slug", "archivedAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())`,
       [
         id,
         params.organizationId,
@@ -223,6 +241,7 @@ export async function createTestItem(params: {
         params.boardId,
         params.itemTypeId,
         params.statusId,
+        params.priorityId,
         params.authorId,
         params.title,
         slug,

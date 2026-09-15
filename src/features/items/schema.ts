@@ -45,6 +45,7 @@ export const updateItemSchema = z.object({
   description: itemDescriptionSchema,
   itemTypeId: z.string().min(1, "Choose an item type"),
   statusId: z.string().min(1, "Choose a status"),
+  priorityId: z.string().min(1, "Choose a priority"),
   categoryId: optionalId,
   tagNames: tagNamesSchema,
 });

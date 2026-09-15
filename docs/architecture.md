@@ -104,6 +104,19 @@ not `/`.
   page (`/org/[slug]/boards/[boardSlug]/items/[itemSlug]`), read-only
   counts on the public one. Basic moderation (delete a comment, remove a
   member) and board-level search/filter/sort round out the phase.
+- **Phase 4** — Doxa's main differentiation: opinions are evidence, not
+  automatically decisions. Priority (organisation-controlled data, same
+  pattern as Status/ItemType), a flexible ScoreCriterion/ItemScore
+  prioritisation model (optional, organisation-configured dimensions —
+  never a fixed set, never forced on every Item), and a first-class,
+  append-only Decision entity (decision type, rationale, target date,
+  internal notes, full history — see the Decision model's doc comment in
+  `prisma/schema.prisma`). The Item page now separates COMMUNITY SIGNAL
+  (votes/comments/followers) from BUSINESS SIGNAL (priority/score) so a
+  vote is never implied to be a priority. A basic Now/Next/Later roadmap
+  view and an internal, admin+-only prioritisation view (sortable/
+  filterable by votes, priority, status, type, category, score) round out
+  the phase.
 
-Priority, Attachments, and Decision are not yet implemented — see the
-root `README.md` for each phase's concrete "what was implemented" list.
+Attachments are not yet implemented — see the root `README.md` for each
+phase's concrete "what was implemented" list.

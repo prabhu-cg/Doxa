@@ -11,6 +11,7 @@ import type {
   ItemTag,
   ItemType,
   Organization,
+  Priority,
   Prisma,
   Profile,
   Status,
@@ -23,6 +24,7 @@ import type { BoardSort } from "./schema";
 export type ItemWithRelations = Item & {
   itemType: ItemType;
   status: Status;
+  priority: Priority;
   category: Category | null;
   author: Profile;
   tags: (ItemTag & { tag: Tag })[];
@@ -41,6 +43,7 @@ export type BoardFilters = {
 const itemRelationsInclude = {
   itemType: true,
   status: true,
+  priority: true,
   category: true,
   author: true,
   tags: { include: { tag: true } },

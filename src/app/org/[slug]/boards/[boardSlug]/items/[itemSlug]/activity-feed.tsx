@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { ActivityWithActor } from "@/features/activity/queries";
 import type { ActivityType } from "@/generated/prisma/client";
+import { DECISION_TYPE_LABELS } from "@/features/decisions/schema";
 
 const ACTIVITY_LABELS: Record<
   ActivityType,
@@ -10,11 +11,15 @@ const ACTIVITY_LABELS: Record<
   ITEM_EDITED: (_data, actor) => `${actor} edited this item`,
   STATUS_CHANGED: (data, actor) =>
     `${actor} changed status from ${data.fromStatus} to ${data.toStatus}`,
+  PRIORITY_CHANGED: (data, actor) =>
+    `${actor} changed priority from ${data.fromPriority} to ${data.toPriority}`,
   VOTE_ADDED: (_data, actor) => `${actor} voted`,
   VOTE_REMOVED: (_data, actor) => `${actor} removed their vote`,
   COMMENT_ADDED: (_data, actor) => `${actor} commented`,
   ITEM_ARCHIVED: (_data, actor) => `${actor} archived this item`,
   ITEM_RESTORED: (_data, actor) => `${actor} restored this item`,
+  DECISION_RECORDED: (data, actor) =>
+    `${actor} recorded a decision: ${DECISION_TYPE_LABELS[data.decisionType as keyof typeof DECISION_TYPE_LABELS] ?? data.decisionType}`,
 };
 
 export function ActivityFeed({

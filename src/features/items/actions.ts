@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { requireItemForOrgMember } from "./queries";
 import { getDefaultStatus } from "@/features/statuses/queries";
+import { getDefaultPriority } from "@/features/priorities/queries";
 import { resolveOrCreateTagIds } from "@/features/tags/resolve";
 import { createItemSchema, updateItemSchema } from "./schema";
 import { generateUniqueItemSlug } from "./slug";
@@ -71,6 +72,14 @@ export async function createItem(
     };
   }
 
+  const defaultPriority = await getDefaultPriority(organizationId);
+  if (!defaultPriority) {
+    return {
+      success: false,
+      error: "This organisation has no active priorities configured",
+    };
+  }
+
   const slug = await generateUniqueItemSlug(board.id, parsed.data.title);
   const tagIds = await resolveOrCreateTagIds(
     organizationId,
@@ -85,6 +94,7 @@ export async function createItem(
         boardId: board.id,
         itemTypeId: itemType.id,
         statusId: defaultStatus.id,
+        priorityId: defaultPriority.id,
         categoryId,
         authorId: profile.id,
         title: parsed.data.title,
@@ -116,6 +126,7 @@ export async function updateItem(
     description?: string;
     itemTypeId: string;
     statusId: string;
+    priorityId: string;
     categoryId?: string;
     tagNames?: string[];
   },
@@ -152,6 +163,11 @@ export async function updateItem(
   });
   if (!status) return { success: false, error: "Choose a valid status" };
 
+  const priority = await db.priority.findFirst({
+    where: { id: parsed.data.priorityId, organizationId, archivedAt: null },
+  });
+  if (!priority) return { success: false, error: "Choose a valid priority" };
+
   let categoryId: string | null = null;
   if (parsed.data.categoryId) {
     const category = await db.category.findFirst({
@@ -168,6 +184,42 @@ export async function updateItem(
 
   const statusChanged = status.id !== item.statusId;
   const previousStatus = item.status;
+  const priorityChanged = priority.id !== item.priorityId;
+  const previousPriority = item.priority;
+
+  const activityLogs = [];
+  if (statusChanged) {
+    activityLogs.push(
+      logActivity(db, {
+        itemId: item.id,
+        actorId: profile.id,
+        type: "STATUS_CHANGED",
+        data: { fromStatus: previousStatus.name, toStatus: status.name },
+      }),
+    );
+  }
+  if (priorityChanged) {
+    activityLogs.push(
+      logActivity(db, {
+        itemId: item.id,
+        actorId: profile.id,
+        type: "PRIORITY_CHANGED",
+        data: {
+          fromPriority: previousPriority.name,
+          toPriority: priority.name,
+        },
+      }),
+    );
+  }
+  if (!statusChanged && !priorityChanged) {
+    activityLogs.push(
+      logActivity(db, {
+        itemId: item.id,
+        actorId: profile.id,
+        type: "ITEM_EDITED",
+      }),
+    );
+  }
 
   await db.$transaction([
     db.item.update({
@@ -177,6 +229,7 @@ export async function updateItem(
         description: parsed.data.description,
         itemTypeId: itemType.id,
         statusId: status.id,
+        priorityId: priority.id,
         categoryId,
       },
     }),
@@ -184,14 +237,7 @@ export async function updateItem(
     db.itemTag.createMany({
       data: tagIds.map((tagId) => ({ itemId: item.id, tagId })),
     }),
-    logActivity(db, {
-      itemId: item.id,
-      actorId: profile.id,
-      type: statusChanged ? "STATUS_CHANGED" : "ITEM_EDITED",
-      data: statusChanged
-        ? { fromStatus: previousStatus.name, toStatus: status.name }
-        : {},
-    }),
+    ...activityLogs,
   ]);
 
   if (statusChanged) {

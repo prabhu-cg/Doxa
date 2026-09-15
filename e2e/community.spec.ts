@@ -5,6 +5,7 @@ import {
   createTestBoard,
   createTestItemType,
   createTestOrganizationForUser,
+  createTestPriority,
   createTestSpace,
   createTestStatus,
   deleteTestOrganizationById,
@@ -50,6 +51,7 @@ test.describe.serial("Phase 3: community interaction loop", () => {
     const space = await createTestSpace(org.id, "Product");
     await createTestItemType(org.id, "Feature");
     await createTestStatus(org.id, "Open", true);
+    await createTestPriority(org.id, "None", true);
     board = await createTestBoard(org.id, space.id, "Roadmap", {
       visibility: "PUBLIC",
     });

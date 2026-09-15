@@ -2,6 +2,7 @@ import { requireItemForOrgMember } from "@/features/items/queries";
 import { canArchiveItem, canEditItem } from "@/features/items/permissions";
 import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { listStatusesForOrganization } from "@/features/statuses/queries";
+import { listPrioritiesForOrganization } from "@/features/priorities/queries";
 import { listCategoriesForOrganization } from "@/features/categories/queries";
 import {
   getVoteCountForItem,
@@ -18,6 +19,14 @@ import {
 import { canCommentOnItem } from "@/features/comments/permissions";
 import { listActivityForItem } from "@/features/activity/queries";
 import { hasAtLeastRole } from "@/features/organizations/permissions";
+import {
+  computeItemScore,
+  getScoresForItem,
+  listScoreCriteriaForOrganization,
+} from "@/features/scoring/queries";
+import { canScoreItem } from "@/features/scoring/permissions";
+import { listDecisionsForItem } from "@/features/decisions/queries";
+import { canRecordDecision } from "@/features/decisions/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,6 +37,9 @@ import { FollowButton } from "./follow-button";
 import { CommentSection } from "./comment-section";
 import { toCommentData } from "@/features/comments/mapper";
 import { ActivityFeed } from "./activity-feed";
+import { ScorePanel } from "./score-panel";
+import { DecisionPanel } from "./decision-panel";
+import { DecisionBadge } from "@/components/decision-badge";
 
 export default async function ItemAdminPage({
   params,
@@ -46,10 +58,13 @@ export default async function ItemAdminPage({
   const canArchive = canArchiveItem(membership.role, isAuthor);
   const canComment = canCommentOnItem(membership.role);
   const canModerate = hasAtLeastRole(membership.role, "ADMIN");
+  const canScore = canScoreItem(membership.role);
+  const canRecord = canRecordDecision(membership.role);
 
   const [
     itemTypes,
     statuses,
+    priorities,
     categories,
     voteCount,
     hasVoted,
@@ -58,9 +73,13 @@ export default async function ItemAdminPage({
     comments,
     commentCount,
     activities,
+    scoreCriteria,
+    itemScores,
+    decisions,
   ] = await Promise.all([
     canEdit ? listItemTypesForOrganization(membership.organization.id) : [],
     canEdit ? listStatusesForOrganization(membership.organization.id) : [],
+    canEdit ? listPrioritiesForOrganization(membership.organization.id) : [],
     canEdit ? listCategoriesForOrganization(membership.organization.id) : [],
     getVoteCountForItem(item.id),
     hasUserVotedForItem(item.id, profile.id),
@@ -69,7 +88,13 @@ export default async function ItemAdminPage({
     listCommentsForItem(item.id),
     countCommentsForItem(item.id),
     listActivityForItem(item.id),
+    canScore
+      ? listScoreCriteriaForOrganization(membership.organization.id)
+      : [],
+    canScore ? getScoresForItem(item.id) : [],
+    listDecisionsForItem(item.id),
   ]);
+  const computedScore = computeItemScore(itemScores);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
@@ -93,6 +118,21 @@ export default async function ItemAdminPage({
           {item.category ? (
             <Badge variant="outline">{item.category.name}</Badge>
           ) : null}
+          {item.priority.slug !== "none" ? (
+            <Badge
+              variant="secondary"
+              style={
+                item.priority.color
+                  ? {
+                      backgroundColor: `${item.priority.color}22`,
+                      color: item.priority.color,
+                    }
+                  : undefined
+              }
+            >
+              {item.priority.name} priority
+            </Badge>
+          ) : null}
           {item.archivedAt ? <Badge variant="secondary">Archived</Badge> : null}
         </div>
         <p className="text-muted-foreground text-sm">
@@ -100,21 +140,39 @@ export default async function ItemAdminPage({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <VoteButton
-          orgSlug={slug}
-          boardSlug={boardSlug}
-          itemSlug={itemSlug}
-          initialVoted={hasVoted}
-          initialCount={voteCount}
-        />
-        <FollowButton
-          orgSlug={slug}
-          boardSlug={boardSlug}
-          itemSlug={itemSlug}
-          initialFollowing={following}
-          initialCount={followerCount}
-        />
+      {decisions[0] ? (
+        <div>
+          <DecisionBadge type={decisions[0].type} />
+        </div>
+      ) : null}
+
+      <div className="space-y-2">
+        <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          Community signal
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <VoteButton
+            orgSlug={slug}
+            boardSlug={boardSlug}
+            itemSlug={itemSlug}
+            initialVoted={hasVoted}
+            initialCount={voteCount}
+          />
+          <FollowButton
+            orgSlug={slug}
+            boardSlug={boardSlug}
+            itemSlug={itemSlug}
+            initialFollowing={following}
+            initialCount={followerCount}
+          />
+          <span className="text-muted-foreground text-xs">
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
+          </span>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          Votes, comments, and followers show interest, not priority — see
+          Business signal below for how this item is actually being evaluated.
+        </p>
       </div>
 
       {item.description ? (
@@ -129,6 +187,49 @@ export default async function ItemAdminPage({
             </Badge>
           ))}
         </div>
+      ) : null}
+
+      <Separator />
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold">Decision</h2>
+        <DecisionPanel
+          orgSlug={slug}
+          boardSlug={boardSlug}
+          itemSlug={itemSlug}
+          canRecord={canRecord}
+          history={decisions}
+        />
+      </section>
+
+      {canScore ? (
+        <>
+          <Separator />
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold">Business signal</h2>
+              <p className="text-muted-foreground text-xs">
+                Impact, value, effort, and strategic alignment — how this
+                organisation is actually evaluating the item.
+              </p>
+            </div>
+            <ScorePanel
+              orgSlug={slug}
+              boardSlug={boardSlug}
+              itemSlug={itemSlug}
+              criteria={scoreCriteria.map((c) => ({
+                id: c.id,
+                name: c.name,
+                description: c.description,
+              }))}
+              scores={itemScores.map((s) => ({
+                criterionId: s.criterionId,
+                value: s.value,
+              }))}
+              computed={computedScore}
+            />
+          </section>
+        </>
       ) : null}
 
       <Separator />
@@ -169,10 +270,12 @@ export default async function ItemAdminPage({
               initialDescription={item.description ?? ""}
               initialItemTypeId={item.itemTypeId}
               initialStatusId={item.statusId}
+              initialPriorityId={item.priorityId}
               initialCategoryId={item.categoryId ?? ""}
               initialTags={item.tags.map(({ tag }) => tag.name).join(", ")}
               itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
               statuses={statuses.map((s) => ({ id: s.id, name: s.name }))}
+              priorities={priorities.map((p) => ({ id: p.id, name: p.name }))}
               categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             />
           </section>

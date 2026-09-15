@@ -19,6 +19,7 @@ import {
 } from "./permissions";
 import { DEFAULT_ITEM_TYPES } from "@/features/item-types/defaults";
 import { DEFAULT_STATUSES } from "@/features/statuses/defaults";
+import { DEFAULT_PRIORITIES } from "@/features/priorities/defaults";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -46,6 +47,7 @@ export async function createOrganization(input: {
       },
       itemTypes: { create: DEFAULT_ITEM_TYPES },
       statuses: { create: DEFAULT_STATUSES },
+      priorities: { create: DEFAULT_PRIORITIES },
     },
   });
 
@@ -89,6 +91,7 @@ export async function completeOnboarding(input: {
         },
         itemTypes: { create: DEFAULT_ITEM_TYPES },
         statuses: { create: DEFAULT_STATUSES },
+        priorities: { create: DEFAULT_PRIORITIES },
       },
     }),
   ]);

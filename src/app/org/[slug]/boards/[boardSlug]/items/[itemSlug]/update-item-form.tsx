@@ -28,6 +28,7 @@ const formSchema = z.object({
   description: itemDescriptionFieldSchema,
   itemTypeId: z.string().min(1, "Choose an item type"),
   statusId: z.string().min(1, "Choose a status"),
+  priorityId: z.string().min(1, "Choose a priority"),
   categoryId: z.string(),
   tags: z.string(),
 });
@@ -43,10 +44,12 @@ export function UpdateItemForm({
   initialDescription,
   initialItemTypeId,
   initialStatusId,
+  initialPriorityId,
   initialCategoryId,
   initialTags,
   itemTypes,
   statuses,
+  priorities,
   categories,
 }: {
   orgSlug: string;
@@ -56,10 +59,12 @@ export function UpdateItemForm({
   initialDescription: string;
   initialItemTypeId: string;
   initialStatusId: string;
+  initialPriorityId: string;
   initialCategoryId: string;
   initialTags: string;
   itemTypes: Option[];
   statuses: Option[];
+  priorities: Option[];
   categories: Option[];
 }) {
   const [rootError, setRootError] = useState<string | null>(null);
@@ -76,6 +81,7 @@ export function UpdateItemForm({
       description: initialDescription,
       itemTypeId: initialItemTypeId,
       statusId: initialStatusId,
+      priorityId: initialPriorityId,
       categoryId: initialCategoryId || NO_CATEGORY,
       tags: initialTags,
     },
@@ -89,6 +95,7 @@ export function UpdateItemForm({
       description: values.description,
       itemTypeId: values.itemTypeId,
       statusId: values.statusId,
+      priorityId: values.priorityId,
       categoryId:
         values.categoryId === NO_CATEGORY ? undefined : values.categoryId,
       tagNames: values.tags
@@ -176,6 +183,35 @@ export function UpdateItemForm({
                 {statuses.map((status) => (
                   <SelectItem key={status.id} value={status.id}>
                     {status.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </FormField>
+
+      <FormField
+        label="Priority"
+        htmlFor="priorityId"
+        error={errors.priorityId?.message}
+      >
+        <Controller
+          control={control}
+          name="priorityId"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={Object.fromEntries(priorities.map((p) => [p.id, p.name]))}
+            >
+              <SelectTrigger id="priorityId" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {priorities.map((priority) => (
+                  <SelectItem key={priority.id} value={priority.id}>
+                    {priority.name}
                   </SelectItem>
                 ))}
               </SelectContent>

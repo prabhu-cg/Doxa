@@ -4,6 +4,7 @@ import {
   requireOrganizationMembership,
 } from "@/features/organizations/queries";
 import { listSpacesForOrganization } from "@/features/spaces/queries";
+import { canViewPrioritization } from "@/features/prioritization/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LinkButton } from "@/components/link-button";
@@ -32,10 +33,18 @@ export default async function OrganizationDashboardPage({
             role: <Badge variant="secondary">{membership.role}</Badge>
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           <LinkButton variant="outline" href={`/org/${slug}/boards`}>
             Boards
           </LinkButton>
+          <LinkButton variant="outline" href={`/org/${slug}/roadmap`}>
+            Roadmap
+          </LinkButton>
+          {canViewPrioritization(membership.role) ? (
+            <LinkButton variant="outline" href={`/org/${slug}/prioritization`}>
+              Prioritisation
+            </LinkButton>
+          ) : null}
           <LinkButton variant="outline" href={`/org/${slug}/settings`}>
             Settings
           </LinkButton>

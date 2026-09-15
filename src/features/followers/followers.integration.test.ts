@@ -46,6 +46,14 @@ describe("ItemFollower uniqueness", () => {
         isDefault: true,
       },
     });
+    const priority = await db.priority.create({
+      data: {
+        organizationId: orgId,
+        name: "None",
+        slug: "none",
+        isDefault: true,
+      },
+    });
     const item = await db.item.create({
       data: {
         organizationId: orgId,
@@ -53,6 +61,7 @@ describe("ItemFollower uniqueness", () => {
         boardId: board.id,
         itemTypeId: itemType.id,
         statusId: status.id,
+        priorityId: priority.id,
         authorId,
         title: "Dark mode",
         slug: "dark-mode",

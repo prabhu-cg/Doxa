@@ -118,6 +118,20 @@ export default async function OrganizationSettingsPage({
           <LinkButton
             variant="outline"
             size="sm"
+            href={`/org/${slug}/settings/priorities`}
+          >
+            Priorities
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/scoring`}
+          >
+            Scoring criteria
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
             href={`/org/${slug}/settings/categories`}
           >
             Categories

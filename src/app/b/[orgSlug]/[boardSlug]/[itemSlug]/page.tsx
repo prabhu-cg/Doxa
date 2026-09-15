@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVisibleItem } from "@/features/items/queries";
 import { getFollowerCountForItem } from "@/features/followers/queries";
+import { getCurrentDecisionForItem } from "@/features/decisions/queries";
 import { Badge } from "@/components/ui/badge";
+import { DecisionBadge } from "@/components/decision-badge";
 
 export async function generateMetadata({
   params,
@@ -28,7 +30,10 @@ export default async function PublicItemPage({
   const visible = await getVisibleItem(orgSlug, boardSlug, itemSlug);
   if (!visible) notFound();
   const { organization, board, item } = visible;
-  const followerCount = await getFollowerCountForItem(item.id);
+  const [followerCount, currentDecision] = await Promise.all([
+    getFollowerCountForItem(item.id),
+    getCurrentDecisionForItem(item.id),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
@@ -62,6 +67,21 @@ export default async function PublicItemPage({
           {item.category ? (
             <Badge variant="outline">{item.category.name}</Badge>
           ) : null}
+          {item.priority.slug !== "none" ? (
+            <Badge
+              variant="secondary"
+              style={
+                item.priority.color
+                  ? {
+                      backgroundColor: `${item.priority.color}22`,
+                      color: item.priority.color,
+                    }
+                  : undefined
+              }
+            >
+              {item.priority.name} priority
+            </Badge>
+          ) : null}
         </div>
         <p className="text-muted-foreground text-sm">
           Submitted by {item.author.displayName}
@@ -74,6 +94,20 @@ export default async function PublicItemPage({
           sign in as an organisation member to vote, comment, and follow.
         </p>
       </div>
+
+      {currentDecision ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <DecisionBadge type={currentDecision.type} />
+            <span className="text-muted-foreground text-xs">
+              {currentDecision.createdAt.toLocaleDateString()}
+            </span>
+          </div>
+          <p className="text-sm whitespace-pre-wrap">
+            {currentDecision.rationale}
+          </p>
+        </div>
+      ) : null}
 
       {item.description ? (
         <p className="text-sm whitespace-pre-wrap">{item.description}</p>
