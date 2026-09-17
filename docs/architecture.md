@@ -118,5 +118,16 @@ not `/`.
   filterable by votes, priority, status, type, category, score) round out
   the phase.
 
+- **Phase 5** — commercial SaaS readiness while keeping a useful free
+  tier. A central entitlement/feature system
+  (`features/entitlements/queries.ts`) resolved from a global `Plan`
+  table (FREE/PRO/BUSINESS — never a hard-coded limit in application
+  code); Stripe-shaped billing architecture (`Customer`/`Subscription`,
+  never required for local development —
+  `features/billing/stripe.ts`); organisation branding (logo, accent
+  colour, configurable Item terminology); and an organisation-scoped,
+  append-only audit log (`AuditLog`) for administrative/security events.
+  See the root `README.md`'s Phase 5 section for the full list.
+
 Attachments are not yet implemented — see the root `README.md` for each
 phase's concrete "what was implemented" list.

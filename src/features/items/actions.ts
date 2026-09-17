@@ -6,6 +6,7 @@ import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { requireItemForOrgMember } from "./queries";
 import { getDefaultStatus } from "@/features/statuses/queries";
 import { getDefaultPriority } from "@/features/priorities/queries";
+import { canCreateItem as checkItemLimit } from "@/features/entitlements/queries";
 import { resolveOrCreateTagIds } from "@/features/tags/resolve";
 import { createItemSchema, updateItemSchema } from "./schema";
 import { generateUniqueItemSlug } from "./slug";
@@ -38,6 +39,15 @@ export async function createItem(
     };
   }
 
+  const organizationId = membership.organization.id;
+  const limitCheck = await checkItemLimit(organizationId);
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      error: `This organisation's plan allows up to ${limitCheck.limit} items. Upgrade to submit more.`,
+    };
+  }
+
   const parsed = createItemSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -45,8 +55,6 @@ export async function createItem(
       error: parsed.error.issues[0]?.message ?? "Invalid input",
     };
   }
-
-  const organizationId = membership.organization.id;
 
   // itemTypeId/categoryId are client-supplied <select> values — re-verify
   // they belong to this organisation before trusting them.

@@ -7,16 +7,18 @@ This repository is being built in sequential, phase-gated prompts.
 **Phase 0 (foundation), Phase 1 (auth & tenancy), Phase 0.5 (marketing
 site), Phase 2 (Spaces/Boards/Items), Phase 3 (community interaction:
 voting, comments, followers, mentions, activity, notifications, search,
-moderation), and Phase 4 (priority, scoring, decisions, decision history,
-roadmap, admin prioritisation) are complete.** AI, billing, and
-integrations are not yet built.
+moderation), Phase 4 (priority, scoring, decisions, decision history,
+roadmap, admin prioritisation), and Phase 5 (plans, entitlements, billing
+architecture, organisation admin, audit log, usage enforcement, basic
+branding) are complete.** AI and third-party integrations are not yet
+built.
 
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · shadcn/ui ·
 Supabase (Postgres, Auth, Storage) · Prisma 7 · Zod · React Hook Form ·
-Tiptap · Resend · Vitest · Playwright · pnpm. See `docs/tech-stack.md` for
-exact pins and why.
+Tiptap · Resend · Stripe · Vitest · Playwright · pnpm. See
+`docs/tech-stack.md` for exact pins and why.
 
 ## Docs
 
@@ -56,6 +58,112 @@ pnpm dev
 | `pnpm db:generate`             | Regenerate Prisma client       |
 | `pnpm db:migrate`              | Create/apply a migration (dev) |
 | `pnpm db:studio`               | Prisma Studio                  |
+
+## What was implemented (Phase 5 — SaaS plans, entitlements, billing, admin, audit log)
+
+This phase's objective: prepare Doxa to operate as a commercial
+multi-tenant SaaS while retaining a useful free tier.
+
+- **Plans**: a global `Plan` table (`prisma/schema.prisma`) — exactly
+  three rows, one per `PlanKey` (FREE/PRO/BUSINESS), seeded by the Phase
+  5 migration's backfill and re-appliable via `pnpm db:seed-plans`
+  (`prisma/seed-plans.ts`, upserts from `features/billing/defaults.ts`).
+  Every numeric limit and boolean feature flag lives on this row —
+  `null` means unlimited. **No billing logic is hard-coded anywhere in
+  application code**; every check goes through
+  `features/entitlements/queries.ts`.
+- **Entitlements**: `features/entitlements/queries.ts` is the single
+  central system controlling max organisations (per owning user, capped
+  by FREE's limit — see "Assumptions made" below), max members, max
+  boards, max Items, storage (modeled, not yet enforced — no file
+  storage feature exists), advanced prioritisation, analytics (modeled,
+  not yet enforced), branding, API access (modeled, not yet enforced),
+  and integrations (modeled, not yet enforced). Usage is always computed
+  live (`getUsageForOrganization`) — never denormalized, so it can never
+  drift, and archived (not just active) Boards/Items still count against
+  a limit, since archiving is a visibility change, not deletion, and
+  must never be a loophole for unlimited resource cycling.
+  `createOrganization`/`completeOnboarding`, `createBoard`, and
+  `createItem` all enforce their respective limit **server-side** before
+  writing — never a client-side check.
+- **Billing architecture**: `features/billing/` implements the
+  Customer/Subscription/Plan/SubscriptionStatus/BillingPeriod/
+  cancellation architecture the brief asked for, modeled directly on
+  Stripe's own objects so a webhook has a natural, already-correct shape
+  to write into. Every organisation gets a `Customer` + `Subscription`
+  (on FREE) the moment it's created — billing being unconfigured must
+  never mean an organisation lacks a plan. `features/billing/stripe.ts`
+  returns `null` when `STRIPE_SECRET_KEY` is unset (every local dev
+  environment, per `docs/environment.md`); `changePlan` and
+  `cancelSubscription` (`features/billing/actions.ts`) both work
+  correctly either way — with Stripe configured, upgrading a paid plan
+  redirects to a real Stripe Checkout Session and the actual plan change
+  applies from the webhook
+  (`src/app/api/webhooks/stripe/route.ts`, verifies the signature,
+  501s if billing isn't configured, handles
+  `checkout.session.completed`/`customer.subscription.updated`/
+  `customer.subscription.deleted`); without Stripe, a plan change (or a
+  FREE downgrade, always) writes directly to the local `Subscription`
+  row, so every plan transition is testable without a Stripe account.
+  Stripe secret keys never leave `src/server`/`server-only`-guarded code
+  (`src/lib/env/server.ts`).
+- **Organisation admin**: `/org/[slug]/settings/{billing,branding,
+audit-log}` are new; item type/status/category/tag/priority/scoring
+  management (Phases 2 and 4) and member management (Phase 1/3) were
+  already in place and are unchanged. **Roles** gained a real
+  promote/demote flow — `changeMemberRole`
+  (`features/organizations/actions.ts`, `canChangeMemberRole`
+  permission) lets an admin move a member between MEMBER/ADMIN and an
+  owner additionally promote to/demote from OWNER (never the last one),
+  surfaced as a role `<Select>` next to each member on the settings
+  page.
+- **Branding**: `Organization.logoUrl`/`accentColor` (gated behind the
+  `branding` entitlement when actually setting a non-default value —
+  clearing is always allowed, so a downgraded organisation never loses
+  what it already had) plus organisation-configurable Item terminology
+  (`itemTerminologySingular`/`Plural`, ungated — it's organisational
+  configuration, not visual branding) at
+  `/org/[slug]/settings/branding`. Terminology is applied in the
+  highest-traffic item-related copy (the "New Item" button and page,
+  `features/organizations/terminology.ts`), not swept across every
+  string. The public board page shows the organisation's logo (if set)
+  and applies its accent colour to the board title — "public board
+  identity" without a website builder.
+- **Audit log**: `AuditLog` (`prisma/schema.prisma`) — organisation-
+  scoped, append-only, written via `features/audit-log/log.ts#
+logAuditEvent` inside the same transaction as the mutation it records
+  (same pattern as `ItemActivity`/`Decision`). Logged: member removed,
+  role changed, organisation/branding updated, board created/archived/
+  restored, decision recorded, and plan changed (including a
+  Stripe-webhook-originated change, with a null actor). `data` never
+  carries a secret or token — see `docs/security-principles.md`'s
+  "Auditability" section, which named this phase explicitly. Visible at
+  `/org/[slug]/settings/audit-log`, admin+-only.
+- **UX**: the cross-board admin prioritisation view (Phase 4) is now
+  gated behind the `advancedPrioritisation` entitlement — an
+  unentitled organisation sees a plain upgrade message instead of the
+  feature, never a 404 (this is an entitlement gap, not an authorization
+  failure). No scoring/branding/billing UI looks like "enterprise
+  software" by default: a Free-tier organisation using only Status and
+  votes never sees a paywall unless it actually tries a gated action.
+- **Testing**: `features/{entitlements,billing,audit-log}/
+*.integration.test.ts` cover limit enforcement (including the
+  archived-doesn't-free-quota guarantee), null-limit (unlimited) plans,
+  plan-seeding correctness against `DEFAULT_PLANS`, audit log tenant
+  isolation and append-only ordering, and the new
+  `canChangeMemberRole` permission matrix (added to
+  `organizations.integration.test.ts`) — real Prisma queries against the
+  real Supabase instance, same pattern as every prior phase.
+  `e2e/billing.spec.ts` exercises the actual Server Action + UI paths
+  end to end: a new org starts on Free with Free's limits shown, an
+  admin (not the owner) can't touch billing, branding/advanced
+  prioritisation are paywalled on Free and unlocked immediately after an
+  owner switches to Pro (with no Stripe configured), both changes land
+  in the audit log, and cancelling flips the plan back to Free.
+  `e2e/utils/test-users.ts#createTestOrganizationForUser` was updated to
+  create a Customer+Subscription(FREE) row exactly like the real
+  `createOrganization` Server Action does, since every action that
+  resolves an organisation's plan now requires one.
 
 ## What was implemented (Phase 4 — priority, scoring, decisions, roadmap)
 
@@ -491,6 +599,55 @@ projects` team) for future env var management and deployment.
 
 ## Assumptions made (flag if any are wrong)
 
+- **"Maximum organisations" is checked per owning user against FREE's
+  limit, at the moment they try to create a new one, regardless of what
+  plan their existing organisations are on** — the brief lists "maximum
+  organisations" as an entitlement without saying which plan's limit
+  governs creating an ADDITIONAL one; since a brand-new organisation
+  always starts on FREE (there's no flow to pre-select a paid plan
+  before creation — Stripe checkout only exists for an org that already
+  exists), the only coherent cap to check at creation time is FREE's.
+  This is a real limitation: a Business-plan owner who wants a sixth
+  organisation must create it, then immediately upgrade it, rather than
+  it being pre-approved by their existing plan.
+- **Only the organisation OWNER can manage billing** (`canManageBilling`,
+  `features/billing/permissions.ts`), not admins — the brief doesn't
+  specify who controls money; treating it as an owner-only action, one
+  tier stricter than the existing admin+ tier used for statuses/
+  priorities/scoring/branding, matches how real billing systems gate
+  payment changes and avoids an admin (who can't remove an owner or see
+  the audit log's full picture) being able to downgrade or cancel a
+  plan.
+- **Archived Boards/Items still count against their plan's limit** —
+  the brief doesn't say whether archiving frees up quota; since
+  archiving is explicitly a visibility change, not a deletion
+  (`Board.status`/`Item.archivedAt` are both fully restorable), letting
+  it free up quota would make limits meaningless (archive-and-recreate
+  in a loop). `maxOrganizations`/`maxMembers` have no equivalent
+  "archive" state to worry about.
+- **Without Stripe configured, a plan change writes directly to the
+  local `Subscription` row** (`features/billing/actions.ts#changePlan`)
+  — the brief says Stripe must never be required for local development
+  but also asks for real Customer/Subscription/cancellation architecture;
+  reconciling those means the direct-write path exists for every
+  environment without `STRIPE_SECRET_KEY` set, which in practice is only
+  ever local dev/test, since a real production deployment configures it.
+  This is documented, not hidden — see `features/billing/actions.ts`'s
+  doc comment.
+- **Logo/accent colour are gated behind the `branding` entitlement only
+  when being SET to a non-default value; clearing them back to nothing
+  is always allowed** — this asymmetry is deliberate: a downgraded
+  organisation keeps seeing its existing branding (the schema comment in
+  `prisma/schema.prisma` says the column always accepts a value so
+  downgrading doesn't lose data) but can still remove it if it wants to,
+  since removal never needs the entitlement it no longer has.
+- **Item terminology (`itemTerminologySingular`/`Plural`) is NOT gated
+  behind the `branding` entitlement, unlike logo/accent colour** — the
+  brief's ENTITLEMENTS list has a `branding` bullet, but its
+  ORGANISATION ADMIN list separately names "default terminology" as its
+  own bullet; read as two different capabilities, terminology is
+  organisational configuration (like renaming a Status), not visual
+  branding, so it's free on every plan.
 - **Scoring an Item (the business signal itself) is admin+-only, not
   open to any member** — the brief distinguishes COMMUNITY SIGNAL from
   BUSINESS SIGNAL but doesn't say who may set the latter; since scoring
@@ -651,11 +808,27 @@ add supabase` remains available later if that's preferred.
 
 ## Not implemented (by design)
 
-AI, billing, integrations, and file attachments — see the phased build
-plan for what's next. Also out of scope: social login (only
-email/password), member invitations (the only way into an org right now
-is creating it — Phase 3 adds removing a member, not inviting one), and
-organisation branding/settings beyond the name (Phase 5).
+AI, third-party integrations, and file attachments — see the phased
+build plan for what's next. Also out of scope: social login (only
+email/password), and member invitations (the only way into an org right
+now is creating it — Phase 3 added removing a member, Phase 5 added
+changing a member's role, neither added inviting one by email).
+
+**Phase 5 specifically did not implement** (explicitly out of scope per
+its own brief): advanced AI. Also not built: enforcement of the
+`analytics`/`apiAccess`/`integrations`/`maxStorageMb` entitlements — all
+four are modeled on `Plan` (so the system is "capable of controlling"
+them, per the brief) but nothing enforces them yet, because the
+underlying features (an analytics dashboard, a public API, third-party
+integrations, file storage/Attachments) don't exist yet; a member
+invitation flow (see "Not implemented" above — `maxMembers` therefore
+has no live code path that can actually be blocked by it yet, beyond the
+moment of organisation creation, which always starts at one member); a
+UI for editing `Plan` rows (`pnpm db:seed-plans` from
+`features/billing/defaults.ts` is the configuration mechanism); Stripe
+customer-portal / invoice history UI; and proration on a plan change
+(the direct-DB-write path applies immediately, and the Checkout path
+defers entirely to Stripe's own proration behaviour).
 
 **Phase 4 specifically did not implement** (explicitly out of scope per
 its own brief): AI or billing. Also not built: email/notification

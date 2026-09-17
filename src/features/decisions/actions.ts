@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
 import { requireItemForOrgMember } from "@/features/items/queries";
 import { logActivity } from "@/features/activity/log";
+import { logAuditEvent } from "@/features/audit-log/log";
 import { recordDecisionSchema } from "./schema";
 import { canRecordDecision } from "./permissions";
 
@@ -66,6 +67,14 @@ export async function recordDecision(
       actorId: profile.id,
       type: "DECISION_RECORDED",
       data: { decisionType: parsed.data.type },
+    }),
+    logAuditEvent(db, {
+      organizationId: membership.organization.id,
+      actorId: profile.id,
+      action: "DECISION_RECORDED",
+      targetType: "Item",
+      targetId: item.id,
+      data: { decisionType: parsed.data.type, itemTitle: item.title },
     }),
   ]);
 

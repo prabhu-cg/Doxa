@@ -15,6 +15,12 @@ const serverEnvSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.email().optional(),
   CONTACT_NOTIFICATION_EMAIL: z.email().optional(),
+  // Billing (Phase 5) — optional. Without them, features/billing/stripe.ts's
+  // getStripeClient() returns null and plan changes fall back to a direct
+  // local update instead of a real Stripe checkout — see that file and
+  // docs/environment.md. Never required for local development.
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 function loadServerEnv() {
@@ -25,6 +31,8 @@ function loadServerEnv() {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     CONTACT_NOTIFICATION_EMAIL: process.env.CONTACT_NOTIFICATION_EMAIL,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   });
 
   if (!parsed.success) {

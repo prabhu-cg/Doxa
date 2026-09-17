@@ -5,10 +5,12 @@ import {
   requireOrganizationMembership,
 } from "@/features/organizations/queries";
 import {
+  canChangeMemberRole,
   canUpdateOrganization,
   canLeaveOrganization,
   canManageMembers,
   canRemoveMember,
+  hasAtLeastRole,
 } from "@/features/organizations/permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +19,8 @@ import { LinkButton } from "@/components/link-button";
 import { UpdateOrganizationForm } from "./update-organization-form";
 import { LeaveOrganizationDialog } from "./leave-organization-dialog";
 import { RemoveMemberControl } from "./remove-member-control";
+import { MemberRoleControl } from "./member-role-control";
+import type { MembershipRole } from "@/generated/prisma/client";
 
 export const metadata: Metadata = { title: "Organisation settings" };
 
@@ -77,7 +81,27 @@ export default async function OrganizationSettingsPage({
               <span className="flex-1 truncate text-sm">
                 {m.user.displayName}
               </span>
-              <Badge variant="secondary">{m.role}</Badge>
+              {canManage &&
+              m.userId !== membership.userId &&
+              canChangeMemberRole(
+                membership.role,
+                m.role,
+                m.role,
+                ownerCount,
+              ) ? (
+                <MemberRoleControl
+                  slug={slug}
+                  membershipId={m.id}
+                  currentRole={m.role}
+                  assignableRoles={
+                    hasAtLeastRole(membership.role, "OWNER")
+                      ? (["MEMBER", "ADMIN", "OWNER"] as MembershipRole[])
+                      : (["MEMBER", "ADMIN"] as MembershipRole[])
+                  }
+                />
+              ) : (
+                <Badge variant="secondary">{m.role}</Badge>
+              )}
               {canManage &&
               m.userId !== membership.userId &&
               canRemoveMember(membership.role, m.role, ownerCount) ? (
@@ -143,6 +167,37 @@ export default async function OrganizationSettingsPage({
           >
             Tags
           </LinkButton>
+        </div>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Plan, branding &amp; audit</h2>
+        <div className="flex flex-wrap gap-2">
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/billing`}
+          >
+            Billing
+          </LinkButton>
+          <LinkButton
+            variant="outline"
+            size="sm"
+            href={`/org/${slug}/settings/branding`}
+          >
+            Branding
+          </LinkButton>
+          {canManage ? (
+            <LinkButton
+              variant="outline"
+              size="sm"
+              href={`/org/${slug}/settings/audit-log`}
+            >
+              Audit log
+            </LinkButton>
+          ) : null}
         </div>
       </section>
 

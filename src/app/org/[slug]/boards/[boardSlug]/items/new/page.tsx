@@ -5,6 +5,7 @@ import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { canCreateItem } from "@/features/items/permissions";
 import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { listCategoriesForOrganization } from "@/features/categories/queries";
+import { getItemTerminology } from "@/features/organizations/terminology";
 import { CreateItemForm } from "./create-item-form";
 
 export const metadata: Metadata = { title: "New item" };
@@ -20,6 +21,8 @@ export default async function NewItemPage({
     notFound();
   }
 
+  const terminology = getItemTerminology(membership.organization);
+
   const [itemTypes, categories] = await Promise.all([
     listItemTypesForOrganization(membership.organization.id),
     listCategoriesForOrganization(membership.organization.id),
@@ -28,7 +31,9 @@ export default async function NewItemPage({
   if (itemTypes.length === 0) {
     return (
       <div className="mx-auto w-full max-w-md space-y-4 px-4 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">New item</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          New {terminology.singular}
+        </h1>
         <p className="text-muted-foreground text-sm">
           This organisation has no active item types configured yet. Add one in{" "}
           <Link className="underline" href={`/org/${slug}/settings/item-types`}>
@@ -43,7 +48,9 @@ export default async function NewItemPage({
   return (
     <div className="mx-auto w-full max-w-md space-y-6 px-4 py-10">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">New item</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          New {terminology.singular}
+        </h1>
         <p className="text-muted-foreground text-sm">on {board.name}</p>
       </div>
       <CreateItemForm

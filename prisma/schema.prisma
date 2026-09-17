@@ -85,6 +85,60 @@
 // ActivityType gains PRIORITY_CHANGED and DECISION_RECORDED, logged the
 // same way STATUS_CHANGED already is, so an Item's Activity tab stays the
 // single place to see everything that happened to it.
+//
+// Phase 5 prepares Doxa to operate as a commercial multi-tenant SaaS
+// while keeping a useful free tier. Five additions:
+//
+// - `Plan` — a GLOBAL (not per-organisation) row per commercial tier
+//   (FREE/PRO/BUSINESS): numeric limits (null = unlimited) and boolean
+//   feature flags. This is the "central entitlement/feature system" the
+//   brief asks for — application code never hard-codes a limit or a
+//   `role === X` style plan check; it calls
+//   features/entitlements/queries.ts, which reads these rows. Exact
+//   commercial limits are configurable here, seeded by
+//   features/billing/defaults.ts, without an application code change.
+// - `Customer` / `Subscription` — one of each per Organisation (the
+//   billing entity is the Organisation, matching how membership/roles
+//   already work — a team/workspace billing model, not per-user).
+//   `Customer.stripeCustomerId` / `Subscription.stripeSubscriptionId`
+//   are nullable: every organisation gets a Customer+Subscription row on
+//   FREE the moment it's created (see organizations/actions.ts), whether
+//   or not Stripe is ever configured for this environment — "retaining a
+//   useful free tier" means billing being unconfigured must never be a
+//   reason an organisation lacks a plan. `SubscriptionStatus`,
+//   `BillingPeriod`, `cancelAtPeriodEnd`/`canceledAt` model exactly the
+//   Stripe subscription lifecycle so a future webhook handler
+//   (features/billing/webhook.ts) has a natural, already-correct shape
+//   to write into — see docs/environment.md for how STRIPE_* env vars
+//   stay optional in local dev.
+// - `Organization` gains branding fields (`logoUrl`, `accentColor`) and
+//   configurable per-organisation Item terminology
+//   (`itemTerminologySingular`/`Plural`) — the "Terminology ... per
+//   organisation is a later-phase concern" the Phase 0 comment promised.
+//   Setting non-default branding is gated behind the `branding`
+//   entitlement (features/organizations/actions.ts), not a DB
+//   constraint — the column always accepts a value so an org that later
+//   downgrades doesn't lose its existing branding data.
+// - `AuditLog` — organisation-level, append-only, for significant
+//   admin/security events (member removed, role changed, org/branding
+//   updated, board created, plan changed, decision recorded, ...). Same
+//   shape as `ItemActivity` (nullable `actorId`, `data` JSON payload)
+//   but organisation-scoped rather than item-scoped, and deliberately
+//   never carries secrets/tokens in `data` — see
+//   docs/security-principles.md's "Auditability" section, which named
+//   this phase explicitly.
+//
+// Usage enforcement (max members/boards/items) is done with live COUNT
+// queries against the existing Membership/Board/Item tables, not a
+// separate usage-ledger table — same "compute on read, never
+// denormalize, can't drift" rationale as vote counts (see the Phase 3
+// note above). Storage/API-access/integrations/analytics entitlements
+// are modeled as Plan flags now so the system can control them, but
+// nothing enforces them yet because the underlying features (file
+// storage, a public API, third-party integrations, an analytics
+// dashboard) don't exist yet — same "prepare the architecture, don't
+// build the feature" pattern as Phase 3's Notification model before
+// email delivery existed.
 
 generator client {
   provider = "prisma-client"
@@ -124,16 +178,30 @@ model Profile {
   notifications       Notification[]   @relation("NotificationRecipient")
   notificationsCaused Notification[]   @relation("NotificationActor")
   decisionsRecorded   Decision[]
+  auditLogEntries     AuditLog[]
 
   @@map("profiles")
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  /// Branding — gated behind the `branding` Plan entitlement when set to
+  /// anything non-default (features/organizations/actions.ts); the
+  /// column itself has no such constraint, so a downgraded org keeps its
+  /// existing data even though it can no longer change it.
+  logoUrl                 String?
+  accentColor             String?
+  /// What this organisation calls an Item in its own UI (e.g. "Ticket" /
+  /// "Tickets" instead of "Item" / "Items") — see the Phase 0 promise in
+  /// this file's top-of-file comment. Applied in the highest-traffic
+  /// item-related copy only (features/organizations/terminology.ts); not
+  /// swept across every string in the app.
+  itemTerminologySingular String   @default("Item")
+  itemTerminologyPlural   String   @default("Items")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   memberships   Membership[]
   spaces        Space[]
@@ -147,6 +215,9 @@ model Organization {
   scoreCriteria ScoreCriterion[]
   decisions     Decision[]
   notifications Notification[]
+  customer      Customer?
+  subscription  Subscription?
+  auditLogs     AuditLog[]
 
   @@map("organizations")
 }
@@ -643,4 +714,162 @@ model Notification {
 
   @@index([userId, readAt])
   @@map("notifications")
+}
+
+enum PlanKey {
+  FREE
+  PRO
+  BUSINESS
+}
+
+/// A commercial plan tier — GLOBAL data (three rows total, one per
+/// `PlanKey`), not per-organisation, unlike Status/Priority/ItemType.
+/// Every FREE-tier organisation shares this one row and its limits.
+/// `null` on any `max*` column means unlimited. This is the single
+/// source of truth entitlements are resolved from
+/// (features/entitlements/queries.ts) — never a hard-coded number or a
+/// `plan === "PRO"` check scattered through feature code.
+model Plan {
+  id          String  @id @default(cuid())
+  key         PlanKey @unique
+  name        String
+  description String?
+
+  /// Evaluated per owning user across every organisation they own, not
+  /// per-organisation — see features/entitlements/queries.ts.
+  maxOrganizations Int?
+  maxMembers       Int?
+  maxBoards        Int?
+  maxItems         Int?
+  /// Not yet enforced anywhere — there is no file-storage feature yet
+  /// (Attachments, per docs/architecture.md, is still unbuilt).
+  maxStorageMb     Int?
+
+  /// Gates /org/[slug]/prioritization (features/prioritization) — basic
+  /// per-item priority/scoring/decisions stay free on every plan; this
+  /// is specifically the cross-board admin rollup view.
+  advancedPrioritisation Boolean @default(false)
+  /// Not yet enforced — no analytics dashboard feature exists yet.
+  analytics              Boolean @default(false)
+  /// Gates setting a non-default logoUrl/accentColor
+  /// (features/organizations/actions.ts#updateOrganizationBranding).
+  branding               Boolean @default(false)
+  /// Not yet enforced — no public API exists yet.
+  apiAccess              Boolean @default(false)
+  /// Not yet enforced — no third-party integrations exist yet.
+  integrations           Boolean @default(false)
+
+  priceMonthlyCents    Int?
+  priceYearlyCents     Int?
+  stripePriceIdMonthly String?
+  stripePriceIdYearly  String?
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+/// The billing identity for one Organisation — one-to-one, created
+/// alongside every Organisation (whether or not Stripe is configured for
+/// this environment) so "does this org have a Customer record" is never
+/// a question application code has to handle as a special case.
+/// `stripeCustomerId` stays null until a real Stripe Customer is created
+/// for it (features/billing/actions.ts), which only happens once Stripe
+/// env vars are present.
+model Customer {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  stripeCustomerId String?  @unique
+  billingEmail     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription Subscription?
+
+  @@map("customers")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+/// One Organisation's current plan. Modeled after Stripe's own
+/// Subscription object on purpose (status/billingPeriod/period bounds/
+/// cancelAtPeriodEnd/canceledAt) so a future webhook handler has a
+/// natural, already-correct shape to write into — see the top-of-file
+/// Phase 5 note. Every Organisation has exactly one Subscription row,
+/// starting on FREE at creation; a "cancellation" is a status/flag
+/// transition on this same row, never a delete — matching how Stripe
+/// itself represents cancellation (the subscription object persists
+/// through `canceled`).
+model Subscription {
+  id                   String             @id @default(cuid())
+  organizationId       String             @unique
+  customerId           String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  billingPeriod        BillingPeriod      @default(MONTHLY)
+  stripeSubscriptionId String?            @unique
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plan         Plan         @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+enum AuditLogAction {
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  MEMBER_ROLE_CHANGED
+  ORGANIZATION_UPDATED
+  BRANDING_UPDATED
+  BOARD_CREATED
+  BOARD_ARCHIVED
+  BOARD_RESTORED
+  DECISION_RECORDED
+  PLAN_CHANGED
+}
+
+/// An append-only, organisation-scoped record of significant
+/// administrative/security events — never mutated or deleted by
+/// application code, same append-only shape as ItemActivity/Decision.
+/// `data` carries only non-secret, descriptive context (e.g.
+/// `{ fromRole, toRole }`) — never a token, key, or other credential;
+/// see docs/security-principles.md's "Auditability" section.
+model AuditLog {
+  id             String         @id @default(cuid())
+  organizationId String
+  actorId        String?        @db.Uuid
+  action         AuditLogAction
+  targetType     String?
+  targetId       String?
+  data           Json           @default("{}")
+  createdAt      DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        Profile?     @relation(fields: [actorId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
 }

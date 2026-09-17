@@ -15,7 +15,9 @@ import { canViewPrioritization } from "@/features/prioritization/permissions";
 import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { listStatusesForOrganization } from "@/features/statuses/queries";
 import { listCategoriesForOrganization } from "@/features/categories/queries";
+import { hasFeature } from "@/features/entitlements/queries";
 import { Badge } from "@/components/ui/badge";
+import { LinkButton } from "@/components/link-button";
 import { PrioritizationFilters } from "./prioritization-filters";
 
 export const metadata: Metadata = { title: "Prioritisation" };
@@ -31,6 +33,24 @@ export default async function PrioritizationPage({
   const rawFilters = await searchParams;
   const { membership } = await requireOrganizationMembership(slug);
   if (!canViewPrioritization(membership.role)) notFound();
+
+  const canUseAdvancedPrioritisation = await hasFeature(
+    membership.organization.id,
+    "advancedPrioritisation",
+  );
+  if (!canUseAdvancedPrioritisation) {
+    return (
+      <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-10">
+        <h1 className="text-2xl font-bold tracking-tight">Prioritisation</h1>
+        <p className="text-muted-foreground text-sm">
+          Cross-board prioritisation — sorting and filtering every Item by
+          votes, priority, status, type, category, and score — requires the Pro
+          plan or higher.
+        </p>
+        <LinkButton href={`/org/${slug}/settings/billing`}>Upgrade</LinkButton>
+      </div>
+    );
+  }
 
   const parsedFilters = prioritizationFiltersSchema.safeParse({
     itemType: rawFilters.itemType,

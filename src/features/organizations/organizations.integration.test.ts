@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/server/db";
 import { getMembershipForSlug, countOwners } from "./queries";
 import {
+  canChangeMemberRole,
   canDeleteOrganization,
   canLeaveOrganization,
   canManageMembers,
@@ -153,6 +154,32 @@ describe("organizations tenant isolation and role enforcement", () => {
 
     it("a plain member can never remove anyone", () => {
       expect(canRemoveMember("MEMBER", "MEMBER", 2)).toBe(false);
+    });
+  });
+
+  describe("member role changes (Phase 5)", () => {
+    it("only admins+ can change roles at all", () => {
+      expect(canChangeMemberRole("MEMBER", "MEMBER", "ADMIN", 1)).toBe(false);
+      expect(canChangeMemberRole("ADMIN", "MEMBER", "ADMIN", 1)).toBe(true);
+    });
+
+    it("an admin can promote/demote between MEMBER and ADMIN", () => {
+      expect(canChangeMemberRole("ADMIN", "MEMBER", "ADMIN", 1)).toBe(true);
+      expect(canChangeMemberRole("ADMIN", "ADMIN", "MEMBER", 1)).toBe(true);
+    });
+
+    it("an admin can never promote to OWNER or touch an existing OWNER", () => {
+      expect(canChangeMemberRole("ADMIN", "MEMBER", "OWNER", 1)).toBe(false);
+      expect(canChangeMemberRole("ADMIN", "OWNER", "ADMIN", 2)).toBe(false);
+    });
+
+    it("an owner can promote a member to OWNER", () => {
+      expect(canChangeMemberRole("OWNER", "MEMBER", "OWNER", 1)).toBe(true);
+    });
+
+    it("an owner can demote another owner only if it isn't the last one", () => {
+      expect(canChangeMemberRole("OWNER", "OWNER", "ADMIN", 2)).toBe(true);
+      expect(canChangeMemberRole("OWNER", "OWNER", "ADMIN", 1)).toBe(false);
     });
   });
 });

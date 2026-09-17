@@ -18,6 +18,7 @@ This stack is fixed for the whole build. Every phase's prompt will repeat:
 | Rich text              | Tiptap                                        |
 | Hosting                | Vercel                                        |
 | Email                  | Resend                                        |
+| Billing                | Stripe (`stripe` npm package)                 |
 | Unit/integration tests | Vitest                                        |
 | E2E tests              | Playwright                                    |
 | Package manager        | pnpm                                          |

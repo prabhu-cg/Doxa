@@ -79,7 +79,26 @@ export default async function PublicBoardPage({
         >
           Doxa
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">{board.name}</h1>
+        <div className="flex items-center gap-2">
+          {organization.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- external, org-supplied URL; not a static/local asset next/image can optimize.
+            <img
+              src={organization.logoUrl}
+              alt={`${organization.name} logo`}
+              className="size-6 rounded object-contain"
+            />
+          ) : null}
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={
+              organization.accentColor
+                ? { color: organization.accentColor }
+                : undefined
+            }
+          >
+            {board.name}
+          </h1>
+        </div>
         <p className="text-muted-foreground text-sm">
           {organization.name}
           {board.description ? ` · ${board.description}` : ""}

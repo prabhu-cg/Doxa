@@ -59,3 +59,25 @@ export function canRemoveMember(
   if (targetRole === "OWNER") return actorRole === "OWNER" && ownerCount > 1;
   return true;
 }
+
+/** Same shape as canRemoveMember: an admin can move a member between
+ * MEMBER and ADMIN but never touch an OWNER (promote to it or demote
+ * from it); only an owner can do either, and never demote the last
+ * owner. Changing your own role isn't covered here — there's no flow for
+ * that, matching "Leave organisation" being the only self-targeting
+ * action. */
+export function canChangeMemberRole(
+  actorRole: MembershipRole,
+  targetRole: MembershipRole,
+  newRole: MembershipRole,
+  ownerCount: number,
+): boolean {
+  if (!hasAtLeastRole(actorRole, "ADMIN")) return false;
+  if (targetRole === "OWNER" || newRole === "OWNER") {
+    if (actorRole !== "OWNER") return false;
+    if (targetRole === "OWNER" && newRole !== "OWNER" && ownerCount <= 1) {
+      return false;
+    }
+  }
+  return true;
+}

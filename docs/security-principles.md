@@ -76,7 +76,10 @@ the choice.
 ## Auditability
 
 Mutations to tenant-owned data should be attributable to a user and a
-timestamp. Item/Board/Decision-level activity history (Phase 3) and formal
-audit logs (Phase 5) are where this becomes a first-class feature; Phase 0
-just names the principle so later schema design accounts for it (e.g.
-`createdBy`/`updatedBy` fields) rather than bolting it on retroactively.
+timestamp. Item-level activity history (`ItemActivity`, Phase 3) covers
+per-Item events; the organisation-scoped `AuditLog` (Phase 5,
+`features/audit-log/log.ts`) covers administrative/security events
+(member removed, role changed, settings/branding changed, board
+created/archived, decision recorded, plan changed). Both are append-only
+— never updated or deleted by application code — and `AuditLog.data`
+never carries a secret, token, or credential.

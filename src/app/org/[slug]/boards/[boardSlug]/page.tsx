@@ -10,6 +10,7 @@ import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { listStatusesForOrganization } from "@/features/statuses/queries";
 import { listCategoriesForOrganization } from "@/features/categories/queries";
 import { listTagsForOrganization } from "@/features/tags/queries";
+import { getItemTerminology } from "@/features/organizations/terminology";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/link-button";
 import { ItemFilters } from "@/components/item-filters";
@@ -58,6 +59,7 @@ export default async function BoardAdminPage({
   ]);
 
   const basePath = `/org/${slug}/boards/${boardSlug}`;
+  const terminology = getItemTerminology(membership.organization);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
@@ -76,7 +78,9 @@ export default async function BoardAdminPage({
         </div>
         <div className="flex shrink-0 gap-2">
           {canCreateItem(membership.role) && board.status === "ACTIVE" ? (
-            <LinkButton href={`${basePath}/items/new`}>New item</LinkButton>
+            <LinkButton href={`${basePath}/items/new`}>
+              New {terminology.singular}
+            </LinkButton>
           ) : null}
           {canManageBoards(membership.role) ? (
             <LinkButton variant="outline" href={`${basePath}/settings`}>

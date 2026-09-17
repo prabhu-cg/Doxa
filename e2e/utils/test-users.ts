@@ -64,13 +64,19 @@ export async function deleteTestOrganization(slug: string) {
   );
 }
 
-/** Creates an org with `userId` as its OWNER, bypassing the UI. */
+/** Creates an org with `userId` as its OWNER, bypassing the UI. Also
+ * creates a Customer + Subscription on FREE, exactly like the real
+ * createOrganization/completeOnboarding Server Actions do (Phase 5) —
+ * without it, any Server Action that resolves the org's plan
+ * (features/entitlements/queries.ts#getPlanForOrganization, called from
+ * createBoard/createItem) would throw on an org created this way. */
 export async function createTestOrganizationForUser(
   userId: string,
   name: string,
 ) {
   const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${randomUUID().slice(0, 8)}`;
   const orgId = randomUUID();
+  const customerId = randomUUID();
 
   await withClient(async (client) => {
     await client.query(
@@ -80,6 +86,18 @@ export async function createTestOrganizationForUser(
     await client.query(
       `INSERT INTO "memberships" ("id", "organizationId", "userId", "role") VALUES ($1, $2, $3, 'OWNER')`,
       [randomUUID(), orgId, userId],
+    );
+    const { rows } = await client.query(
+      `SELECT "id" FROM "plans" WHERE "key" = 'FREE'`,
+    );
+    const freePlanId = rows[0]?.id;
+    await client.query(
+      `INSERT INTO "customers" ("id", "organizationId", "updatedAt") VALUES ($1, $2, now())`,
+      [customerId, orgId],
+    );
+    await client.query(
+      `INSERT INTO "subscriptions" ("id", "organizationId", "customerId", "planId", "updatedAt") VALUES ($1, $2, $3, $4, now())`,
+      [randomUUID(), orgId, customerId, freePlanId],
     );
   });
 

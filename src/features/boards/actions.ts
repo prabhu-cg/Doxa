@@ -7,6 +7,8 @@ import { requireBoardForOrgMember } from "./queries";
 import { createBoardSchema, updateBoardSchema } from "./schema";
 import { generateUniqueBoardSlug } from "./slug";
 import { canManageBoards } from "./permissions";
+import { canCreateBoard } from "@/features/entitlements/queries";
+import { logAuditEvent } from "@/features/audit-log/log";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -19,11 +21,20 @@ export async function createBoard(
     visibility: "PUBLIC" | "PRIVATE";
   },
 ): Promise<ActionResult & { slug?: string }> {
-  const { membership } = await requireOrganizationMembership(orgSlug);
+  const { profile, membership } = await requireOrganizationMembership(orgSlug);
   if (!canManageBoards(membership.role)) {
     return {
       success: false,
       error: "Only owners and admins can create boards",
+    };
+  }
+
+  const organizationId = membership.organization.id;
+  const limitCheck = await canCreateBoard(organizationId);
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      error: `This organisation's plan allows up to ${limitCheck.limit} boards. Upgrade to create more.`,
     };
   }
 
@@ -40,7 +51,7 @@ export async function createBoard(
   const space = await db.space.findFirst({
     where: {
       id: parsed.data.spaceId,
-      organizationId: membership.organization.id,
+      organizationId,
       archivedAt: null,
     },
   });
@@ -48,20 +59,25 @@ export async function createBoard(
     return { success: false, error: "Choose a valid, active space" };
   }
 
-  const slug = await generateUniqueBoardSlug(
-    membership.organization.id,
-    parsed.data.name,
-  );
+  const slug = await generateUniqueBoardSlug(organizationId, parsed.data.name);
 
-  await db.board.create({
+  const board = await db.board.create({
     data: {
-      organizationId: membership.organization.id,
+      organizationId,
       spaceId: space.id,
       name: parsed.data.name,
       description: parsed.data.description,
       visibility: parsed.data.visibility,
       slug,
     },
+  });
+  await logAuditEvent(db, {
+    organizationId,
+    actorId: profile.id,
+    action: "BOARD_CREATED",
+    targetType: "Board",
+    targetId: board.id,
+    data: { name: board.name },
   });
 
   revalidatePath(`/org/${orgSlug}/boards`);
@@ -112,7 +128,7 @@ export async function archiveBoard(
   orgSlug: string,
   boardSlug: string,
 ): Promise<ActionResult> {
-  const { membership, board } = await requireBoardForOrgMember(
+  const { profile, membership, board } = await requireBoardForOrgMember(
     orgSlug,
     boardSlug,
   );
@@ -123,10 +139,17 @@ export async function archiveBoard(
     };
   }
 
-  await db.board.update({
-    where: { id: board.id },
-    data: { status: "ARCHIVED" },
-  });
+  await db.$transaction([
+    db.board.update({ where: { id: board.id }, data: { status: "ARCHIVED" } }),
+    logAuditEvent(db, {
+      organizationId: membership.organization.id,
+      actorId: profile.id,
+      action: "BOARD_ARCHIVED",
+      targetType: "Board",
+      targetId: board.id,
+      data: { name: board.name },
+    }),
+  ]);
 
   revalidatePath(`/org/${orgSlug}/boards`);
   revalidatePath(`/org/${orgSlug}/boards/${boardSlug}`);
@@ -138,7 +161,7 @@ export async function restoreBoard(
   orgSlug: string,
   boardSlug: string,
 ): Promise<ActionResult> {
-  const { membership, board } = await requireBoardForOrgMember(
+  const { profile, membership, board } = await requireBoardForOrgMember(
     orgSlug,
     boardSlug,
   );
@@ -149,10 +172,17 @@ export async function restoreBoard(
     };
   }
 
-  await db.board.update({
-    where: { id: board.id },
-    data: { status: "ACTIVE" },
-  });
+  await db.$transaction([
+    db.board.update({ where: { id: board.id }, data: { status: "ACTIVE" } }),
+    logAuditEvent(db, {
+      organizationId: membership.organization.id,
+      actorId: profile.id,
+      action: "BOARD_RESTORED",
+      targetType: "Board",
+      targetId: board.id,
+      data: { name: board.name },
+    }),
+  ]);
 
   revalidatePath(`/org/${orgSlug}/boards`);
   revalidatePath(`/org/${orgSlug}/boards/${boardSlug}`);
