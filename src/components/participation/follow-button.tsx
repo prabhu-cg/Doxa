@@ -23,10 +23,12 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [count, setCount] = useState(initialCount);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onClick() {
     if (pending) return;
     setPending(true);
+    setError(null);
     const nextFollowing = !following;
     setFollowing(nextFollowing);
     setCount((c) => c + (nextFollowing ? 1 : -1));
@@ -39,22 +41,30 @@ export function FollowButton({
     if (!result.success) {
       setFollowing(!nextFollowing);
       setCount((c) => c + (nextFollowing ? -1 : 1));
+      setError(result.error);
       return;
     }
     router.refresh();
   }
 
   return (
-    <Button
-      type="button"
-      variant={following ? "secondary" : "outline"}
-      size="sm"
-      onClick={onClick}
-      disabled={pending}
-      aria-pressed={following}
-    >
-      {following ? <BellRing /> : <Bell />}
-      {following ? "Following" : "Follow"} · {count}
-    </Button>
+    <>
+      <Button
+        type="button"
+        variant={following ? "secondary" : "outline"}
+        size="sm"
+        onClick={onClick}
+        disabled={pending}
+        aria-pressed={following}
+      >
+        {following ? <BellRing /> : <Bell />}
+        {following ? "Following" : "Follow"} · {count}
+      </Button>
+      {error ? (
+        <p role="alert" className="text-destructive w-full text-xs">
+          {error}
+        </p>
+      ) : null}
+    </>
   );
 }

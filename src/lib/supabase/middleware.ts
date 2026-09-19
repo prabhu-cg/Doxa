@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { clientEnv } from "@/lib/env/client";
+import { safeNextPath } from "@/lib/safe-next";
 
 // The authenticated app surface — everything else (the marketing site,
 // auth pages, legal pages, etc.) is public. This is an allowlist of what
@@ -67,7 +68,10 @@ export async function updateSession(
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    // Someone who followed a "sign in to vote" link while already signed in
+    // goes straight back to the page they meant to reach.
+    const next = safeNextPath(request.nextUrl.searchParams.get("next"), "/app");
+    return NextResponse.redirect(new URL(next, request.url));
   }
 
   return response;

@@ -1,5 +1,5 @@
 /**
- * Paths of the public, read-only pages under `/b/`. A board has one only while
+ * Paths of the public pages under `/b/`. A board has one only while
  * it is Public and not archived; an item only while it is not archived either.
  * Slugs are already URL-safe, so they go in as they are.
  */

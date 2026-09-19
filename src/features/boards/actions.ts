@@ -108,6 +108,7 @@ export async function updateBoard(
     name: string;
     description?: string;
     visibility: "PUBLIC" | "PRIVATE";
+    requireApproval: boolean;
   },
 ): Promise<ActionResult> {
   const { membership, board } = await requireBoardForOrgMember(
@@ -139,6 +140,7 @@ export async function updateBoard(
       name: parsed.data.name,
       description: parsed.data.description,
       visibility: parsed.data.visibility,
+      requireApproval: parsed.data.requireApproval,
     },
   });
 

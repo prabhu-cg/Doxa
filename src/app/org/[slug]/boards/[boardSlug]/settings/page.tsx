@@ -38,6 +38,7 @@ export default async function BoardSettingsPage({
         initialName={board.name}
         initialDescription={board.description ?? ""}
         initialVisibility={board.visibility}
+        initialRequireApproval={board.requireApproval}
       />
 
       {board.visibility === "PUBLIC" && board.status === "ACTIVE" ? (

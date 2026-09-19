@@ -7,6 +7,12 @@ const passwordSchema = z
 
 export const signUpSchema = z
   .object({
+    /** What to call them on comments and votes; optional, defaults to the start of their email. */
+    displayName: z
+      .string()
+      .trim()
+      .max(60, "Name must be at most 60 characters")
+      .optional(),
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),

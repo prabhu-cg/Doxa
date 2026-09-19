@@ -28,7 +28,11 @@ export type BoardSummaryWithSpace = BoardSummary & { space: Space };
 // moved — a board's own `updatedAt` doesn't change when items are added.
 const boardSummaryInclude = {
   _count: {
-    select: { items: { where: { deletedAt: null, archivedAt: null } } },
+    select: {
+      items: {
+        where: { deletedAt: null, archivedAt: null, awaitingReview: false },
+      },
+    },
   },
   items: {
     where: { deletedAt: null },

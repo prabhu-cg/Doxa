@@ -25,7 +25,7 @@ export function RouteModal({
 }: {
   title: string;
   description?: string;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
   children: React.ReactNode;
 }) {
   const router = useRouter();

@@ -9,7 +9,10 @@ import type { Profile } from "@/generated/prisma/client";
  * window before that trigger commits. This fallback makes that race
  * harmless instead of a broken page.
  */
-async function getOrCreateProfile(userId: string, email: string | undefined) {
+export async function getOrCreateProfile(
+  userId: string,
+  email: string | undefined,
+) {
   const existing = await db.profile.findUnique({ where: { id: userId } });
   if (existing) return existing;
 

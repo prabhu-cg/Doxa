@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/server/supabase/server-client";
 import { clientEnv } from "@/lib/env/client";
+import { safeNextPath } from "@/lib/safe-next";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -12,10 +13,16 @@ import {
 
 type ActionResult = { success: true } | { success: false; error: string };
 
+/**
+ * `next` is where they were headed — a customer signing up from a public
+ * board goes back there, not into organisation onboarding.
+ */
 export async function signUp(input: {
+  displayName?: string;
   email: string;
   password: string;
   confirmPassword: string;
+  next?: string;
 }): Promise<ActionResult & { status?: "check-email" }> {
   const parsed = signUpSchema.safeParse(input);
   if (!parsed.success) {
@@ -25,12 +32,17 @@ export async function signUp(input: {
     };
   }
 
+  const next = safeNextPath(input.next, "/onboarding");
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${clientEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=/onboarding`,
+      emailRedirectTo: `${clientEnv.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+      // The profile trigger reads this; without it the name is the start of the email.
+      ...(parsed.data.displayName
+        ? { data: { display_name: parsed.data.displayName } }
+        : {}),
     },
   });
   if (error) return { success: false, error: error.message };
@@ -40,16 +52,9 @@ export async function signUp(input: {
   // link and /auth/callback exchanges the code. Without email
   // confirmation required, a session comes back immediately.
   if (data.session) {
-    redirect("/onboarding");
+    redirect(next);
   }
   return { success: true, status: "check-email" };
-}
-
-/** Only ever redirect to a same-app relative path — never follow an
- * externally-supplied `next` value as-is, or it becomes an open redirect. */
-function safeNextPath(next: string | undefined): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/app";
-  return next;
 }
 
 export async function signIn(input: {
@@ -69,7 +74,7 @@ export async function signIn(input: {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { success: false, error: "Invalid email or password" };
 
-  redirect(safeNextPath(input.next));
+  redirect(safeNextPath(input.next, "/app"));
 }
 
 export async function signOut(): Promise<void> {

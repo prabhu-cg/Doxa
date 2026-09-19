@@ -338,10 +338,10 @@ The core loop this phase adds: **Submit → Discuss → Vote → Follow.**
   type, status, and tags stay in the same compact header block as
   Phase 2; votes and following sit in one row right below it; comments
   and activity are split into two tabs (`Discussion` / `Activity`) so
-  neither crowds the page by default. The public, unauthenticated Item
-  page (`/b/[orgSlug]/[boardSlug]/[itemSlug]`) gained read-only
-  vote/comment/follower counts, not interactive controls — see
-  "Assumptions made" below.
+  neither crowds the page by default. The public Item page
+  (`/b/[orgSlug]/[boardSlug]/[itemSlug]`) first gained read-only
+  vote/comment/follower counts; it is interactive for signed-in
+  visitors since "Customer participation" (below).
 - **Tests**: `features/{votes,comments,followers,activity,
 notifications}/*.integration.test.ts` (added to the existing
   `items.integration.test.ts` and `organizations.integration.test.ts`
@@ -701,12 +701,13 @@ projects` team) for future env var management and deployment.
   board, matching "simple by default" in `docs/architecture.md`. `Board`
   does carry a reserved `settings Json` column for this kind of
   per-board configuration later (see the Phase 2 section above).
-- **Item creation requires an authenticated org member, even on a PUBLIC
-  board** — the brief's Public Experience section only asks for
-  view/browse/search/open without an account; ITEM CRUD's "users with
-  permission can create" reads as membership-gated. Anonymous public
-  submission (if wanted later) is a distinct, larger decision (spam/rate
-  limiting) left to a future phase.
+- **Item creation requires a signed-in user, even on a PUBLIC board** —
+  the brief's Public Experience section only asks for
+  view/browse/search/open without an account. Phase 2 made it
+  member-only; customer participation (see "Customer participation"
+  below) later opened it to any signed-in, email-verified user on a
+  Public board, still with an account — anonymous public submission
+  remains a distinct, larger decision (spam/rate limiting).
 - **Category is single-select per Item, Tags are multi-select** — the
   brief's CATEGORIES AND TAGS section only says Items "can have multiple
   tags," implying (by omission) a single category, which also matches how
@@ -772,11 +773,10 @@ add supabase` remains available later if that's preferred.
   single form (name + org name).
 - **No RLS-based "who can see this org" filtering; app-layer checks only**
   by design — see `docs/multi-tenancy.md`.
-- **Voting, commenting, and following require an authenticated org
-  member, even on a PUBLIC board** — same reasoning as Phase 2's item
-  creation. The public `/b/[orgSlug]/[boardSlug]/[itemSlug]` page shows
-  read-only vote/comment/follower counts and points visitors at signing
-  in; the interactive controls live on the `/org/[slug]/...` Item page.
+- **Voting, commenting, and following required an org member in Phase 3**
+  — the public `/b/[orgSlug]/[boardSlug]/[itemSlug]` page showed read-only
+  counts. Superseded by customer participation (below): the public page is
+  now interactive for any signed-in, email-verified user.
 - **Comment body is plain text, not Tiptap rich text** — the Phase 2
   README already named comments as "the more likely first real use case"
   for rich text once it lands; this phase's own brief just says
@@ -806,6 +806,71 @@ add supabase` remains available later if that's preferred.
   phase adds the removal half via `removeMember`/`canRemoveMember`,
   scoped by the same owner/admin rules as everywhere else in
   `features/organizations/permissions.ts`.
+
+## Customer participation
+
+Anyone with an account — a customer, not only a team member — can vote,
+comment, follow and submit on an organisation's **Public, active** boards
+from `/b/[orgSlug]/[boardSlug]`. Deliberately _not_ done by making them
+`Membership`s (a member can see Private boards and, at admin, change
+things): a participant is a signed-in, email-verified `Profile` with no
+membership in that organisation.
+
+- **One gate**: `features/participation/access.ts` (`requireParticipation`,
+  `requireItemParticipation`, `getViewer`) resolves the caller to a member
+  (their role), a participant (`role: null`), or a refusal — signed out,
+  email not confirmed, blocked, or a board that isn't Public/active (same
+  answer as "doesn't exist", so it can't reveal private boards). Vote,
+  comment, follow and the public submit action all go through it; the
+  permission functions accept `role: null`.
+- **Sign-in comes back**: the public pages link to
+  `/login?next=<page>` and `/signup?next=<page>`; `next` survives the
+  confirmation email (`/auth/callback`), and a customer who signs up
+  from a board never goes through organisation onboarding. Signup has an
+  optional name, used for the profile's display name.
+- **Submissions**: `submitItem` creates an `Item` with `origin: COMMUNITY`
+  (never counted toward `maxItems`). `Board.requireApproval` (default
+  on, a checkbox in board settings) sets `Item.awaitingReview`: such an item
+  is visible only to the team (marked "Needs review") and to its author,
+  and is left out of the public board, counts, response stats,
+  roadmaps and prioritisation until an owner/admin approves it
+  (`features/moderation`) or declines it (soft delete). The team is
+  notified (`ITEM_SUBMITTED`). A member submitting from the public page
+  makes an ordinary team item.
+- **Protection**: per-participant hourly limits counted from the rows
+  themselves (`features/participation/rate-limit.ts`: 5 submissions,
+  10 waiting for review, 20 comments, 60 votes); owners/admins can
+  block a participant (`ParticipantBlock`, per organisation, from
+  Block on their comment; listed with Unblock in organisation settings).
+- **Comments are public**, labelled "Team" when written by a member.
+- **The public pages are the organisation's** (`/b/[orgSlug]/…`, `/r/[orgSlug]`,
+  and the sign-in reached from them): `components/public/PublicShell` gives
+  every page its logo (or a monogram tile when it has none), name, accent
+  colour, tabs for its public boards and the roadmap, and a small "Powered by
+  Doxa". The accent is `Organization.accentColor` run through
+  `lib/brand-color.ts` (darkened until white text on it and it as text both
+  reach 4.5:1) and applied as CSS variables for the whole page, drawers
+  included; with no colour set it stays Doxa's terracotta. Each board also
+  has a generated share card (`opengraph-image.tsx`, monogram and text only —
+  it never fetches the logo URL) and the tab icon is the logo.
+- **The board is a data grid**, not cards: the vote first in every row
+  (`VoteChip`, one click; a link to sign in for signed-out visitors), then item,
+  status, the team's decision, type, tags, comments, updated, submitter —
+  columns appear as the screen widens. Search, filters and sort live in the
+  URL (`GridToolbar`). A row opens its item in a right-hand drawer at
+  `?item=<slug>` on the board's own address (shareable, refresh-safe, Back
+  closes it); the item's own page `/b/…/[itemSlug]` is unchanged for direct
+  links. Note: an intercepting route was tried for the drawer and dropped —
+  Next's `(.)` marker breaks on a dynamic segment (`(.)[itemSlug]`).
+- **Not built yet**: email notifications (a participant has no in-app bell,
+  so decision/reply notifications are stored but only reach them by email
+  once that exists), magic-link / social sign-in, SSO / embeddable widget,
+  reports/flagging by participants, and a "Needs review" filter (the badge
+  and the notification are how a team finds them today).
+- **Tests**: `features/participation/participation.integration.test.ts`
+  (review visibility, rate limits, blocks, team labels),
+  `lib/safe-next.test.ts`, `e2e/participation.spec.ts` (the customer
+  journey end to end).
 
 ## Not implemented (by design)
 

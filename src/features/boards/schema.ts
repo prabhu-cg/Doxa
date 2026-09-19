@@ -20,4 +20,5 @@ export const updateBoardSchema = z.object({
   name: boardNameSchema,
   description: optionalText(500, "Description"),
   visibility: boardVisibilitySchema,
+  requireApproval: z.boolean(),
 });

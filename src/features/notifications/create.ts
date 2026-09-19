@@ -159,3 +159,35 @@ export async function notifyDecisionRecorded(params: {
     })),
   );
 }
+
+/**
+ * Tells the team (owners and admins) that a community participant submitted an
+ * Item, and whether it is waiting for their review. Members who submit
+ * their own items are never announced this way.
+ */
+export async function notifyItemSubmitted(params: {
+  organizationId: string;
+  itemId: string;
+  actorId: string;
+  awaitingReview: boolean;
+}) {
+  const moderators = await db.membership.findMany({
+    where: {
+      organizationId: params.organizationId,
+      role: { in: ["OWNER", "ADMIN"] },
+      userId: { not: params.actorId },
+    },
+    select: { userId: true },
+  });
+
+  await createNotifications(
+    moderators.map((moderator) => ({
+      organizationId: params.organizationId,
+      userId: moderator.userId,
+      type: "ITEM_SUBMITTED" as const,
+      itemId: params.itemId,
+      actorId: params.actorId,
+      data: { awaitingReview: params.awaitingReview },
+    })),
+  );
+}

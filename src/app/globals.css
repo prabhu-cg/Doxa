@@ -182,3 +182,15 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Public pages (/b, /r): the browser-owned parts take the page's accent, so the
+   selection, caret and scrollbars belong to the brand and not to the browser. */
+.public-surface {
+  --public-topbar: 59px;
+  caret-color: var(--primary);
+  scrollbar-color: var(--border-strong) transparent;
+}
+.public-surface ::selection {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}

@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
-import { requireItemForOrgMember } from "@/features/items/queries";
 import { logActivity } from "@/features/activity/log";
+import { requireItemParticipation } from "@/features/participation/access";
+import { checkVoteRate } from "@/features/participation/rate-limit";
+import { revalidateItem } from "@/features/participation/revalidate";
 import { canVoteOnItem } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -21,16 +22,18 @@ export async function addVote(
   boardSlug: string,
   itemSlug: string,
 ): Promise<ActionResult> {
-  const { profile, membership, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
-  if (!canVoteOnItem(membership.role)) {
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, role, organization, item } = access;
+  if (!canVoteOnItem(role)) {
     return {
       success: false,
       error: "You don't have permission to vote on this item",
     };
+  }
+  if (role === null) {
+    const rate = await checkVoteRate(organization.id, profile.id);
+    if (!rate.allowed) return { success: false, error: rate.error };
   }
 
   try {
@@ -49,7 +52,7 @@ export async function addVote(
     if (!alreadyVoted) throw error;
   }
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }
 
@@ -58,11 +61,9 @@ export async function removeVote(
   boardSlug: string,
   itemSlug: string,
 ): Promise<ActionResult> {
-  const { profile, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, item } = access;
 
   const deleted = await db.vote.deleteMany({
     where: { itemId: item.id, userId: profile.id },
@@ -75,6 +76,6 @@ export async function removeVote(
     });
   }
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }

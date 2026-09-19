@@ -36,10 +36,13 @@ import { boardTrail } from "@/lib/breadcrumb-trails";
 import { publicItemPath } from "@/lib/public-links";
 import { CopyLinkButton } from "@/components/public-link";
 import { EditItemDrawer } from "./edit-item-drawer";
-import { VoteButton } from "./vote-button";
-import { FollowButton } from "./follow-button";
-import { CommentSection } from "./comment-section";
+import { VoteButton } from "@/components/participation/vote-button";
+import { FollowButton } from "@/components/participation/follow-button";
+import { CommentSection } from "@/components/participation/comment-section";
+import { ReviewBanner } from "@/components/participation/review-banner";
 import { toCommentData } from "@/features/comments/mapper";
+import { canModerateCommunity } from "@/features/moderation/permissions";
+import { listTeamMemberIds } from "@/features/moderation/queries";
 import { ActivityFeed } from "./activity-feed";
 import { ScorePanel } from "./score-panel";
 import { DecisionPanel } from "./decision-panel";
@@ -86,6 +89,7 @@ export default async function ItemAdminPage({
   const canArchive = canArchiveItem(membership.role, isAuthor);
   const canComment = canCommentOnItem(membership.role);
   const canModerate = hasAtLeastRole(membership.role, "ADMIN");
+  const canReview = canModerateCommunity(membership.role);
   const canScore = canScoreItem(membership.role);
   const canRecord = canRecordDecision(membership.role);
 
@@ -104,6 +108,7 @@ export default async function ItemAdminPage({
     scoreCriteria,
     itemScores,
     decisions,
+    teamIds,
   ] = await Promise.all([
     canEdit ? listItemTypesForOrganization(membership.organization.id) : [],
     canEdit ? listStatusesForOrganization(membership.organization.id) : [],
@@ -121,6 +126,7 @@ export default async function ItemAdminPage({
       : [],
     canScore ? getScoresForItem(item.id) : [],
     listDecisionsForItem(item.id),
+    listTeamMemberIds(membership.organization.id),
   ]);
   const computedScore = computeItemScore(itemScores);
 
@@ -129,7 +135,8 @@ export default async function ItemAdminPage({
   const publicPath =
     board.visibility === "PUBLIC" &&
     board.status === "ACTIVE" &&
-    !item.archivedAt
+    !item.archivedAt &&
+    !item.awaitingReview
       ? publicItemPath(slug, boardSlug, itemSlug)
       : null;
 
@@ -146,9 +153,12 @@ export default async function ItemAdminPage({
             {item.archivedAt ? (
               <Badge variant="secondary">Archived</Badge>
             ) : null}
+            {item.awaitingReview ? (
+              <Badge variant="secondary">Awaiting review</Badge>
+            ) : null}
           </>
         }
-        description={`Submitted by ${item.author.displayName} · ${formatRelativeTime(item.createdAt)}`}
+        description={`Submitted by ${item.author.displayName}${item.origin === "COMMUNITY" ? " (community)" : ""} · ${formatRelativeTime(item.createdAt)}`}
         actions={
           publicPath || canEdit ? (
             <>
@@ -189,6 +199,16 @@ export default async function ItemAdminPage({
           ) : undefined
         }
       />
+
+      {item.awaitingReview ? (
+        <ReviewBanner
+          orgSlug={slug}
+          boardSlug={boardSlug}
+          itemSlug={itemSlug}
+          authorName={item.author.displayName}
+          canModerate={canReview}
+        />
+      ) : null}
 
       {/* Reads top to bottom on a phone (what it is → where it stands →
           the conversation); on a wide screen the assessment rail sits beside
@@ -325,10 +345,12 @@ export default async function ItemAdminPage({
                 orgSlug={slug}
                 boardSlug={boardSlug}
                 itemSlug={itemSlug}
-                comments={comments.map(toCommentData)}
+                comments={comments.map((c) => toCommentData(c, teamIds))}
                 currentUserId={profile.id}
                 canComment={canComment}
                 canModerate={canModerate}
+                allowMentions
+                cannotCommentNotice="You don't have permission to comment."
               />
             </TabsContent>
             <TabsContent value="activity" className="pt-4">

@@ -5,6 +5,7 @@ export type NotificationKind =
   | "COMMENT_REPLY"
   | "ITEM_STATUS_CHANGED"
   | "ITEM_DECISION"
+  | "ITEM_SUBMITTED"
   | "MENTION";
 
 /** The one-line text the bell shows for a notification. */
@@ -27,6 +28,10 @@ export function notificationMessage(n: {
       const type = n.data.decisionType as keyof typeof DECISION_TYPE_LABELS;
       return `Decision on "${title}": ${DECISION_TYPE_LABELS[type] ?? "recorded"}`;
     }
+    case "ITEM_SUBMITTED":
+      return n.data.awaitingReview
+        ? `${actor} submitted "${title}" — waiting for your review`
+        : `${actor} submitted "${title}"`;
     case "MENTION":
       return `${actor} mentioned you on "${title}"`;
   }

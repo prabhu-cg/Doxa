@@ -85,8 +85,7 @@ const COMMUNITY: Feature[] = [
     icon: LogIn,
     title: "Customer participation",
     description:
-      "Let customers sign in to vote, comment and submit on public boards.",
-    planned: true,
+      "Customers sign in to vote, comment and submit on public boards — you review new submissions before they go live.",
   },
 ];
 

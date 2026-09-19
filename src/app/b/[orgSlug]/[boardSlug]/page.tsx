@@ -2,24 +2,44 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVisibleBoard } from "@/features/boards/queries";
-import { listItemsForBoard } from "@/features/items/queries";
+import { getBoardTotals, listItemsForBoard } from "@/features/items/queries";
 import {
   boardFiltersSchema,
   type BoardFiltersValues,
+  type BoardSort,
 } from "@/features/items/schema";
 import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { listStatusesForOrganization } from "@/features/statuses/queries";
 import { listCategoriesForOrganization } from "@/features/categories/queries";
 import { listTagsForOrganization } from "@/features/tags/queries";
-import { ItemFilters } from "@/components/item-filters";
-import { ItemCard } from "@/components/item-card";
 import {
   getCurrentDecisionTypesForItems,
   getResponseSummaryForBoard,
 } from "@/features/decisions/transparency";
 import { getItemTerminology } from "@/features/organizations/terminology";
+import { getAuthenticatedSupabaseUser } from "@/features/auth/queries";
+import { getViewer } from "@/features/participation/access";
+import { listVotedItemIds } from "@/features/votes/queries";
 import { describeResponsiveness } from "@/lib/decision-stats";
-import { publicRoadmapPath } from "@/lib/public-links";
+import {
+  publicBoardPath,
+  publicItemPath,
+  publicRoadmapPath,
+} from "@/lib/public-links";
+import { ItemGrid } from "@/components/public/item-grid";
+import { OrgIdentity } from "@/components/public/org-identity";
+import { ItemDrawer } from "@/components/public/item-drawer";
+import {
+  ItemDrawerSubheader,
+  OpenPageLink,
+  PublicItemDetail,
+} from "@/components/public/public-item-detail";
+import { findPublicItem } from "@/features/items/public";
+import { GridToolbar } from "@/components/public/grid-toolbar";
+import { SubmitDrawer } from "@/components/participation/submit-drawer";
+import { ParticipationNotice } from "@/components/participation/participation-notice";
+
+const PAGE_SIZE = 50;
 
 export async function generateMetadata({
   params,
@@ -29,9 +49,14 @@ export async function generateMetadata({
   const { orgSlug, boardSlug } = await params;
   const visible = await getVisibleBoard(orgSlug, boardSlug);
   if (!visible) return {};
+  const title = `${visible.board.name} · ${visible.organization.name}`;
+  const description =
+    visible.board.description ??
+    `Vote on what matters and see how ${visible.organization.name} responds.`;
   return {
-    title: `${visible.board.name} · ${visible.organization.name}`,
-    description: visible.board.description ?? undefined,
+    title,
+    description,
+    openGraph: { title, description, siteName: visible.organization.name },
   };
 }
 
@@ -59,8 +84,38 @@ export default async function PublicBoardPage({
   const filters: Partial<BoardFiltersValues> = parsedFilters.success
     ? parsedFilters.data
     : {};
+  const sort: BoardSort = filters.sort ?? "newest";
+  const limit = Math.min(
+    Math.max(
+      Number.parseInt(String(rawFilters.limit ?? ""), 10) || PAGE_SIZE,
+      PAGE_SIZE,
+    ),
+    1000,
+  );
 
-  const [items, itemTypes, statuses, categories, tags] = await Promise.all([
+  const openItemSlug =
+    typeof rawFilters.item === "string" && rawFilters.item
+      ? rawFilters.item
+      : null;
+  const openItem = openItemSlug
+    ? await findPublicItem(orgSlug, boardSlug, openItemSlug)
+    : null;
+
+  const terminology = getItemTerminology(organization);
+  const basePath = publicBoardPath(orgSlug, boardSlug);
+  const user = await getAuthenticatedSupabaseUser();
+
+  const [
+    viewer,
+    found,
+    itemTypes,
+    statuses,
+    categories,
+    tags,
+    totals,
+    summary,
+  ] = await Promise.all([
+    getViewer(organization.id, user),
     listItemsForBoard(board.id, {
       q: filters.q,
       itemTypeSlug: filters.itemType,
@@ -73,104 +128,216 @@ export default async function PublicBoardPage({
     listStatusesForOrganization(organization.id),
     listCategoriesForOrganization(organization.id),
     listTagsForOrganization(organization.id),
-  ]);
-
-  const [decisionTypes, responsiveness] = await Promise.all([
-    getCurrentDecisionTypesForItems(items.map((item) => item.id)),
+    getBoardTotals(board.id),
     getResponseSummaryForBoard(board.id),
   ]);
-  const responsivenessLine = describeResponsiveness(
-    responsiveness,
-    getItemTerminology(organization),
-  );
 
-  const basePath = `/b/${orgSlug}/${boardSlug}`;
+  const items = found.slice(0, limit);
+  const [decisionTypes, votedIds] = await Promise.all([
+    getCurrentDecisionTypesForItems(items.map((item) => item.id)),
+    viewer.status === "anonymous"
+      ? new Set<string>()
+      : listVotedItemIds(
+          viewer.profile.id,
+          items.map((item) => item.id),
+        ),
+  ]);
+
+  const isMember = viewer.status === "active" && viewer.role !== null;
+  const responsivenessLine = describeResponsiveness(summary, terminology);
+  const hasFilters =
+    !!filters.q ||
+    !!filters.itemType ||
+    !!filters.status ||
+    !!filters.category ||
+    !!filters.tag;
+
+  /** The board's own address with the current filters, and a different sort. */
+  function href(next: { sort?: BoardSort; limit?: number; item?: string }) {
+    const params = new URLSearchParams();
+    if (filters.q) params.set("q", filters.q);
+    if (filters.itemType) params.set("itemType", filters.itemType);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.category) params.set("category", filters.category);
+    if (filters.tag) params.set("tag", filters.tag);
+    const nextSort = next.sort ?? sort;
+    if (nextSort !== "newest") params.set("sort", nextSort);
+    if (limit > PAGE_SIZE || (next.limit && next.limit > PAGE_SIZE)) {
+      params.set("limit", String(Math.max(limit, next.limit ?? 0)));
+    }
+    if (next.item) params.set("item", next.item);
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  }
+
+  const noun = terminology.plural.toLowerCase();
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
-      <div>
-        <Link
-          href="/"
-          className="text-muted-foreground text-sm font-semibold tracking-tight"
-        >
-          Doxa
-        </Link>
-        <div className="flex items-center gap-2">
-          {organization.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external, org-supplied URL; not a static/local asset next/image can optimize.
-            <img
-              src={organization.logoUrl}
-              alt={`${organization.name} logo`}
-              className="size-6 rounded object-contain"
+    <>
+      <section
+        aria-label={`About ${board.name}`}
+        className="border-b bg-[color-mix(in_srgb,var(--primary)_5%,white)]"
+      >
+        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-end justify-between gap-x-8 gap-y-5 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex max-w-3xl min-w-0 items-start gap-4 sm:gap-5">
+            <OrgIdentity
+              markOnly
+              name={organization.name}
+              logoUrl={organization.logoUrl}
+              size={48}
+              className="shrink-0"
             />
-          ) : null}
-          <h1
-            className="text-2xl font-bold tracking-tight"
-            style={
-              organization.accentColor
-                ? { color: organization.accentColor }
-                : undefined
+            <div className="min-w-0">
+              <h1 className="text-[28px] leading-tight font-bold tracking-tight text-balance">
+                {board.name}
+              </h1>
+              {board.description ? (
+                <p className="text-foreground/75 mt-1.5 max-w-prose text-[15px] leading-6">
+                  {board.description}
+                </p>
+              ) : null}
+              <p className="text-foreground/75 mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+                <span>
+                  <b className="text-foreground font-semibold tabular-nums">
+                    {totals.items}
+                  </b>{" "}
+                  {totals.items === 1
+                    ? terminology.singular.toLowerCase()
+                    : noun}
+                </span>
+                <span>
+                  <b className="text-foreground font-semibold tabular-nums">
+                    {totals.votes}
+                  </b>{" "}
+                  {totals.votes === 1 ? "vote" : "votes"}
+                </span>
+                {responsivenessLine ? <span>{responsivenessLine}</span> : null}
+                <Link
+                  href={publicRoadmapPath(orgSlug)}
+                  className="text-primary-text font-semibold underline-offset-4 hover:underline"
+                >
+                  See the roadmap
+                </Link>
+              </p>
+            </div>
+          </div>
+          <SubmitDrawer
+            orgSlug={orgSlug}
+            boardSlug={boardSlug}
+            itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
+            singular={terminology.singular}
+            requiresReview={board.requireApproval && !isMember}
+            blockedNotice={
+              viewer.status === "active" ? undefined : (
+                <ParticipationNotice
+                  viewer={viewer}
+                  next={basePath}
+                  action={`submit ${terminology.singular.toLowerCase()}`}
+                />
+              )
             }
-          >
-            {board.name}
-          </h1>
+          />
         </div>
-        <p className="text-muted-foreground text-sm">
-          {organization.name}
-          {board.description ? ` · ${board.description}` : ""}
-        </p>
-        {responsivenessLine ? (
-          <p className="text-muted-foreground mt-1 text-sm">
-            {responsivenessLine}
-          </p>
-        ) : null}
-        <p className="mt-1 text-sm">
-          <Link
-            href={publicRoadmapPath(orgSlug)}
-            className="text-foreground underline underline-offset-4"
-          >
-            See the roadmap
-          </Link>
-        </p>
+      </section>
+
+      <div className="mx-auto w-full max-w-[1400px] space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+        <GridToolbar
+          basePath={basePath}
+          current={{
+            q: filters.q,
+            itemType: filters.itemType,
+            status: filters.status,
+            category: filters.category,
+            tag: filters.tag,
+            sort,
+          }}
+          itemTypes={itemTypes}
+          statuses={statuses}
+          categories={categories}
+          tags={tags}
+          itemNounPlural={terminology.plural}
+        />
+
+        {items.length === 0 ? (
+          <div className="rounded-xl border border-dashed px-6 py-16 text-center">
+            <p className="font-semibold">
+              {hasFilters ? `No ${noun} match` : `No ${noun} here yet`}
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {hasFilters
+                ? "Try a different search, or clear the filters."
+                : `Be the first — use “Submit ${terminology.singular.toLowerCase()}” above.`}
+            </p>
+            {hasFilters ? (
+              <Link
+                href={basePath}
+                className="text-primary-text mt-3 inline-block text-sm font-semibold underline-offset-4 hover:underline"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+          </div>
+        ) : (
+          <>
+            <ItemGrid
+              items={items}
+              decisionTypes={decisionTypes}
+              votedIds={votedIds}
+              viewer={viewer}
+              orgSlug={orgSlug}
+              boardSlug={boardSlug}
+              sort={sort}
+              sortHref={(next) => href({ sort: next })}
+              itemHref={(slug) => href({ item: slug })}
+            />
+            <p className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span aria-live="polite">
+                Showing{" "}
+                <span className="tabular-nums">
+                  {items.length} of {found.length}
+                </span>{" "}
+                {found.length === 1 ? terminology.singular.toLowerCase() : noun}
+              </span>
+              {found.length > items.length ? (
+                <Link
+                  href={href({ limit: limit + PAGE_SIZE })}
+                  scroll={false}
+                  className="text-primary-text text-sm font-semibold underline-offset-4 hover:underline"
+                >
+                  Show more
+                </Link>
+              ) : null}
+            </p>
+          </>
+        )}
       </div>
 
-      <ItemFilters
-        basePath={basePath}
-        itemTypes={itemTypes}
-        statuses={statuses}
-        categories={categories}
-        tags={tags}
-        current={filters}
-      />
-
-      {items.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No items match.</p>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              href={`${basePath}/${item.slug}`}
-              title={item.title}
-              description={item.description}
-              itemTypeName={item.itemType.name}
-              statusName={item.status.name}
-              statusColor={item.status.color}
-              categoryName={item.category?.name}
-              decisionType={decisionTypes.get(item.id)}
-              tagNames={item.tags.map((t) => t.tag.name)}
-              authorName={item.author.displayName}
-              voteCount={item._count.votes}
-              commentCount={item._count.comments}
-              priorityName={
-                item.priority.slug !== "none" ? item.priority.name : null
-              }
-              priorityColor={item.priority.color}
-              updatedAt={item.updatedAt}
+      {openItem ? (
+        <ItemDrawer
+          key={openItem.item.id}
+          title={openItem.item.title}
+          subheader={
+            <ItemDrawerSubheader
+              orgSlug={orgSlug}
+              boardSlug={boardSlug}
+              itemSlug={openItem.item.slug}
             />
-          ))}
-        </div>
-      )}
-    </div>
+          }
+          headerAction={
+            <OpenPageLink
+              href={publicItemPath(orgSlug, boardSlug, openItem.item.slug)}
+            />
+          }
+          closeHref={href({})}
+        >
+          <PublicItemDetail
+            orgSlug={orgSlug}
+            boardSlug={boardSlug}
+            itemSlug={openItem.item.slug}
+            variant="drawer"
+          />
+        </ItemDrawer>
+      ) : null}
+    </>
   );
 }

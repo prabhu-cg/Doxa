@@ -56,9 +56,9 @@ export default function AboutPage() {
             for your team and public; and in-app notifications.
           </p>
           <p>
-            Next: letting customers sign in to vote, comment and submit on
-            public boards. After that: email notifications, integrations and an
-            API.
+            Customers can sign in to vote, comment and submit on public boards,
+            with new submissions held for your review. Next: email
+            notifications, integrations and an API.
           </p>
 
           <h2 className="text-foreground">Who&apos;s building it</h2>

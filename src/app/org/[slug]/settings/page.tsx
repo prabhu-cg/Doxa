@@ -16,6 +16,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LinkButton } from "@/components/link-button";
+import { canModerateCommunity } from "@/features/moderation/permissions";
+import { listBlockedParticipants } from "@/features/moderation/queries";
+import { formatRelativeTime } from "@/lib/utils";
+import { UnblockParticipantControl } from "./unblock-participant-control";
 import { UpdateOrganizationForm } from "./update-organization-form";
 import { LeaveOrganizationDialog } from "./leave-organization-dialog";
 import { RemoveMemberControl } from "./remove-member-control";
@@ -31,9 +35,13 @@ export default async function OrganizationSettingsPage({
 }) {
   const { slug } = await params;
   const { membership } = await requireOrganizationMembership(slug);
-  const [members, ownerCount] = await Promise.all([
+  const canModerate = canModerateCommunity(membership.role);
+  const [members, ownerCount, blocked] = await Promise.all([
     listMembersForOrganization(membership.organization.id),
     countOwners(membership.organization.id),
+    canModerate
+      ? listBlockedParticipants(membership.organization.id)
+      : Promise.resolve([]),
   ]);
 
   const canEdit = canUpdateOrganization(membership.role);
@@ -115,6 +123,42 @@ export default async function OrganizationSettingsPage({
           ))}
         </ul>
       </section>
+
+      {canModerate ? (
+        <>
+          <Separator />
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold">
+              Blocked people ({blocked.length})
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              People outside your team who can no longer vote, comment or submit
+              on your public boards. To block someone, use Block on one of their
+              comments.
+            </p>
+            {blocked.length > 0 ? (
+              <ul className="space-y-2">
+                {blocked.map((person) => (
+                  <li key={person.userId} className="flex items-center gap-3">
+                    <span className="flex-1 truncate text-sm">
+                      {person.displayName}
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · blocked {formatRelativeTime(person.blockedAt)}
+                      </span>
+                    </span>
+                    <UnblockParticipantControl
+                      slug={slug}
+                      userId={person.userId}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        </>
+      ) : null}
 
       <Separator />
 

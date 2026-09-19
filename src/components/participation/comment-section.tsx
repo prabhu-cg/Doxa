@@ -7,17 +7,14 @@ import {
   deleteComment,
   updateComment,
 } from "@/features/comments/actions";
+import { blockParticipant } from "@/features/moderation/actions";
 import type { CommentData } from "@/features/comments/mapper";
+import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/format-date";
+import { formatRelativeTime } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-function formatTimestamp(date: Date) {
-  return new Date(date).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 
 type SubmitResult = { success: boolean; error?: string };
 
@@ -90,7 +87,7 @@ function CommentItem({
   orgSlug: string;
   boardSlug: string;
   itemSlug: string;
-  currentUserId: string;
+  currentUserId: string | null;
   canComment: boolean;
   canModerate: boolean;
   isReply: boolean;
@@ -102,6 +99,11 @@ function CommentItem({
   const isAuthor = comment.authorId === currentUserId;
   const canEdit = isAuthor && !deleted;
   const canDelete = (isAuthor || canModerate) && !deleted;
+  // Moderators can bar someone who isn't on the team; that's only offered
+  // where it is actually possible (see blockParticipant).
+  const canBlock =
+    canModerate && !comment.authorIsTeam && !isAuthor && !deleted;
+  const [blocked, setBlocked] = useState(false);
 
   async function handleDelete() {
     if (!window.confirm("Delete this comment?")) return;
@@ -117,6 +119,19 @@ function CommentItem({
     }
   }
 
+  async function handleBlock() {
+    if (
+      !window.confirm(
+        `Block ${comment.authorName}? They won't be able to vote, comment or submit on your boards.`,
+      )
+    ) {
+      return;
+    }
+    const result = await blockParticipant(orgSlug, comment.authorId);
+    if (result.success) setBlocked(true);
+    else window.alert(result.error);
+  }
+
   return (
     <li className="space-y-2">
       <div className="flex items-start gap-2.5">
@@ -128,8 +143,13 @@ function CommentItem({
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-baseline gap-1.5">
             <span className="text-sm font-semibold">{comment.authorName}</span>
-            <span className="text-muted-foreground text-xs">
-              {formatTimestamp(comment.createdAt)}
+            {comment.authorIsTeam ? <Badge variant="soft">Team</Badge> : null}
+            <span
+              suppressHydrationWarning
+              title={formatDate(new Date(comment.createdAt))}
+              className="text-muted-foreground text-xs"
+            >
+              {formatRelativeTime(new Date(comment.createdAt))}
               {comment.editedAt ? " (edited)" : ""}
             </span>
           </div>
@@ -194,6 +214,19 @@ function CommentItem({
                   Delete
                 </button>
               ) : null}
+              {canBlock ? (
+                blocked ? (
+                  <span className="text-muted-foreground text-xs">Blocked</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-destructive text-xs hover:underline"
+                    onClick={handleBlock}
+                  >
+                    Block
+                  </button>
+                )
+              ) : null}
             </div>
           ) : null}
 
@@ -252,14 +285,22 @@ export function CommentSection({
   currentUserId,
   canComment,
   canModerate,
+  allowMentions,
+  cannotCommentNotice,
 }: {
   orgSlug: string;
   boardSlug: string;
   itemSlug: string;
   comments: CommentData[];
-  currentUserId: string;
+  /** Null for a visitor who isn't signed in. */
+  currentUserId: string | null;
   canComment: boolean;
+  /** Team admins: may delete anyone's comment and block participants. */
   canModerate: boolean;
+  /** Mentions only resolve to team members, so only they are told about them. */
+  allowMentions: boolean;
+  /** Shown in place of the form when the viewer can't comment — e.g. a sign-in prompt. */
+  cannotCommentNotice: React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -267,7 +308,11 @@ export function CommentSection({
     <div className="space-y-5">
       {canComment ? (
         <CommentForm
-          placeholder="Write a comment… (@mention a teammate)"
+          placeholder={
+            allowMentions
+              ? "Write a comment… (@mention a teammate)"
+              : "Write a comment…"
+          }
           submitLabel="Comment"
           onSubmit={async (body) => {
             const result = await createComment(orgSlug, boardSlug, itemSlug, {
@@ -278,9 +323,9 @@ export function CommentSection({
           }}
         />
       ) : (
-        <p className="text-muted-foreground text-sm">
-          Only organisation members can comment.
-        </p>
+        <div className="text-muted-foreground text-sm">
+          {cannotCommentNotice}
+        </div>
       )}
 
       {comments.length === 0 ? (

@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
-import { requireItemForOrgMember } from "@/features/items/queries";
+import { requireItemParticipation } from "@/features/participation/access";
+import { checkCommentRate } from "@/features/participation/rate-limit";
+import { revalidateItem } from "@/features/participation/revalidate";
 import { logActivity } from "@/features/activity/log";
 import { ensureFollowing } from "@/features/followers/ensure";
 import {
@@ -25,16 +26,18 @@ export async function createComment(
   itemSlug: string,
   input: { body: string; parentId?: string },
 ): Promise<ActionResult> {
-  const { profile, membership, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
-  if (!canCommentOnItem(membership.role)) {
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, role, organization, item } = access;
+  if (!canCommentOnItem(role)) {
     return {
       success: false,
       error: "You don't have permission to comment on this item",
     };
+  }
+  if (role === null) {
+    const rate = await checkCommentRate(organization.id, profile.id);
+    if (!rate.allowed) return { success: false, error: rate.error };
   }
 
   const parsed = createCommentSchema.safeParse(input);
@@ -57,7 +60,7 @@ export async function createComment(
     parentId = parent.parentId ?? parent.id;
   }
 
-  const organizationId = membership.organization.id;
+  const organizationId = organization.id;
   const mentionedIds = await resolveMentionedProfileIds(
     organizationId,
     parsed.data.body,
@@ -111,7 +114,7 @@ export async function createComment(
     });
   }
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }
 
@@ -122,11 +125,9 @@ export async function updateComment(
   commentId: string,
   input: { body: string },
 ): Promise<ActionResult> {
-  const { profile, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, item } = access;
   const comment = await db.comment.findFirst({
     where: { id: commentId, itemId: item.id, deletedAt: null },
   });
@@ -149,7 +150,7 @@ export async function updateComment(
     data: { body: parsed.data.body, editedAt: new Date() },
   });
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }
 
@@ -163,17 +164,15 @@ export async function deleteComment(
   itemSlug: string,
   commentId: string,
 ): Promise<ActionResult> {
-  const { profile, membership, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, role, item } = access;
   const comment = await db.comment.findFirst({
     where: { id: commentId, itemId: item.id, deletedAt: null },
   });
   if (!comment)
     return { success: false, error: "That comment no longer exists" };
-  if (!canDeleteComment(membership.role, comment.authorId === profile.id)) {
+  if (!canDeleteComment(role, comment.authorId === profile.id)) {
     return {
       success: false,
       error: "You don't have permission to delete this comment",
@@ -185,6 +184,6 @@ export async function deleteComment(
     data: { deletedAt: new Date(), body: "" },
   });
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }

@@ -175,10 +175,12 @@ model Profile {
   mentionedIn         CommentMention[]
   itemFollows         ItemFollower[]
   activities          ItemActivity[]
-  notifications       Notification[]   @relation("NotificationRecipient")
-  notificationsCaused Notification[]   @relation("NotificationActor")
+  notifications       Notification[]     @relation("NotificationRecipient")
+  notificationsCaused Notification[]     @relation("NotificationActor")
   decisionsRecorded   Decision[]
   auditLogEntries     AuditLog[]
+  participantBlocks   ParticipantBlock[] @relation("BlockedParticipant")
+  participantsBlocked ParticipantBlock[] @relation("BlockedBy")
 
   @@map("profiles")
 }
@@ -203,21 +205,22 @@ model Organization {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  memberships   Membership[]
-  spaces        Space[]
-  boards        Board[]
-  itemTypes     ItemType[]
-  statuses      Status[]
-  priorities    Priority[]
-  categories    Category[]
-  tags          Tag[]
-  items         Item[]
-  scoreCriteria ScoreCriterion[]
-  decisions     Decision[]
-  notifications Notification[]
-  customer      Customer?
-  subscription  Subscription?
-  auditLogs     AuditLog[]
+  memberships       Membership[]
+  spaces            Space[]
+  boards            Board[]
+  itemTypes         ItemType[]
+  statuses          Status[]
+  priorities        Priority[]
+  categories        Category[]
+  tags              Tag[]
+  items             Item[]
+  scoreCriteria     ScoreCriterion[]
+  decisions         Decision[]
+  notifications     Notification[]
+  customer          Customer?
+  subscription      Subscription?
+  auditLogs         AuditLog[]
+  participantBlocks ParticipantBlock[]
 
   @@map("organizations")
 }
@@ -236,6 +239,25 @@ model Membership {
 
   @@unique([organizationId, userId])
   @@map("memberships")
+}
+
+/// A person the organisation's team has barred from voting, commenting,
+/// following and submitting on its public boards. Per organisation: being
+/// blocked by one organisation says nothing about another. Members can't
+/// be blocked this way — remove the membership instead.
+model ParticipantBlock {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String   @db.Uuid
+  blockedById    String   @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         Profile      @relation("BlockedParticipant", fields: [userId], references: [id], onDelete: Cascade)
+  blockedBy    Profile      @relation("BlockedBy", fields: [blockedById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("participant_blocks")
 }
 
 /// A logical grouping within an organisation (e.g. "Product", "Customer
@@ -273,21 +295,25 @@ enum BoardStatus {
 /// visitor may view it at all (see the public `/b/[org]/[board]` routes);
 /// `status` is the archive lifecycle, kept separate from visibility.
 model Board {
-  id             String          @id @default(cuid())
-  organizationId String
-  spaceId        String
-  name           String
-  slug           String
-  description    String?
-  visibility     BoardVisibility @default(PRIVATE)
-  status         BoardStatus     @default(ACTIVE)
+  id              String          @id @default(cuid())
+  organizationId  String
+  spaceId         String
+  name            String
+  slug            String
+  description     String?
+  visibility      BoardVisibility @default(PRIVATE)
+  status          BoardStatus     @default(ACTIVE)
+  /// Whether an Item submitted by a community participant waits for a
+  /// team member to approve it before it shows on the public board. On by
+  /// default; team members' own submissions never wait.
+  requireApproval Boolean         @default(true)
   /// Reserved for future per-board configuration (e.g. custom submission
   /// fields, enabled item types). Not yet read or written by application
   /// logic beyond the default empty object — see the Phase 2 brief's
   /// "configuration" board property.
-  settings       Json            @default("{}")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  settings        Json            @default("{}")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   space        Space        @relation(fields: [spaceId], references: [id], onDelete: Cascade)
@@ -484,6 +510,9 @@ model Item {
   categoryId     String?
   authorId       String     @db.Uuid
   origin         ItemOrigin @default(TEAM)
+  /// A community submission the team hasn't approved yet: visible to the
+  /// team and its author only, and left out of every count and roadmap.
+  awaitingReview Boolean    @default(false)
   title          String
   slug           String
   description    String?
@@ -693,6 +722,8 @@ enum NotificationType {
   ITEM_STATUS_CHANGED
   /// A decision was recorded on an Item the recipient voted on or follows.
   ITEM_DECISION
+  /// A community participant submitted an Item (sent to the team).
+  ITEM_SUBMITTED
   MENTION
 }
 

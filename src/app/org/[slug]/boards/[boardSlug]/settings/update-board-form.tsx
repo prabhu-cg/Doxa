@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateBoardSchema } from "@/features/boards/schema";
 import { updateBoard } from "@/features/boards/actions";
@@ -17,6 +17,7 @@ type FormValues = {
   name: string;
   description?: string;
   visibility: "PUBLIC" | "PRIVATE";
+  requireApproval: boolean;
 };
 
 const VISIBILITY_OPTIONS: {
@@ -34,7 +35,7 @@ const VISIBILITY_OPTIONS: {
     value: "PUBLIC",
     label: "Public",
     description:
-      "Anyone with the link can browse this board, no account required. Submitting and voting still require membership.",
+      "Anyone with the link can browse this board. Signed-in visitors can also vote, comment, follow and submit — team members and customers alike.",
   },
 ];
 
@@ -44,12 +45,14 @@ export function UpdateBoardForm({
   initialName,
   initialDescription,
   initialVisibility,
+  initialRequireApproval,
 }: {
   orgSlug: string;
   boardSlug: string;
   initialName: string;
   initialDescription: string;
   initialVisibility: "PUBLIC" | "PRIVATE";
+  initialRequireApproval: boolean;
 }) {
   const router = useRouter();
   const [rootError, setRootError] = useState<string | null>(null);
@@ -65,8 +68,10 @@ export function UpdateBoardForm({
       name: initialName,
       description: initialDescription,
       visibility: initialVisibility,
+      requireApproval: initialRequireApproval,
     },
   });
+  const isPublic = useWatch({ control, name: "visibility" }) === "PUBLIC";
 
   async function onSubmit(values: FormValues) {
     setRootError(null);
@@ -136,6 +141,29 @@ export function UpdateBoardForm({
           )}
         />
       </FormField>
+      {isPublic ? (
+        <Label
+          htmlFor="requireApproval"
+          className="hover:bg-accent/40 flex cursor-pointer items-start gap-3 rounded-lg border p-3"
+        >
+          <input
+            id="requireApproval"
+            type="checkbox"
+            className="mt-0.5 size-4"
+            {...register("requireApproval")}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">
+              Review new submissions first
+            </span>
+            <span className="text-muted-foreground text-xs">
+              Items submitted by people outside your team stay hidden until an
+              owner or admin approves them. Your team&apos;s own items are never
+              held back.
+            </span>
+          </span>
+        </Label>
+      ) : null}
       {rootError ? (
         <p className="text-destructive text-sm">{rootError}</p>
       ) : null}

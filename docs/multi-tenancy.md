@@ -68,6 +68,20 @@ Hiding a button is not authorization.
   organisations of their own hits a known-valid org slug directly and
   gets a 404, never the organisation's name or data).
 
+## Participants: signed in, but not a tenant
+
+A customer taking part on a Public board is a `Profile` with **no
+`Membership`**, and must stay that way — a member can see Private boards,
+and admins can change things. The boundary is enforced in one place,
+`features/participation/access.ts`: a non-member is let through only for a
+Public, active board, only when their email is confirmed and they aren't in
+`ParticipantBlock` for that organisation, and any other board (private,
+archived, missing) gets the same refusal, so this path can't be used to
+probe which private boards exist. Everything a participant creates is scoped
+by the item's own `organizationId`, like any member's; `origin: COMMUNITY`
+keeps it out of the team's plan usage. The `/org/[slug]/**` routes are
+untouched — a participant still gets a 404 there.
+
 ## Row Level Security: deliberately not used for these tables
 
 Organisations/Memberships/Profiles are read and written exclusively

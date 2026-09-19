@@ -10,6 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
+import { OrgIdentity } from "@/components/public/org-identity";
 import { publicBoardPath, publicItemPath } from "@/lib/public-links";
 
 export async function generateMetadata({
@@ -40,116 +42,113 @@ export default async function PublicRoadmapPage({
     shipped.length === 0 && ROADMAP_STAGES.every((s) => stages[s].length === 0);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-10 px-4 py-10">
-      <header className="space-y-2">
-        <Link
-          href="/"
-          className="text-muted-foreground text-sm font-semibold tracking-tight"
-        >
-          Doxa
-        </Link>
-        <div className="flex items-center gap-2">
-          {organization.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external, org-supplied URL; not a static/local asset next/image can optimize.
-            <img
-              src={organization.logoUrl}
-              alt={`${organization.name} logo`}
-              className="size-6 rounded object-contain"
-            />
-          ) : null}
-          <h1
-            className="text-2xl font-bold tracking-tight"
-            style={
-              organization.accentColor
-                ? { color: organization.accentColor }
-                : undefined
-            }
-          >
-            Roadmap
-          </h1>
-        </div>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          {organization.name} · What we&apos;re working on, what&apos;s next,
-          and what has shipped. Every card links to the reasoning behind the
-          decision.
-        </p>
-        <p className="text-muted-foreground text-sm">
-          Share an idea or see what others asked for:{" "}
-          {boards.map((board, index) => (
-            <span key={board.slug}>
-              {index > 0 ? " · " : ""}
-              <Link
-                href={publicBoardPath(orgSlug, board.slug)}
-                className="text-foreground underline underline-offset-4"
-              >
-                {board.name}
-              </Link>
-            </span>
-          ))}
-        </p>
-      </header>
-
-      {isEmpty ? (
-        <p className="text-muted-foreground text-sm">
-          Nothing on the roadmap yet — check back soon.
-        </p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {ROADMAP_STAGES.map((stage) => (
-              <section key={stage} className="space-y-3">
-                <h2 className="text-sm font-semibold">
-                  {ROADMAP_STAGE_LABELS[stage]}{" "}
-                  <span className="text-muted-foreground font-normal">
-                    ({stages[stage].length})
-                  </span>
-                </h2>
-                {stages[stage].length === 0 ? (
-                  <p className="text-muted-foreground text-xs">
-                    Nothing here yet.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {stages[stage].map((item) => (
-                      <RoadmapCard
-                        key={item.id}
-                        orgSlug={orgSlug}
-                        item={item}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            ))}
-          </div>
-
-          {shipped.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold">Recently shipped</h2>
-              <ul className="divide-y border-y">
-                {shipped.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+    <>
+      <section
+        aria-label="About the roadmap"
+        className="border-b bg-[color-mix(in_srgb,var(--primary)_5%,white)]"
+      >
+        <div className="mx-auto flex w-full max-w-[1400px] items-start gap-4 px-4 py-8 sm:gap-5 sm:px-6 lg:px-8">
+          <OrgIdentity
+            markOnly
+            name={organization.name}
+            logoUrl={organization.logoUrl}
+            size={48}
+            className="shrink-0"
+          />
+          <div className="min-w-0">
+            <h1 className="text-[28px] leading-tight font-bold tracking-tight">
+              Roadmap
+            </h1>
+            <p className="text-foreground/75 mt-1.5 max-w-prose text-[15px] leading-6">
+              What {organization.name} is working on, what&apos;s next, and what
+              has shipped. Every item links to the reasoning behind the
+              decision.
+            </p>
+            <p className="text-muted-foreground mt-3 text-sm">
+              Share an idea or see what others asked for:{" "}
+              {boards.map((board, index) => (
+                <span key={board.slug}>
+                  {index > 0 ? " · " : ""}
+                  <Link
+                    href={publicBoardPath(orgSlug, board.slug)}
+                    className="text-primary-text font-semibold underline-offset-4 hover:underline"
                   >
-                    <Link
-                      href={publicItemPath(orgSlug, item.boardSlug, item.slug)}
-                      className="text-sm font-medium hover:underline"
-                    >
-                      {item.title}
-                    </Link>
-                    <span className="text-muted-foreground text-xs">
-                      {item.votes} {item.votes === 1 ? "vote" : "votes"} ·
-                      shipped {formatRelativeTime(item.decidedAt)}
+                    {board.name}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto w-full max-w-[1400px] space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+        {isEmpty ? (
+          <p className="text-muted-foreground text-sm">
+            Nothing on the roadmap yet — check back soon.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {ROADMAP_STAGES.map((stage) => (
+                <section key={stage} className="space-y-3">
+                  <h2 className="text-sm font-semibold">
+                    {ROADMAP_STAGE_LABELS[stage]}{" "}
+                    <span className="text-muted-foreground font-normal">
+                      ({stages[stage].length})
                     </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </>
-      )}
-    </div>
+                  </h2>
+                  {stages[stage].length === 0 ? (
+                    <p className="text-muted-foreground text-xs">
+                      Nothing here yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {stages[stage].map((item) => (
+                        <RoadmapCard
+                          key={item.id}
+                          orgSlug={orgSlug}
+                          item={item}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+
+            {shipped.length > 0 ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold">Recently shipped</h2>
+                <ul className="divide-y border-y">
+                  {shipped.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+                    >
+                      <Link
+                        href={publicItemPath(
+                          orgSlug,
+                          item.boardSlug,
+                          item.slug,
+                        )}
+                        className="text-sm font-medium hover:underline"
+                      >
+                        {item.title}
+                      </Link>
+                      <span className="text-muted-foreground text-xs">
+                        {item.votes} {item.votes === 1 ? "vote" : "votes"} ·
+                        shipped {formatRelativeTime(item.decidedAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -181,9 +180,7 @@ function RoadmapCard({
         </p>
         <p className="text-muted-foreground text-xs">
           {item.votes} {item.votes === 1 ? "vote" : "votes"}
-          {item.targetDate
-            ? ` · target ${item.targetDate.toLocaleDateString()}`
-            : ""}
+          {item.targetDate ? ` · target ${formatDate(item.targetDate)}` : ""}
         </p>
       </CardContent>
     </Card>

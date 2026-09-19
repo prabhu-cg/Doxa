@@ -26,6 +26,7 @@ export function ItemCard({
   commentCount,
   updatedAt,
   archived,
+  awaitingReview,
 }: {
   href: string;
   title: string;
@@ -45,6 +46,8 @@ export function ItemCard({
   commentCount: number;
   updatedAt: Date;
   archived?: boolean;
+  /** A community submission the team hasn't approved yet. */
+  awaitingReview?: boolean;
 }) {
   return (
     <EntityCard
@@ -58,6 +61,9 @@ export function ItemCard({
           <Badge variant="outline">{itemTypeName}</Badge>
           {decisionType ? <DecisionBadge type={decisionType} /> : null}
           {archived ? <Badge variant="secondary">Archived</Badge> : null}
+          {awaitingReview ? (
+            <Badge variant="warning">Needs review</Badge>
+          ) : null}
         </>
       }
       subtitle={categoryName}

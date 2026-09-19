@@ -51,6 +51,7 @@ export async function listItemsForPrioritization(
       organizationId,
       deletedAt: null,
       archivedAt: null,
+      awaitingReview: false,
       ...(filters.itemTypeSlug
         ? { itemType: { slug: filters.itemTypeSlug } }
         : {}),

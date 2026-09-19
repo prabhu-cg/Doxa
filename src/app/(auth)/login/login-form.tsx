@@ -11,6 +11,7 @@ import { FormField } from "@/components/form-field";
 import { IconInput } from "@/components/auth/icon-input";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
+import { authPath } from "@/lib/safe-next";
 
 type FormValues = { email: string; password: string };
 
@@ -70,7 +71,10 @@ export function LoginForm({ next }: { next?: string }) {
         >
           Forgot password?
         </Link>
-        <Link href="/signup" className="hover:text-foreground underline">
+        <Link
+          href={authPath("signup", next)}
+          className="hover:text-foreground underline"
+        >
           Create an account
         </Link>
       </div>

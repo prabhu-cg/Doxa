@@ -61,6 +61,7 @@ export async function getPublicRoadmap(
       organizationId: organization.id,
       deletedAt: null,
       archivedAt: null,
+      awaitingReview: false,
       board: { visibility: "PUBLIC", status: "ACTIVE" },
     },
     select: {

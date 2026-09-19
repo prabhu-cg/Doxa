@@ -10,18 +10,24 @@ export type CommentData = {
   body: string;
   authorId: string;
   authorName: string;
+  /** Whether the author is on the organisation's team, so the UI can say so. */
+  authorIsTeam: boolean;
   createdAt: Date;
   editedAt: Date | null;
   deletedAt: Date | null;
   replies: CommentData[];
 };
 
-export function toCommentData(comment: CommentWithReplies): CommentData {
+export function toCommentData(
+  comment: CommentWithReplies,
+  teamIds: ReadonlySet<string>,
+): CommentData {
   return {
     id: comment.id,
     body: comment.body,
     authorId: comment.authorId,
     authorName: comment.author.displayName,
+    authorIsTeam: teamIds.has(comment.authorId),
     createdAt: comment.createdAt,
     editedAt: comment.editedAt,
     deletedAt: comment.deletedAt,
@@ -30,6 +36,7 @@ export function toCommentData(comment: CommentWithReplies): CommentData {
       body: reply.body,
       authorId: reply.authorId,
       authorName: reply.author.displayName,
+      authorIsTeam: teamIds.has(reply.authorId),
       createdAt: reply.createdAt,
       editedAt: reply.editedAt,
       deletedAt: reply.deletedAt,

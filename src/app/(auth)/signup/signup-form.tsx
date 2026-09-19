@@ -11,10 +11,17 @@ import { FormField } from "@/components/form-field";
 import { IconInput } from "@/components/auth/icon-input";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { authPath } from "@/lib/safe-next";
 
-type FormValues = { email: string; password: string; confirmPassword: string };
+type FormValues = {
+  displayName?: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string }) {
   const [rootError, setRootError] = useState<string | null>(null);
   const [checkEmail, setCheckEmail] = useState<string | null>(null);
   const {
@@ -25,7 +32,7 @@ export function SignUpForm() {
 
   async function onSubmit(values: FormValues) {
     setRootError(null);
-    const result = await signUp(values);
+    const result = await signUp({ ...values, next });
     if (!result.success) {
       setRootError(result.error);
       return;
@@ -49,6 +56,19 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <FormField
+        label="Your name (optional)"
+        htmlFor="displayName"
+        hint="Shown next to your votes and comments."
+        error={errors.displayName?.message}
+      >
+        <Input
+          id="displayName"
+          autoComplete="name"
+          aria-invalid={!!errors.displayName}
+          {...register("displayName")}
+        />
+      </FormField>
       <FormField
         label="Email address"
         htmlFor="email"
@@ -96,7 +116,10 @@ export function SignUpForm() {
       </Button>
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{" "}
-        <Link href="/login" className="hover:text-foreground underline">
+        <Link
+          href={authPath("login", next)}
+          className="hover:text-foreground underline"
+        >
           Sign in
         </Link>
       </p>

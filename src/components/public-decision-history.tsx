@@ -1,4 +1,5 @@
 import { DecisionBadge } from "@/components/decision-badge";
+import { formatDate } from "@/lib/format-date";
 import { ROADMAP_STAGE_LABELS } from "@/features/decisions/schema";
 import type { PublicDecision } from "@/features/decisions/transparency";
 
@@ -25,7 +26,7 @@ export function PublicDecisionHistory({
         <div className="flex flex-wrap items-center gap-2">
           <DecisionBadge type={current.type} bare />
           <span className="text-muted-foreground text-xs">
-            {current.createdAt.toLocaleDateString()}
+            {formatDate(current.createdAt)}
           </span>
           {current.roadmapStage ? (
             <span className="text-muted-foreground text-xs">
@@ -34,7 +35,7 @@ export function PublicDecisionHistory({
           ) : null}
           {current.targetDate ? (
             <span className="text-muted-foreground text-xs">
-              · Target {current.targetDate.toLocaleDateString()}
+              · Target {formatDate(current.targetDate)}
             </span>
           ) : null}
         </div>
@@ -52,7 +53,7 @@ export function PublicDecisionHistory({
                 <div className="flex flex-wrap items-center gap-2">
                   <DecisionBadge type={decision.type} bare />
                   <span className="text-muted-foreground text-xs">
-                    {decision.createdAt.toLocaleDateString()}
+                    {formatDate(decision.createdAt)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm whitespace-pre-wrap">

@@ -59,7 +59,12 @@ export async function getResponseSummaryForBoard(
   boardId: string,
 ): Promise<ResponseSummary> {
   const items = await db.item.findMany({
-    where: { boardId, deletedAt: null, archivedAt: null },
+    where: {
+      boardId,
+      deletedAt: null,
+      archivedAt: null,
+      awaitingReview: false,
+    },
     select: {
       createdAt: true,
       decisions: {

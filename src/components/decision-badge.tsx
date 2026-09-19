@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { badgeColors } from "@/lib/brand-color";
 import {
   DECISION_TYPE_COLORS,
   DECISION_TYPE_LABELS,
@@ -15,7 +16,8 @@ export function DecisionBadge({
 }) {
   const color = DECISION_TYPE_COLORS[type];
   return (
-    <Badge variant="secondary" style={{ backgroundColor: `${color}22`, color }}>
+    <Badge variant="secondary" style={badgeColors(color)}>
+      {" "}
       {bare ? null : "Decision: "}
       {DECISION_TYPE_LABELS[type]}
     </Badge>

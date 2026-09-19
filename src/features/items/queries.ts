@@ -56,16 +56,20 @@ const SORT_ORDER_BY: Record<BoardSort, Prisma.ItemOrderByWithRelationInput> = {
   "recently-updated": { updatedAt: "desc" },
 };
 
+/** `includePending` is for the team's own views: a community submission that
+ * hasn't been approved yet is otherwise left out, so the public board never
+ * lists it. */
 export async function listItemsForBoard(
   boardId: string,
   filters: BoardFilters = {},
-  options: { includeArchived?: boolean } = {},
+  options: { includeArchived?: boolean; includePending?: boolean } = {},
 ): Promise<ItemWithRelations[]> {
   return db.item.findMany({
     where: {
       boardId,
       deletedAt: null,
       ...(options.includeArchived ? {} : { archivedAt: null }),
+      ...(options.includePending ? {} : { awaitingReview: false }),
       ...(filters.q
         ? {
             OR: [
@@ -102,13 +106,24 @@ export async function getItemForOrgMember(
   });
 }
 
-/** For the public routes — archived (and deleted) Items are invisible. */
+/** For the public routes — archived (and deleted) Items are invisible, and so
+ * is a submission still awaiting review, except to the person who submitted it. */
 export async function getItemForVisitor(
   boardId: string,
   itemSlug: string,
+  viewerId?: string,
 ): Promise<ItemWithRelations | null> {
   return db.item.findFirst({
-    where: { boardId, slug: itemSlug, deletedAt: null, archivedAt: null },
+    where: {
+      boardId,
+      slug: itemSlug,
+      deletedAt: null,
+      archivedAt: null,
+      OR: [
+        { awaitingReview: false },
+        ...(viewerId ? [{ authorId: viewerId }] : []),
+      ],
+    },
     include: itemRelationsInclude,
   });
 }
@@ -139,6 +154,7 @@ export async function getVisibleItem(
   orgSlug: string,
   boardSlug: string,
   itemSlug: string,
+  viewerId?: string,
 ): Promise<{
   organization: Organization;
   board: BoardWithSpace;
@@ -147,8 +163,26 @@ export async function getVisibleItem(
   const visible = await getVisibleBoard(orgSlug, boardSlug);
   if (!visible) return null;
 
-  const item = await getItemForVisitor(visible.board.id, itemSlug);
+  const item = await getItemForVisitor(visible.board.id, itemSlug, viewerId);
   if (!item) return null;
 
   return { organization: visible.organization, board: visible.board, item };
+}
+
+/** What a board's public masthead says about it: how many items it lists and
+ * how many votes are on them — over the same items the public list shows. */
+export async function getBoardTotals(
+  boardId: string,
+): Promise<{ items: number; votes: number }> {
+  const live = {
+    boardId,
+    deletedAt: null,
+    archivedAt: null,
+    awaitingReview: false,
+  };
+  const [items, votes] = await Promise.all([
+    db.item.count({ where: live }),
+    db.vote.count({ where: { item: live } }),
+  ]);
+  return { items, votes };
 }

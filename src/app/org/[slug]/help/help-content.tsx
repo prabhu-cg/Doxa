@@ -23,7 +23,7 @@ const TERMS: Term[] = [
   {
     name: "Board",
     definition:
-      'Where Items are actually submitted and browsed, inside a Space. A Board is Public (anyone with the link can browse, no account required) or Private (organisation members only). Think of a Board as one specific area of feedback — "Mobile bugs" and "Feature requests" would usually be two different Boards, not one.',
+      'Where Items are actually submitted and browsed, inside a Space. A Board is Public (anyone with the link can browse; signed-in visitors, including customers, can also vote, comment and submit) or Private (organisation members only). Think of a Board as one specific area of feedback — "Mobile bugs" and "Feature requests" would usually be two different Boards, not one.',
   },
   {
     name: "Item",

@@ -22,7 +22,11 @@ export async function listSpacesForOrganization(
   organizationId: string,
   options: { includeArchived?: boolean; recentFirst?: boolean } = {},
 ): Promise<SpaceWithCounts[]> {
-  const liveItems = { deletedAt: null, archivedAt: null };
+  const liveItems = {
+    deletedAt: null,
+    archivedAt: null,
+    awaitingReview: false,
+  };
   const spaces = await db.space.findMany({
     where: {
       organizationId,

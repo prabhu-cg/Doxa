@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
-import { requireItemForOrgMember } from "@/features/items/queries";
+import { requireItemParticipation } from "@/features/participation/access";
+import { revalidateItem } from "@/features/participation/revalidate";
 import { canFollowItem } from "./permissions";
 import { ensureFollowing } from "./ensure";
 
@@ -13,12 +13,10 @@ export async function followItem(
   boardSlug: string,
   itemSlug: string,
 ): Promise<ActionResult> {
-  const { profile, membership, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
-  if (!canFollowItem(membership.role)) {
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, role, item } = access;
+  if (!canFollowItem(role)) {
     return {
       success: false,
       error: "You don't have permission to follow this item",
@@ -27,7 +25,7 @@ export async function followItem(
 
   await ensureFollowing(db, item.id, profile.id);
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }
 
@@ -36,16 +34,14 @@ export async function unfollowItem(
   boardSlug: string,
   itemSlug: string,
 ): Promise<ActionResult> {
-  const { profile, item } = await requireItemForOrgMember(
-    orgSlug,
-    boardSlug,
-    itemSlug,
-  );
+  const access = await requireItemParticipation(orgSlug, boardSlug, itemSlug);
+  if (!access.ok) return { success: false, error: access.error };
+  const { profile, item } = access;
 
   await db.itemFollower.deleteMany({
     where: { itemId: item.id, userId: profile.id },
   });
 
-  revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
+  revalidateItem(orgSlug, boardSlug, itemSlug);
   return { success: true };
 }

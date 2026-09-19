@@ -57,7 +57,7 @@ export default async function BoardAdminPage({
         tagSlug: filters.tag,
         sort: filters.sort,
       },
-      { includeArchived: true },
+      { includeArchived: true, includePending: true },
     ),
     listItemTypesForOrganization(membership.organization.id),
     listStatusesForOrganization(membership.organization.id),
@@ -153,6 +153,7 @@ export default async function BoardAdminPage({
               priorityColor={item.priority.color}
               updatedAt={item.updatedAt}
               archived={!!item.archivedAt}
+              awaitingReview={item.awaitingReview}
             />
           ))}
         </EntityGrid>

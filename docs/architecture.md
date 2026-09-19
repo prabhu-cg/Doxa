@@ -98,11 +98,13 @@ not `/`.
   board/item browsing experience at `/b/[orgSlug]/[boardSlug]`.
 - **Phase 3** — the community interaction layer: Vote, Comment (one level
   of threaded replies), CommentMention, ItemFollower, ItemActivity, and
-  Notification, all owned by Item. Voting, commenting, and following are
+  Notification, all owned by Item. Voting, commenting, and following were
   membership-gated the same way submitting an Item is (see "Assumptions
   made" in the root `README.md`) — interactive on the authenticated Item
   page (`/org/[slug]/boards/[boardSlug]/items/[itemSlug]`), read-only
-  counts on the public one. Basic moderation (delete a comment, remove a
+  counts on the public one. Customer participation later opened the
+  public page to signed-in, email-verified visitors without making them
+  members — see "Customer participation" in the root `README.md`. Basic moderation (delete a comment, remove a
   member) and board-level search/filter/sort round out the phase.
 - **Phase 4** — Doxa's main differentiation: opinions are evidence, not
   automatically decisions. Priority (organisation-controlled data, same

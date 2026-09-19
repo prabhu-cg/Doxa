@@ -57,4 +57,24 @@ describe("notificationMessage", () => {
       }),
     ).toBe('"Dark mode" changed from Open to Planned');
   });
+
+  it("says a community submission is waiting for review", () => {
+    expect(
+      notificationMessage({
+        ...base,
+        type: "ITEM_SUBMITTED",
+        data: { awaitingReview: true },
+      }),
+    ).toBe('Ana submitted "Dark mode" — waiting for your review');
+  });
+
+  it("just announces a submission that went straight onto the board", () => {
+    expect(
+      notificationMessage({
+        ...base,
+        type: "ITEM_SUBMITTED",
+        data: { awaitingReview: false },
+      }),
+    ).toBe('Ana submitted "Dark mode"');
+  });
 });

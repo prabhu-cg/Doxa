@@ -8,7 +8,10 @@ const ACTIVITY_LABELS: Record<
   (data: Record<string, unknown>, actorName: string) => string
 > = {
   ITEM_CREATED: (_data, actor) => `${actor} created this item`,
-  ITEM_EDITED: (_data, actor) => `${actor} edited this item`,
+  ITEM_EDITED: (data, actor) =>
+    data.approved
+      ? `${actor} approved this submission`
+      : `${actor} edited this item`,
   STATUS_CHANGED: (data, actor) =>
     `${actor} changed status from ${data.fromStatus} to ${data.toStatus}`,
   PRIORITY_CHANGED: (data, actor) =>

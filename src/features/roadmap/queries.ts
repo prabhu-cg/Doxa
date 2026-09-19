@@ -35,7 +35,12 @@ export async function listRoadmapForOrganization(
   organizationId: string,
 ): Promise<RoadmapBoard> {
   const items = await db.item.findMany({
-    where: { organizationId, deletedAt: null, archivedAt: null },
+    where: {
+      organizationId,
+      deletedAt: null,
+      archivedAt: null,
+      awaitingReview: false,
+    },
     include: {
       itemType: true,
       status: true,
