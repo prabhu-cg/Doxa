@@ -6,13 +6,16 @@ import {
   countUnreadNotifications,
   listNotificationsForUser,
 } from "@/features/notifications/queries";
+import { canViewPrioritization } from "@/features/prioritization/permissions";
 import { AppShell } from "@/components/app-shell";
 
 export default async function OrgLayout({
   children,
+  modal,
   params,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
@@ -37,6 +40,7 @@ export default async function OrgLayout({
         name: m.organization.name,
       }))}
       displayName={profile.displayName}
+      showPrioritisation={canViewPrioritization(membership.role)}
       notifications={notifications.map((n) => ({
         id: n.id,
         type: n.type,
@@ -50,6 +54,7 @@ export default async function OrgLayout({
         createdAt: n.createdAt,
       }))}
       unreadNotificationCount={unreadNotificationCount}
+      modal={modal}
     >
       {children}
     </AppShell>

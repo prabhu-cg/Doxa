@@ -73,13 +73,12 @@ test.describe("organisation switching and settings", () => {
       .first()
       .click();
     await page.getByRole("menuitem", { name: orgB.name }).click();
-    await expect(page).toHaveURL(new RegExp(`/org/${orgB.slug}$`));
-    await expect(page.getByRole("heading", { name: orgB.name })).toBeVisible();
+    // An organisation's landing page redirects to its Spaces.
+    await expect(page).toHaveURL(new RegExp(`/org/${orgB.slug}/spaces$`));
+    await expect(page.getByRole("button", { name: orgB.name })).toBeVisible();
   });
 
-  test("renaming an organisation updates the dashboard and switcher", async ({
-    page,
-  }) => {
+  test("renaming an organisation updates the switcher", async ({ page }) => {
     await login(page, user.email, user.password);
     await page.goto(`/org/${orgA.slug}/settings`);
     await page.getByLabel("Organisation name").fill("Switch Org A Renamed");

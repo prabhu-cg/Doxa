@@ -12,23 +12,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type OrgOption = { slug: string; name: string };
 
 export function OrgSwitcher({
   current,
   options,
+  className = "max-w-[220px]",
 }: {
   current: OrgOption;
   options: OrgOption[];
+  className?: string;
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <Button
-            variant="ghost"
-            className="max-w-[220px] justify-between gap-2"
+            variant="outline"
+            className={cn("w-full justify-between gap-2", className)}
           >
             <span className="truncate">{current.name}</span>
             <ChevronsUpDown className="size-4 opacity-50" />

@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 type FormValues = {
   name: string;
@@ -25,10 +27,24 @@ type FormValues = {
   visibility: "PUBLIC" | "PRIVATE";
 };
 
-const VISIBILITY_ITEMS = {
-  PRIVATE: "Private — members of this organisation only",
-  PUBLIC: "Public — anyone with the link, no account required",
-};
+const VISIBILITY_OPTIONS: {
+  value: "PRIVATE" | "PUBLIC";
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "PRIVATE",
+    label: "Private",
+    description:
+      "Only members of this organisation can see this board and its Items.",
+  },
+  {
+    value: "PUBLIC",
+    label: "Public",
+    description:
+      "Anyone with the link can browse this board, no account required. Submitting and voting still require membership.",
+  },
+];
 
 export function CreateBoardForm({
   orgSlug,
@@ -78,10 +94,12 @@ export function CreateBoardForm({
       <FormField
         label="Description"
         htmlFor="description"
+        hint="Explain what belongs here so contributors know where to submit — e.g. 'Bug reports for the mobile app' or 'Ideas for the Q3 roadmap'."
         error={errors.description?.message}
       >
         <Textarea
           id="description"
+          placeholder="What's this board for?"
           aria-invalid={!!errors.description}
           {...register("description")}
         />
@@ -125,23 +143,31 @@ export function CreateBoardForm({
           control={control}
           name="visibility"
           render={({ field }) => (
-            <Select
+            <RadioGroup
               value={field.value}
               onValueChange={field.onChange}
-              items={VISIBILITY_ITEMS}
+              className="gap-2"
             >
-              <SelectTrigger id="visibility" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PRIVATE">
-                  {VISIBILITY_ITEMS.PRIVATE}
-                </SelectItem>
-                <SelectItem value="PUBLIC">
-                  {VISIBILITY_ITEMS.PUBLIC}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              {VISIBILITY_OPTIONS.map((option) => (
+                <Label
+                  key={option.value}
+                  htmlFor={`visibility-${option.value}`}
+                  className="hover:bg-accent/40 has-data-checked:border-primary has-data-checked:bg-accent/60 flex cursor-pointer items-start gap-3 rounded-lg border p-3"
+                >
+                  <RadioGroupItem
+                    id={`visibility-${option.value}`}
+                    value={option.value}
+                    className="mt-0.5"
+                  />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium">{option.label}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {option.description}
+                    </span>
+                  </span>
+                </Label>
+              ))}
+            </RadioGroup>
           )}
         />
       </FormField>

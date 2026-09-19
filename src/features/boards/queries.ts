@@ -15,31 +15,67 @@ import type {
 
 export type BoardWithSpace = Board & { space: Space };
 
+export type BoardSummary = Board & {
+  _count: { items: number };
+  /** The later of the board's own edit and its most recently touched item. */
+  lastActivityAt: Date;
+};
+export type BoardSummaryWithSpace = BoardSummary & { space: Space };
+
+// Live items only, plus the newest one so a card can say when the board last
+// moved — a board's own `updatedAt` doesn't change when items are added.
+const boardSummaryInclude = {
+  _count: {
+    select: { items: { where: { deletedAt: null, archivedAt: null } } },
+  },
+  items: {
+    where: { deletedAt: null },
+    select: { updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+    take: 1,
+  },
+} as const;
+
+function withLastActivity<
+  T extends { updatedAt: Date; items: { updatedAt: Date }[] },
+>({ items, ...board }: T): Omit<T, "items"> & { lastActivityAt: Date } {
+  return {
+    ...board,
+    lastActivityAt:
+      items[0] && items[0].updatedAt > board.updatedAt
+        ? items[0].updatedAt
+        : board.updatedAt,
+  };
+}
+
 export async function listBoardsForOrganization(
   organizationId: string,
   options: { includeArchived?: boolean } = {},
-): Promise<BoardWithSpace[]> {
-  return db.board.findMany({
+): Promise<BoardSummaryWithSpace[]> {
+  const boards = await db.board.findMany({
     where: {
       organizationId,
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
-    include: { space: true },
+    include: { space: true, ...boardSummaryInclude },
     orderBy: { createdAt: "asc" },
   });
+  return boards.map(withLastActivity);
 }
 
 export async function listBoardsForSpace(
   spaceId: string,
   options: { includeArchived?: boolean } = {},
-): Promise<Board[]> {
-  return db.board.findMany({
+): Promise<BoardSummary[]> {
+  const boards = await db.board.findMany({
     where: {
       spaceId,
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
+    include: boardSummaryInclude,
     orderBy: { createdAt: "asc" },
   });
+  return boards.map(withLastActivity);
 }
 
 /** Returns null for both "no such board" and "board belongs to a different

@@ -272,7 +272,7 @@ export default async function ItemAdminPage({
               initialStatusId={item.statusId}
               initialPriorityId={item.priorityId}
               initialCategoryId={item.categoryId ?? ""}
-              initialTags={item.tags.map(({ tag }) => tag.name).join(", ")}
+              initialTags={item.tags.map(({ tag }) => tag.name)}
               itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
               statuses={statuses.map((s) => ({ id: s.id, name: s.name }))}
               priorities={priorities.map((p) => ({ id: p.id, name: p.name }))}

@@ -62,8 +62,7 @@ test.describe("admin: creating a space, board and item end to end", () => {
     // only visibility needs choosing.
     await page.getByRole("link", { name: "New board" }).click();
     await page.getByLabel("Name").fill("Feature Requests");
-    await page.getByRole("combobox", { name: "Visibility" }).click();
-    await page.getByRole("option", { name: /Public/ }).click();
+    await page.getByRole("radio", { name: /Public/ }).click();
     await page.getByRole("button", { name: "Create board" }).click();
     await expect(page).toHaveURL(/\/boards\/feature-requests/);
     await expect(page.getByText("PUBLIC")).toBeVisible();

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { canManageBoards } from "@/features/boards/permissions";
 import { canCreateItem } from "@/features/items/permissions";
@@ -15,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/link-button";
 import { ItemFilters } from "@/components/item-filters";
 import { ItemCard } from "@/components/item-card";
+import { EntityGrid } from "@/components/entity-card";
 
 export default async function BoardAdminPage({
   params,
@@ -62,8 +64,8 @@ export default async function BoardAdminPage({
   const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{board.name}</h1>
@@ -74,6 +76,17 @@ export default async function BoardAdminPage({
           </div>
           {board.description ? (
             <p className="text-muted-foreground text-sm">{board.description}</p>
+          ) : canManageBoards(membership.role) ? (
+            <p className="text-muted-foreground text-sm italic">
+              No description yet —{" "}
+              <Link
+                href={`${basePath}/settings`}
+                className="underline underline-offset-2"
+              >
+                add one
+              </Link>{" "}
+              so contributors know what belongs on this board.
+            </p>
           ) : null}
         </div>
         <div className="flex shrink-0 gap-2">
@@ -102,7 +115,7 @@ export default async function BoardAdminPage({
       {items.length === 0 ? (
         <p className="text-muted-foreground text-sm">No items match.</p>
       ) : (
-        <div className="space-y-3">
+        <EntityGrid>
           {items.map((item) => (
             <ItemCard
               key={item.id}
@@ -117,10 +130,15 @@ export default async function BoardAdminPage({
               authorName={item.author.displayName}
               voteCount={item._count.votes}
               commentCount={item._count.comments}
+              priorityName={
+                item.priority.slug !== "none" ? item.priority.name : null
+              }
+              priorityColor={item.priority.color}
+              updatedAt={item.updatedAt}
               archived={!!item.archivedAt}
             />
           ))}
-        </div>
+        </EntityGrid>
       )}
     </div>
   );

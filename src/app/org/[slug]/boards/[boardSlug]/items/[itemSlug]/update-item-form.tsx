@@ -13,6 +13,7 @@ import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { TagInput } from "@/components/tag-input";
 import {
   Select,
   SelectContent,
@@ -30,7 +31,7 @@ const formSchema = z.object({
   statusId: z.string().min(1, "Choose a status"),
   priorityId: z.string().min(1, "Choose a priority"),
   categoryId: z.string(),
-  tags: z.string(),
+  tags: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -61,7 +62,7 @@ export function UpdateItemForm({
   initialStatusId: string;
   initialPriorityId: string;
   initialCategoryId: string;
-  initialTags: string;
+  initialTags: string[];
   itemTypes: Option[];
   statuses: Option[];
   priorities: Option[];
@@ -98,10 +99,7 @@ export function UpdateItemForm({
       priorityId: values.priorityId,
       categoryId:
         values.categoryId === NO_CATEGORY ? undefined : values.categoryId,
-      tagNames: values.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tagNames: values.tags,
     });
     if (!result.success) {
       setRootError(result.error);
@@ -256,7 +254,19 @@ export function UpdateItemForm({
       ) : null}
 
       <FormField label="Tags" htmlFor="tags" error={errors.tags?.message}>
-        <Input id="tags" aria-invalid={!!errors.tags} {...register("tags")} />
+        <Controller
+          control={control}
+          name="tags"
+          render={({ field }) => (
+            <TagInput
+              id="tags"
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="mobile, performance…"
+              aria-invalid={!!errors.tags}
+            />
+          )}
+        />
       </FormField>
 
       {rootError ? (

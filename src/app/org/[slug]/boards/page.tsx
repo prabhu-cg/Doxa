@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { FileText, Globe, Lock } from "lucide-react";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { listBoardsForOrganization } from "@/features/boards/queries";
 import { canManageBoards } from "@/features/boards/permissions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/link-button";
+import { EntityCard, EntityGrid, EntityMeta } from "@/components/entity-card";
+import { getItemTerminology } from "@/features/organizations/terminology";
+import { formatRelativeTime } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Boards" };
 
@@ -19,14 +21,18 @@ export default async function BoardsPage({
   const boards = await listBoardsForOrganization(membership.organization.id, {
     includeArchived: true,
   });
+  const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Boards</h1>
           <p className="text-muted-foreground text-sm">
-            Where Items are submitted, across every space.
+            A Board is where people submit and browse Items for one specific
+            area of feedback — e.g. &quot;Mobile bugs&quot; or &quot;Feature
+            requests&quot;. Boards live inside a Space and can be Public (anyone
+            with the link) or Private (members only).
           </p>
         </div>
         {canManageBoards(membership.role) ? (
@@ -37,31 +43,43 @@ export default async function BoardsPage({
       {boards.length === 0 ? (
         <p className="text-muted-foreground text-sm">No boards yet.</p>
       ) : (
-        <div className="space-y-3">
+        <EntityGrid>
           {boards.map((board) => (
-            <Card key={board.id}>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CardTitle>
-                    <Link href={`/org/${slug}/boards/${board.slug}`}>
-                      {board.name}
-                    </Link>
-                  </CardTitle>
-                  <Badge variant="outline">{board.visibility}</Badge>
+            <EntityCard
+              key={board.id}
+              href={`/org/${slug}/boards/${board.slug}`}
+              title={board.name}
+              badges={
+                <>
+                  <Badge
+                    variant={
+                      board.visibility === "PUBLIC" ? "info" : "secondary"
+                    }
+                  >
+                    {board.visibility === "PUBLIC" ? <Globe /> : <Lock />}
+                    {board.visibility === "PUBLIC" ? "Public" : "Private"}
+                  </Badge>
                   {board.status === "ARCHIVED" ? (
                     <Badge variant="secondary">Archived</Badge>
                   ) : null}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  {board.space.name}
-                  {board.description ? ` · ${board.description}` : ""}
-                </p>
-              </CardContent>
-            </Card>
+                </>
+              }
+              subtitle={board.space.name}
+              description={board.description}
+              meta={
+                <>
+                  <EntityMeta icon={FileText}>
+                    {board._count.items}{" "}
+                    {board._count.items === 1
+                      ? terminology.singular.toLowerCase()
+                      : terminology.plural.toLowerCase()}
+                  </EntityMeta>
+                </>
+              }
+              footer={`Updated ${formatRelativeTime(board.lastActivityAt)}`}
+            />
           ))}
-        </div>
+        </EntityGrid>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { ContactForm } from "@/components/marketing/contact-form";
+import { DoxaLogo } from "@/components/doxa-logo";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -31,18 +32,8 @@ export function MarketingHeader() {
   return (
     <header className="bg-background/95 sticky top-0 z-40 border-b backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          aria-label="Doxa home"
-          className="flex items-center gap-3"
-        >
-          <img src="/doxa-logo.svg" alt="" className="h-9 w-auto shrink-0" />
-          <span className="flex min-w-0 flex-col leading-none">
-            <span className="text-base font-bold tracking-tight">Doxa</span>
-            <span className="text-muted-foreground mt-1 truncate text-[11px] font-medium">
-              Listen. Understand. Decide.
-            </span>
-          </span>
+        <Link href="/" aria-label="Doxa home">
+          <DoxaLogo tagline markClassName="size-9" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">

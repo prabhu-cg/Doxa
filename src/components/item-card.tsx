@@ -1,6 +1,11 @@
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageSquare, ThumbsUp, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { EntityCard, EntityMeta } from "@/components/entity-card";
+import { formatRelativeTime } from "@/lib/utils";
+
+function tint(color?: string | null) {
+  return color ? { backgroundColor: `${color}22`, color } : undefined;
+}
 
 export function ItemCard({
   href,
@@ -9,11 +14,14 @@ export function ItemCard({
   itemTypeName,
   statusName,
   statusColor,
+  priorityName,
+  priorityColor,
   categoryName,
   tagNames,
   authorName,
   voteCount,
   commentCount,
+  updatedAt,
   archived,
 }: {
   href: string;
@@ -22,58 +30,58 @@ export function ItemCard({
   itemTypeName: string;
   statusName: string;
   statusColor?: string | null;
+  /** Omit (or pass null) for items with no priority set. */
+  priorityName?: string | null;
+  priorityColor?: string | null;
   categoryName?: string | null;
   tagNames: string[];
   authorName: string;
   voteCount: number;
   commentCount: number;
+  updatedAt: Date;
   archived?: boolean;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>
-            <Link href={href}>{title}</Link>
-          </CardTitle>
-          <Badge variant="outline">{itemTypeName}</Badge>
-          <Badge
-            variant="secondary"
-            style={
-              statusColor
-                ? { backgroundColor: `${statusColor}22`, color: statusColor }
-                : undefined
-            }
-          >
+    <EntityCard
+      href={href}
+      title={title}
+      badges={
+        <>
+          <Badge variant="soft" style={tint(statusColor)}>
             {statusName}
           </Badge>
-          {categoryName ? (
-            <Badge variant="outline">{categoryName}</Badge>
-          ) : null}
+          <Badge variant="outline">{itemTypeName}</Badge>
           {archived ? <Badge variant="secondary">Archived</Badge> : null}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {description ? (
-          <p className="text-muted-foreground line-clamp-2 text-sm">
-            {description}
-          </p>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-muted-foreground text-xs">by {authorName}</span>
-          <span className="text-muted-foreground text-xs">
-            · {voteCount} {voteCount === 1 ? "vote" : "votes"}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            · {commentCount} {commentCount === 1 ? "comment" : "comments"}
-          </span>
-          {tagNames.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
+        </>
+      }
+      subtitle={categoryName}
+      description={description}
+      meta={
+        <>
+          <EntityMeta icon={ThumbsUp}>
+            {voteCount} {voteCount === 1 ? "vote" : "votes"}
+          </EntityMeta>
+          <EntityMeta icon={MessageSquare}>
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
+          </EntityMeta>
+          {priorityName ? (
+            <Badge variant="warning" style={tint(priorityColor)}>
+              {priorityName}
             </Badge>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          ) : null}
+          <EntityMeta icon={User}>{authorName}</EntityMeta>
+        </>
+      }
+      tags={
+        tagNames.length > 0
+          ? tagNames.map((tag) => (
+              <Badge key={tag} variant="outline">
+                {tag}
+              </Badge>
+            ))
+          : undefined
+      }
+      footer={`Updated ${formatRelativeTime(updatedAt)}`}
+    />
   );
 }

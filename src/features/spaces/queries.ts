@@ -7,18 +7,40 @@ import {
 } from "@/features/organizations/queries";
 import type { Profile, Space } from "@/generated/prisma/client";
 
+export type SpaceWithCounts = Space & {
+  _count: { boards: number; items: number };
+  /** The later of the space's own edit and its most recently touched item. */
+  lastActivityAt: Date;
+};
+
 export async function listSpacesForOrganization(
   organizationId: string,
   options: { includeArchived?: boolean } = {},
-): Promise<(Space & { _count: { boards: number } })[]> {
-  return db.space.findMany({
+): Promise<SpaceWithCounts[]> {
+  const liveItems = { deletedAt: null, archivedAt: null };
+  const spaces = await db.space.findMany({
     where: {
       organizationId,
       ...(options.includeArchived ? {} : { archivedAt: null }),
     },
-    include: { _count: { select: { boards: true } } },
+    include: {
+      _count: { select: { boards: true, items: { where: liveItems } } },
+      items: {
+        where: { deletedAt: null },
+        select: { updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "asc" },
   });
+  return spaces.map(({ items, ...space }) => ({
+    ...space,
+    lastActivityAt:
+      items[0] && items[0].updatedAt > space.updatedAt
+        ? items[0].updatedAt
+        : space.updatedAt,
+  }));
 }
 
 /** Returns null for both "no such space" and "space belongs to a different

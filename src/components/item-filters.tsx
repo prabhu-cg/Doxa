@@ -6,7 +6,7 @@ import type { BoardSort } from "@/features/items/schema";
 type FilterOption = { slug: string; name: string };
 
 const selectClass =
-  "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-10 rounded-lg border bg-transparent px-2.5 text-sm outline-none focus-visible:ring-3";
+  "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-9 rounded-lg border bg-transparent px-2.5 text-sm outline-none focus-visible:ring-3";
 
 const SORT_LABELS: Record<BoardSort, string> = {
   newest: "Newest",

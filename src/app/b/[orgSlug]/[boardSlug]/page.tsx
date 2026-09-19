@@ -132,6 +132,11 @@ export default async function PublicBoardPage({
               authorName={item.author.displayName}
               voteCount={item._count.votes}
               commentCount={item._count.comments}
+              priorityName={
+                item.priority.slug !== "none" ? item.priority.name : null
+              }
+              priorityColor={item.priority.color}
+              updatedAt={item.updatedAt}
             />
           ))}
         </div>
