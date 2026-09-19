@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string; description?: string };
 
@@ -33,66 +34,64 @@ export function ItemTypeManager({
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  async function toggleArchive(id: string, archived: boolean) {
+    await (archived ? restoreItemType : archiveItemType)(orgSlug, id);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       {canManage ? (
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="space-y-3">
+      <ConfigList>
         {itemTypes.map((itemType) =>
           editingId === itemType.id ? (
-            <Card key={itemType.id}>
-              <CardContent>
-                <EditForm
-                  orgSlug={orgSlug}
-                  itemType={itemType}
-                  onDone={() => {
-                    setEditingId(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
+            <ConfigEditRow key={itemType.id}>
+              <EditForm
+                orgSlug={orgSlug}
+                itemType={itemType}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            </ConfigEditRow>
           ) : (
-            <Card key={itemType.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{itemType.name}</span>
-                    {itemType.archivedAt ? (
-                      <Badge variant="secondary">Archived</Badge>
-                    ) : null}
-                  </div>
-                  {itemType.description ? (
-                    <p className="text-muted-foreground text-sm">
-                      {itemType.description}
-                    </p>
+            <ConfigRow
+              key={itemType.id}
+              name={itemType.name}
+              badges={
+                <>
+                  {itemType.archivedAt ? (
+                    <Badge variant="secondary">Archived</Badge>
                   ) : null}
-                </div>
-                {canManage ? (
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingId(itemType.id)}
-                    >
+                </>
+              }
+              description={itemType.description}
+              actions={
+                canManage ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setEditingId(itemType.id)}>
                       Edit
-                    </Button>
-                    <ArchiveButton
-                      orgSlug={orgSlug}
-                      itemTypeId={itemType.id}
-                      archived={!!itemType.archivedAt}
-                      onDone={() => router.refresh()}
-                    />
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant={itemType.archivedAt ? "default" : "destructive"}
+                      onClick={() =>
+                        toggleArchive(itemType.id, !!itemType.archivedAt)
+                      }
+                    >
+                      {itemType.archivedAt ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
+                  </>
+                ) : null
+              }
+            />
           ),
         )}
-      </div>
+      </ConfigList>
     </div>
   );
 }
@@ -143,7 +142,7 @@ function CreateForm({
           <Input id="description" {...register("description")} />
         </FormField>
       </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-6">
+      <Button type="submit" disabled={isSubmitting} className="mt-5">
         {isSubmitting ? "Adding…" : "Add"}
       </Button>
       {rootError ? (
@@ -211,41 +210,5 @@ function EditForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-function ArchiveButton({
-  orgSlug,
-  itemTypeId,
-  archived,
-  onDone,
-}: {
-  orgSlug: string;
-  itemTypeId: string;
-  archived: boolean;
-  onDone: () => void;
-}) {
-  const [pending, setPending] = useState(false);
-
-  async function onClick() {
-    setPending(true);
-    if (archived) {
-      await restoreItemType(orgSlug, itemTypeId);
-    } else {
-      await archiveItemType(orgSlug, itemTypeId);
-    }
-    setPending(false);
-    onDone();
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant={archived ? "outline" : "destructive"}
-      onClick={onClick}
-      disabled={pending}
-    >
-      {archived ? "Restore" : "Archive"}
-    </Button>
   );
 }

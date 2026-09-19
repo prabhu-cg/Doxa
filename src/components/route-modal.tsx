@@ -2,14 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Drawer } from "@/components/drawer";
 
 /**
  * The `<Modal>` wrapper from Next.js's own intercepted-route pattern
@@ -45,7 +38,7 @@ export function RouteModal({
   }, []);
 
   return (
-    <Sheet
+    <Drawer
       open={open}
       onOpenChange={(next) => {
         if (!next) closing.current = true;
@@ -54,22 +47,11 @@ export function RouteModal({
       onOpenChangeComplete={(isOpen) => {
         if (!isOpen && closing.current) router.back();
       }}
+      title={title}
+      description={description}
+      size={size}
     >
-      <SheetContent
-        side="right"
-        className={cn(
-          "gap-0 overflow-hidden",
-          size === "lg" ? "sm:max-w-lg" : "sm:max-w-md",
-        )}
-      >
-        <SheetHeader className="shrink-0 border-b pr-12">
-          <SheetTitle>{title}</SheetTitle>
-          {description ? (
-            <SheetDescription>{description}</SheetDescription>
-          ) : null}
-        </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-      </SheetContent>
-    </Sheet>
+      {children}
+    </Drawer>
   );
 }

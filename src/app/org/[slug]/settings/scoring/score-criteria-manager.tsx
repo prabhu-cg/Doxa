@@ -16,7 +16,8 @@ import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string; description?: string; weight: string };
 
@@ -32,67 +33,70 @@ export function ScoreCriteriaManager({
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  async function toggleArchive(id: string, archived: boolean) {
+    await (archived ? restoreScoreCriterion : archiveScoreCriterion)(
+      orgSlug,
+      id,
+    );
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       {canManage ? (
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="space-y-3">
+      <ConfigList>
         {criteria.map((criterion) =>
           editingId === criterion.id ? (
-            <Card key={criterion.id}>
-              <CardContent>
-                <EditForm
-                  orgSlug={orgSlug}
-                  criterion={criterion}
-                  onDone={() => {
-                    setEditingId(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
+            <ConfigEditRow key={criterion.id}>
+              <EditForm
+                orgSlug={orgSlug}
+                criterion={criterion}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            </ConfigEditRow>
           ) : (
-            <Card key={criterion.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{criterion.name}</span>
-                    <Badge variant="outline">weight {criterion.weight}</Badge>
-                    {criterion.archivedAt ? (
-                      <Badge variant="secondary">Archived</Badge>
-                    ) : null}
-                  </div>
-                  {criterion.description ? (
-                    <p className="text-muted-foreground text-xs">
-                      {criterion.description}
-                    </p>
+            <ConfigRow
+              key={criterion.id}
+              name={criterion.name}
+              badges={
+                <>
+                  <Badge variant="outline">weight {criterion.weight}</Badge>
+                  {criterion.archivedAt ? (
+                    <Badge variant="secondary">Archived</Badge>
                   ) : null}
-                </div>
-                {canManage ? (
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
+                </>
+              }
+              description={criterion.description}
+              actions={
+                canManage ? (
+                  <>
+                    <DropdownMenuItem
                       onClick={() => setEditingId(criterion.id)}
                     >
                       Edit
-                    </Button>
-                    <ArchiveButton
-                      orgSlug={orgSlug}
-                      criterionId={criterion.id}
-                      archived={!!criterion.archivedAt}
-                      onDone={() => router.refresh()}
-                    />
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant={criterion.archivedAt ? "default" : "destructive"}
+                      onClick={() =>
+                        toggleArchive(criterion.id, !!criterion.archivedAt)
+                      }
+                    >
+                      {criterion.archivedAt ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
+                  </>
+                ) : null
+              }
+            />
           ),
         )}
-      </div>
+      </ConfigList>
     </div>
   );
 }
@@ -157,7 +161,7 @@ function CreateForm({
             />
           </FormField>
         </div>
-        <Button type="submit" disabled={isSubmitting} className="mt-6">
+        <Button type="submit" disabled={isSubmitting} className="mt-5">
           {isSubmitting ? "Adding…" : "Add"}
         </Button>
       </div>
@@ -255,41 +259,5 @@ function EditForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-function ArchiveButton({
-  orgSlug,
-  criterionId,
-  archived,
-  onDone,
-}: {
-  orgSlug: string;
-  criterionId: string;
-  archived: boolean;
-  onDone: () => void;
-}) {
-  const [pending, setPending] = useState(false);
-
-  async function onClick() {
-    setPending(true);
-    if (archived) {
-      await restoreScoreCriterion(orgSlug, criterionId);
-    } else {
-      await archiveScoreCriterion(orgSlug, criterionId);
-    }
-    setPending(false);
-    onDone();
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant={archived ? "outline" : "destructive"}
-      onClick={onClick}
-      disabled={pending}
-    >
-      {archived ? "Restore" : "Archive"}
-    </Button>
   );
 }

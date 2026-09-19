@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import {
   getSubscriptionForOrganization,
@@ -50,6 +52,10 @@ export default async function BillingSettingsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Billing" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
         <p className="text-muted-foreground text-sm">
           Doxa stays useful for free — upgrade for higher limits and advanced

@@ -10,11 +10,14 @@ export function ArchiveItemControl({
   boardSlug,
   itemSlug,
   archived,
+  onDone,
 }: {
   orgSlug: string;
   boardSlug: string;
   itemSlug: string;
   archived: boolean;
+  /** Called after a successful archive or restore. */
+  onDone?: () => void;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +35,7 @@ export function ArchiveItemControl({
       return;
     }
     router.refresh();
+    onDone?.();
   }
 
   return (

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { canUpdateOrganization } from "@/features/organizations/permissions";
 import { hasFeature } from "@/features/entitlements/queries";
@@ -21,6 +23,10 @@ export default async function BrandingSettingsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Branding" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Branding</h1>
         <p className="text-muted-foreground text-sm">
           How this organisation presents itself, including on its public boards.

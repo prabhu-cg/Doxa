@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ThumbsUp } from "lucide-react";
 import { addVote, removeVote } from "@/features/votes/actions";
 import { Button } from "@/components/ui/button";
 
@@ -52,7 +53,8 @@ export function VoteButton({
       disabled={pending}
       aria-pressed={voted}
     >
-      ▲ {count} {count === 1 ? "vote" : "votes"}
+      <ThumbsUp />
+      {count} {count === 1 ? "vote" : "votes"}
     </Button>
   );
 }

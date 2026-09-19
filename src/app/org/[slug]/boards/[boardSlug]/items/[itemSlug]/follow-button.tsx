@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Bell, BellRing } from "lucide-react";
 import { followItem, unfollowItem } from "@/features/followers/actions";
 import { Button } from "@/components/ui/button";
 
@@ -46,12 +47,13 @@ export function FollowButton({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={following ? "secondary" : "outline"}
       size="sm"
       onClick={onClick}
       disabled={pending}
       aria-pressed={following}
     >
+      {following ? <BellRing /> : <Bell />}
       {following ? "Following" : "Follow"} · {count}
     </Button>
   );

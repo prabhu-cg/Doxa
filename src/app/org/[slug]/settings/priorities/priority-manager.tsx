@@ -17,7 +17,8 @@ import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string; color?: string };
 
@@ -33,76 +34,81 @@ export function PriorityManager({
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  async function toggleArchive(id: string, archived: boolean) {
+    await (archived ? restorePriority : archivePriority)(orgSlug, id);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       {canManage ? (
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="space-y-3">
+      <ConfigList>
         {priorities.map((priority) =>
           editingId === priority.id ? (
-            <Card key={priority.id}>
-              <CardContent>
-                <EditForm
-                  orgSlug={orgSlug}
-                  priority={priority}
-                  onDone={() => {
-                    setEditingId(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
+            <ConfigEditRow key={priority.id}>
+              <EditForm
+                orgSlug={orgSlug}
+                priority={priority}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            </ConfigEditRow>
           ) : (
-            <Card key={priority.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="size-3 rounded-full"
-                    style={{ backgroundColor: priority.color ?? "#94a3b8" }}
-                  />
-                  <span className="font-medium">{priority.name}</span>
+            <ConfigRow
+              key={priority.id}
+              name={priority.name}
+              leading={
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ backgroundColor: priority.color ?? "#94a3b8" }}
+                  aria-hidden
+                />
+              }
+              badges={
+                <>
                   {priority.isDefault ? <Badge>Default</Badge> : null}
                   {priority.archivedAt ? (
                     <Badge variant="secondary">Archived</Badge>
                   ) : null}
-                </div>
-                {canManage ? (
-                  <div className="flex shrink-0 gap-2">
+                </>
+              }
+              actions={
+                canManage ? (
+                  <>
                     {!priority.isDefault && !priority.archivedAt ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <DropdownMenuItem
                         onClick={async () => {
                           await setDefaultPriority(orgSlug, priority.id);
                           router.refresh();
                         }}
                       >
                         Set default
-                      </Button>
+                      </DropdownMenuItem>
                     ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingId(priority.id)}
-                    >
+                    <DropdownMenuItem onClick={() => setEditingId(priority.id)}>
                       Edit
-                    </Button>
-                    <ArchiveButton
-                      orgSlug={orgSlug}
-                      priorityId={priority.id}
-                      archived={!!priority.archivedAt}
-                      onDone={() => router.refresh()}
-                    />
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant={priority.archivedAt ? "default" : "destructive"}
+                      onClick={() =>
+                        toggleArchive(priority.id, !!priority.archivedAt)
+                      }
+                    >
+                      {priority.archivedAt ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
+                  </>
+                ) : null
+              }
+            />
           ),
         )}
-      </div>
+      </ConfigList>
     </div>
   );
 }
@@ -149,7 +155,7 @@ function CreateForm({
           <Input id="color" placeholder="#ef4444" {...register("color")} />
         </FormField>
       </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-6">
+      <Button type="submit" disabled={isSubmitting} className="mt-5">
         {isSubmitting ? "Adding…" : "Add"}
       </Button>
       {rootError ? (
@@ -214,41 +220,5 @@ function EditForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-function ArchiveButton({
-  orgSlug,
-  priorityId,
-  archived,
-  onDone,
-}: {
-  orgSlug: string;
-  priorityId: string;
-  archived: boolean;
-  onDone: () => void;
-}) {
-  const [pending, setPending] = useState(false);
-
-  async function onClick() {
-    setPending(true);
-    if (archived) {
-      await restorePriority(orgSlug, priorityId);
-    } else {
-      await archivePriority(orgSlug, priorityId);
-    }
-    setPending(false);
-    onDone();
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant={archived ? "outline" : "destructive"}
-      onClick={onClick}
-      disabled={pending}
-    >
-      {archived ? "Restore" : "Archive"}
-    </Button>
   );
 }

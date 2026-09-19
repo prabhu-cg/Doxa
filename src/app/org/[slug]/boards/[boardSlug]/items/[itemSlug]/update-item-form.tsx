@@ -52,6 +52,7 @@ export function UpdateItemForm({
   statuses,
   priorities,
   categories,
+  onSaved,
 }: {
   orgSlug: string;
   boardSlug: string;
@@ -67,6 +68,8 @@ export function UpdateItemForm({
   statuses: Option[];
   priorities: Option[];
   categories: Option[];
+  /** Called after a successful save, e.g. to close the drawer it's in. */
+  onSaved?: () => void;
 }) {
   const [rootError, setRootError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -106,6 +109,7 @@ export function UpdateItemForm({
       return;
     }
     setSaved(true);
+    onSaved?.();
   }
 
   return (

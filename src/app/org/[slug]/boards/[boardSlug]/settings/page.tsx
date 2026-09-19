@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { canManageBoards } from "@/features/boards/permissions";
 import { Separator } from "@/components/ui/separator";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { boardTrail } from "@/lib/breadcrumb-trails";
 import { UpdateBoardForm } from "./update-board-form";
 import { ArchiveBoardControl } from "./archive-board-control";
 
@@ -20,6 +22,10 @@ export default async function BoardSettingsPage({
   return (
     <div className="mx-auto w-full max-w-md space-y-8 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...boardTrail(slug, board), { label: "Settings" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Board settings</h1>
         <p className="text-muted-foreground text-sm">{board.name}</p>
       </div>

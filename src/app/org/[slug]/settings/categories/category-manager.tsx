@@ -14,7 +14,8 @@ import type { Category } from "@/generated/prisma/client";
 import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string };
 
@@ -36,37 +37,31 @@ export function CategoryManager({
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="space-y-3">
+      <ConfigList>
         {categories.map((category) =>
           editingId === category.id ? (
-            <Card key={category.id}>
-              <CardContent>
-                <EditForm
-                  orgSlug={orgSlug}
-                  category={category}
-                  onDone={() => {
-                    setEditingId(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
+            <ConfigEditRow key={category.id}>
+              <EditForm
+                orgSlug={orgSlug}
+                category={category}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            </ConfigEditRow>
           ) : (
-            <Card key={category.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <span className="font-medium">{category.name}</span>
-                {canManage ? (
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingId(category.id)}
-                    >
+            <ConfigRow
+              key={category.id}
+              name={category.name}
+              actions={
+                canManage ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setEditingId(category.id)}>
                       Rename
-                    </Button>
-                    <Button
-                      size="sm"
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       variant="destructive"
                       onClick={async () => {
                         await deleteCategory(orgSlug, category.id);
@@ -74,14 +69,14 @@ export function CategoryManager({
                       }}
                     >
                       Delete
-                    </Button>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                    </DropdownMenuItem>
+                  </>
+                ) : null
+              }
+            />
           ),
         )}
-      </div>
+      </ConfigList>
     </div>
   );
 }
@@ -123,7 +118,7 @@ function CreateForm({
           <Input id="name" placeholder="Mobile app" {...register("name")} />
         </FormField>
       </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-6">
+      <Button type="submit" disabled={isSubmitting} className="mt-5">
         {isSubmitting ? "Adding…" : "Add"}
       </Button>
       {rootError ? (
@@ -182,7 +177,7 @@ function EditForm({
       {rootError ? (
         <p className="text-destructive text-sm">{rootError}</p>
       ) : null}
-      <div className="mt-6 flex gap-2">
+      <div className="mt-5.5 flex gap-2">
         <Button type="submit" size="sm" disabled={isSubmitting}>
           {isSubmitting ? "Saving…" : "Save"}
         </Button>

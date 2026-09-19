@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { listTagsForOrganization } from "@/features/tags/queries";
 import { canManageTags } from "@/features/tags/permissions";
@@ -18,6 +20,10 @@ export default async function TagsSettingsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Tags" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Tags</h1>
         <p className="text-muted-foreground text-sm">
           Free-form labels. Items can have multiple — authors can also create

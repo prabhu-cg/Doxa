@@ -9,6 +9,7 @@ import { EntityCard, EntityGrid, EntityMeta } from "@/components/entity-card";
 import { getItemTerminology } from "@/features/organizations/terminology";
 import { formatRelativeTime } from "@/lib/utils";
 import { PageContainer, PageHeader } from "@/components/page-shell";
+import { spacesTrail } from "@/lib/breadcrumb-trails";
 
 export default async function SpaceDetailPage({
   params,
@@ -23,6 +24,7 @@ export default async function SpaceDetailPage({
   return (
     <PageContainer>
       <PageHeader
+        breadcrumbs={[...spacesTrail(slug), { label: space.name }]}
         title={space.name}
         badges={
           space.archivedAt ? <Badge variant="secondary">Archived</Badge> : null
@@ -31,10 +33,7 @@ export default async function SpaceDetailPage({
         actions={
           <>
             {canManageBoards(membership.role) && !space.archivedAt ? (
-              <LinkButton
-                variant="outline"
-                href={`/org/${slug}/boards/new?space=${space.slug}`}
-              >
+              <LinkButton href={`/org/${slug}/boards/new?space=${space.slug}`}>
                 New board
               </LinkButton>
             ) : null}

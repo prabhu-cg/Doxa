@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { listStatusesForOrganization } from "@/features/statuses/queries";
 import { canManageStatuses } from "@/features/statuses/permissions";
@@ -23,6 +25,10 @@ export default async function StatusesSettingsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Statuses" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Statuses</h1>
         <p className="text-muted-foreground text-sm">
           The workflow an Item moves through — Open, Planned, Completed, or

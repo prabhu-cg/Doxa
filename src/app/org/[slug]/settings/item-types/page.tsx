@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { listItemTypesForOrganization } from "@/features/item-types/queries";
 import { canManageItemTypes } from "@/features/item-types/permissions";
@@ -21,6 +23,10 @@ export default async function ItemTypesSettingsPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Item types" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Item types</h1>
         <p className="text-muted-foreground text-sm">
           What kind of thing an Item is — Feature, Bug, Idea, or anything this

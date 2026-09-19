@@ -10,7 +10,8 @@ import type { Tag } from "@/generated/prisma/client";
 import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string };
 
@@ -32,50 +33,50 @@ export function TagManager({
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) =>
-          editingId === tag.id ? (
-            <EditForm
-              key={tag.id}
-              orgSlug={orgSlug}
-              tag={tag}
-              onDone={() => {
-                setEditingId(null);
-                router.refresh();
-              }}
-              onCancel={() => setEditingId(null)}
-            />
-          ) : (
-            <Badge key={tag.id} variant="outline" className="h-7 gap-2 px-2.5">
-              {tag.name}
-              {canManage ? (
-                <span className="flex gap-1">
-                  <button
-                    type="button"
-                    className="hover:underline"
-                    onClick={() => setEditingId(tag.id)}
-                  >
-                    edit
-                  </button>
-                  <button
-                    type="button"
-                    className="text-destructive hover:underline"
-                    onClick={async () => {
-                      await deleteTag(orgSlug, tag.id);
-                      router.refresh();
-                    }}
-                  >
-                    delete
-                  </button>
-                </span>
-              ) : null}
-            </Badge>
-          ),
-        )}
-        {tags.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No tags yet.</p>
-        ) : null}
-      </div>
+      {tags.length === 0 ? (
+        <p className="text-muted-foreground text-sm">No tags yet.</p>
+      ) : (
+        <ConfigList>
+          {tags.map((tag) =>
+            editingId === tag.id ? (
+              <ConfigEditRow key={tag.id}>
+                <EditForm
+                  orgSlug={orgSlug}
+                  tag={tag}
+                  onDone={() => {
+                    setEditingId(null);
+                    router.refresh();
+                  }}
+                  onCancel={() => setEditingId(null)}
+                />
+              </ConfigEditRow>
+            ) : (
+              <ConfigRow
+                key={tag.id}
+                name={tag.name}
+                actions={
+                  canManage ? (
+                    <>
+                      <DropdownMenuItem onClick={() => setEditingId(tag.id)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={async () => {
+                          await deleteTag(orgSlug, tag.id);
+                          router.refresh();
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </>
+                  ) : null
+                }
+              />
+            ),
+          )}
+        </ConfigList>
+      )}
     </div>
   );
 }
@@ -117,7 +118,7 @@ function CreateForm({
           <Input id="name" placeholder="performance" {...register("name")} />
         </FormField>
       </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-6">
+      <Button type="submit" disabled={isSubmitting} className="mt-5">
         {isSubmitting ? "Adding…" : "Add"}
       </Button>
       {rootError ? (
@@ -155,28 +156,21 @@ function EditForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="border-input flex h-7 items-center gap-1 rounded-full border px-1"
+      className="flex items-center gap-2"
       noValidate
     >
       <Input
         {...register("name")}
-        className="h-5 w-24 border-none px-1 shadow-none focus-visible:ring-0"
+        aria-label="Tag name"
+        className="flex-1"
         autoFocus
       />
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="text-xs hover:underline"
-      >
-        save
-      </button>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="text-xs hover:underline"
-      >
-        cancel
-      </button>
+      <Button type="submit" size="sm" disabled={isSubmitting}>
+        {isSubmitting ? "Saving…" : "Save"}
+      </Button>
+      <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+        Cancel
+      </Button>
     </form>
   );
 }

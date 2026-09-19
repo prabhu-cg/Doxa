@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clearItemScore, setItemScore } from "@/features/scoring/actions";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 
 type Criterion = {
   id: string;
@@ -37,56 +37,53 @@ export function ScorePanel({
     return (
       <p className="text-muted-foreground text-sm">
         No scoring criteria configured yet — an owner or admin can add some in{" "}
-        <a className="underline" href={`/org/${orgSlug}/settings/scoring`}>
+        <Link className="underline" href={`/org/${orgSlug}/settings/scoring`}>
           organisation settings
-        </a>
+        </Link>
         .
       </p>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {computed ? (
         <p className="text-sm">
-          Weighted score:{" "}
-          <span className="font-semibold">
-            {computed.weightedAverage.toFixed(1)} / 5
-          </span>{" "}
+          <span className="text-base font-semibold tabular-nums">
+            {computed.weightedAverage.toFixed(1)}
+          </span>
           <span className="text-muted-foreground">
-            across {computed.scoredCount} of {criteria.length} criteria
+            {" "}
+            / 5 · {computed.scoredCount} of {criteria.length} scored
           </span>
         </p>
       ) : (
         <p className="text-muted-foreground text-sm">Not scored yet.</p>
       )}
 
-      <div className="space-y-2">
+      <ul className="space-y-4">
         {criteria.map((criterion) => (
-          <Card key={criterion.id}>
-            <CardContent className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">{criterion.name}</p>
-                {criterion.description ? (
-                  <p className="text-muted-foreground text-xs">
-                    {criterion.description}
-                  </p>
-                ) : null}
-              </div>
-              <ScoreControl
-                orgSlug={orgSlug}
-                boardSlug={boardSlug}
-                itemSlug={itemSlug}
-                criterionId={criterion.id}
-                value={
-                  scores.find((s) => s.criterionId === criterion.id)?.value
-                }
-                onChanged={() => router.refresh()}
-              />
-            </CardContent>
-          </Card>
+          <li key={criterion.id} className="space-y-1.5">
+            <div>
+              <p className="text-sm font-medium">{criterion.name}</p>
+              {criterion.description ? (
+                <p className="text-muted-foreground text-xs">
+                  {criterion.description}
+                </p>
+              ) : null}
+            </div>
+            <ScoreControl
+              orgSlug={orgSlug}
+              boardSlug={boardSlug}
+              itemSlug={itemSlug}
+              criterionId={criterion.id}
+              criterionName={criterion.name}
+              value={scores.find((s) => s.criterionId === criterion.id)?.value}
+              onChanged={() => router.refresh()}
+            />
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -96,6 +93,7 @@ function ScoreControl({
   boardSlug,
   itemSlug,
   criterionId,
+  criterionName,
   value,
   onChanged,
 }: {
@@ -103,6 +101,7 @@ function ScoreControl({
   boardSlug: string;
   itemSlug: string;
   criterionId: string;
+  criterionName: string;
   value: number | undefined;
   onChanged: () => void;
 }) {
@@ -125,8 +124,12 @@ function ScoreControl({
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1">
-      <div className="flex gap-1">
+    <div className="space-y-1">
+      <div
+        role="group"
+        aria-label={`${criterionName} score`}
+        className="flex gap-1"
+      >
         {SCALE.map((n) => (
           <button
             key={n}
@@ -134,12 +137,12 @@ function ScoreControl({
             disabled={isPending}
             onClick={() => pick(n)}
             aria-pressed={value === n}
-            aria-label={`Score ${n}`}
+            aria-label={`${criterionName}: ${n} out of 5`}
             className={cn(
-              "flex size-7 items-center justify-center rounded-md border text-xs font-medium transition-colors",
+              "focus-visible:ring-ring/50 flex h-8 flex-1 items-center justify-center rounded-md border text-xs font-medium tabular-nums transition-colors outline-none focus-visible:ring-3 disabled:opacity-60",
               value === n
                 ? "bg-primary text-primary-foreground border-primary"
-                : "hover:bg-accent border-input",
+                : "border-input hover:bg-primary-soft hover:text-primary-text",
             )}
           >
             {n}

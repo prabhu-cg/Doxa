@@ -17,7 +17,8 @@ import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
 
 type FormValues = { name: string; color?: string };
 
@@ -33,76 +34,81 @@ export function StatusManager({
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  async function toggleArchive(id: string, archived: boolean) {
+    await (archived ? restoreStatus : archiveStatus)(orgSlug, id);
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       {canManage ? (
         <CreateForm orgSlug={orgSlug} onCreated={() => router.refresh()} />
       ) : null}
 
-      <div className="space-y-3">
+      <ConfigList>
         {statuses.map((status) =>
           editingId === status.id ? (
-            <Card key={status.id}>
-              <CardContent>
-                <EditForm
-                  orgSlug={orgSlug}
-                  status={status}
-                  onDone={() => {
-                    setEditingId(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
+            <ConfigEditRow key={status.id}>
+              <EditForm
+                orgSlug={orgSlug}
+                status={status}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            </ConfigEditRow>
           ) : (
-            <Card key={status.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="size-3 rounded-full"
-                    style={{ backgroundColor: status.color ?? "#94a3b8" }}
-                  />
-                  <span className="font-medium">{status.name}</span>
+            <ConfigRow
+              key={status.id}
+              name={status.name}
+              leading={
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ backgroundColor: status.color ?? "#94a3b8" }}
+                  aria-hidden
+                />
+              }
+              badges={
+                <>
                   {status.isDefault ? <Badge>Default</Badge> : null}
                   {status.archivedAt ? (
                     <Badge variant="secondary">Archived</Badge>
                   ) : null}
-                </div>
-                {canManage ? (
-                  <div className="flex shrink-0 gap-2">
+                </>
+              }
+              actions={
+                canManage ? (
+                  <>
                     {!status.isDefault && !status.archivedAt ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <DropdownMenuItem
                         onClick={async () => {
                           await setDefaultStatus(orgSlug, status.id);
                           router.refresh();
                         }}
                       >
                         Set default
-                      </Button>
+                      </DropdownMenuItem>
                     ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingId(status.id)}
-                    >
+                    <DropdownMenuItem onClick={() => setEditingId(status.id)}>
                       Edit
-                    </Button>
-                    <ArchiveButton
-                      orgSlug={orgSlug}
-                      statusId={status.id}
-                      archived={!!status.archivedAt}
-                      onDone={() => router.refresh()}
-                    />
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant={status.archivedAt ? "default" : "destructive"}
+                      onClick={() =>
+                        toggleArchive(status.id, !!status.archivedAt)
+                      }
+                    >
+                      {status.archivedAt ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
+                  </>
+                ) : null
+              }
+            />
           ),
         )}
-      </div>
+      </ConfigList>
     </div>
   );
 }
@@ -149,7 +155,7 @@ function CreateForm({
           <Input id="color" placeholder="#64748b" {...register("color")} />
         </FormField>
       </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-6">
+      <Button type="submit" disabled={isSubmitting} className="mt-5">
         {isSubmitting ? "Adding…" : "Add"}
       </Button>
       {rootError ? (
@@ -214,41 +220,5 @@ function EditForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-function ArchiveButton({
-  orgSlug,
-  statusId,
-  archived,
-  onDone,
-}: {
-  orgSlug: string;
-  statusId: string;
-  archived: boolean;
-  onDone: () => void;
-}) {
-  const [pending, setPending] = useState(false);
-
-  async function onClick() {
-    setPending(true);
-    if (archived) {
-      await restoreStatus(orgSlug, statusId);
-    } else {
-      await archiveStatus(orgSlug, statusId);
-    }
-    setPending(false);
-    onDone();
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant={archived ? "outline" : "destructive"}
-      onClick={onClick}
-      disabled={pending}
-    >
-      {archived ? "Restore" : "Archive"}
-    </Button>
   );
 }

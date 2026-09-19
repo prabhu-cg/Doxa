@@ -18,6 +18,7 @@ import { ItemFilters } from "@/components/item-filters";
 import { ItemCard } from "@/components/item-card";
 import { EntityGrid } from "@/components/entity-card";
 import { PageContainer, PageHeader } from "@/components/page-shell";
+import { spaceTrail } from "@/lib/breadcrumb-trails";
 
 export default async function BoardAdminPage({
   params,
@@ -67,6 +68,7 @@ export default async function BoardAdminPage({
   return (
     <PageContainer>
       <PageHeader
+        breadcrumbs={[...spaceTrail(slug, board.space), { label: board.name }]}
         title={board.name}
         badges={
           <>

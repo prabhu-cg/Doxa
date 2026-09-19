@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/breadcrumbs";
 
 /**
  * The one page width for the org's list pages (Spaces, Boards, Roadmap,
@@ -36,27 +37,35 @@ export function PageHeader({
   badges,
   description,
   actions,
+  breadcrumbs,
 }: {
   title: string;
   /** Shown inline after the title, e.g. visibility or "Archived". */
   badges?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
+  /** The parent chain down to this page. Leave off on top-level pages. */
+  breadcrumbs?: BreadcrumbItem[];
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {badges}
-        </div>
-        {description ? (
-          <div className="text-muted-foreground mt-1 max-w-2xl text-sm">
-            {description}
+    <div>
+      {breadcrumbs ? (
+        <Breadcrumbs items={breadcrumbs} className="mb-3" />
+      ) : null}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+            {badges}
           </div>
-        ) : null}
+          {description ? (
+            <div className="text-muted-foreground mt-1 max-w-2xl text-sm">
+              {description}
+            </div>
+          ) : null}
+        </div>
+        {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
     </div>
   );
 }

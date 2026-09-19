@@ -28,10 +28,12 @@ import { canScoreItem } from "@/features/scoring/permissions";
 import { listDecisionsForItem } from "@/features/decisions/queries";
 import { canRecordDecision } from "@/features/decisions/permissions";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UpdateItemForm } from "./update-item-form";
-import { ArchiveItemControl } from "./archive-item-control";
+import { PageContainer, PageHeader } from "@/components/page-shell";
+import { formatRelativeTime } from "@/lib/utils";
+import { boardTrail } from "@/lib/breadcrumb-trails";
+import { EditItemDrawer } from "./edit-item-drawer";
 import { VoteButton } from "./vote-button";
 import { FollowButton } from "./follow-button";
 import { CommentSection } from "./comment-section";
@@ -39,7 +41,31 @@ import { toCommentData } from "@/features/comments/mapper";
 import { ActivityFeed } from "./activity-feed";
 import { ScorePanel } from "./score-panel";
 import { DecisionPanel } from "./decision-panel";
-import { DecisionBadge } from "@/components/decision-badge";
+
+function tint(color?: string | null) {
+  return color ? { backgroundColor: `${color}22`, color } : undefined;
+}
+
+/** One block of the assessment rail. */
+function RailSection({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3 px-5 py-4">
+      <div>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default async function ItemAdminPage({
   params,
@@ -47,7 +73,7 @@ export default async function ItemAdminPage({
   params: Promise<{ slug: string; boardSlug: string; itemSlug: string }>;
 }) {
   const { slug, boardSlug, itemSlug } = await params;
-  const { profile, membership, item } = await requireItemForOrgMember(
+  const { profile, membership, board, item } = await requireItemForOrgMember(
     slug,
     boardSlug,
     itemSlug,
@@ -96,208 +122,198 @@ export default async function ItemAdminPage({
   ]);
   const computedScore = computeItemScore(itemScores);
 
+  const priorityIsSet = item.priority.slug !== "none";
+
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
-          <Badge variant="outline">{item.itemType.name}</Badge>
-          <Badge
-            variant="secondary"
-            style={
-              item.status.color
-                ? {
-                    backgroundColor: `${item.status.color}22`,
-                    color: item.status.color,
-                  }
-                : undefined
-            }
-          >
-            {item.status.name}
-          </Badge>
-          {item.category ? (
-            <Badge variant="outline">{item.category.name}</Badge>
-          ) : null}
-          {item.priority.slug !== "none" ? (
-            <Badge
-              variant="secondary"
-              style={
-                item.priority.color
-                  ? {
-                      backgroundColor: `${item.priority.color}22`,
-                      color: item.priority.color,
-                    }
-                  : undefined
-              }
-            >
-              {item.priority.name} priority
+    <PageContainer>
+      <PageHeader
+        breadcrumbs={[...boardTrail(slug, board), { label: item.title }]}
+        title={item.title}
+        badges={
+          <>
+            <Badge variant="soft" style={tint(item.status.color)}>
+              {item.status.name}
             </Badge>
-          ) : null}
-          {item.archivedAt ? <Badge variant="secondary">Archived</Badge> : null}
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Submitted by {item.author.displayName}
-        </p>
-      </div>
-
-      {decisions[0] ? (
-        <div>
-          <DecisionBadge type={decisions[0].type} />
-        </div>
-      ) : null}
-
-      <div className="space-y-2">
-        <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Community signal
-        </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <VoteButton
-            orgSlug={slug}
-            boardSlug={boardSlug}
-            itemSlug={itemSlug}
-            initialVoted={hasVoted}
-            initialCount={voteCount}
-          />
-          <FollowButton
-            orgSlug={slug}
-            boardSlug={boardSlug}
-            itemSlug={itemSlug}
-            initialFollowing={following}
-            initialCount={followerCount}
-          />
-          <span className="text-muted-foreground text-xs">
-            {commentCount} {commentCount === 1 ? "comment" : "comments"}
-          </span>
-        </div>
-        <p className="text-muted-foreground text-xs">
-          Votes, comments, and followers show interest, not priority — see
-          Business signal below for how this item is actually being evaluated.
-        </p>
-      </div>
-
-      {item.description ? (
-        <p className="text-sm whitespace-pre-wrap">{item.description}</p>
-      ) : null}
-
-      {item.tags.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {item.tags.map(({ tag }) => (
-            <Badge key={tag.id} variant="outline">
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
-
-      <Separator />
-
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold">Decision</h2>
-        <DecisionPanel
-          orgSlug={slug}
-          boardSlug={boardSlug}
-          itemSlug={itemSlug}
-          canRecord={canRecord}
-          history={decisions}
-        />
-      </section>
-
-      {canScore ? (
-        <>
-          <Separator />
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold">Business signal</h2>
-              <p className="text-muted-foreground text-xs">
-                Impact, value, effort, and strategic alignment — how this
-                organisation is actually evaluating the item.
-              </p>
-            </div>
-            <ScorePanel
+            {item.archivedAt ? (
+              <Badge variant="secondary">Archived</Badge>
+            ) : null}
+          </>
+        }
+        description={`Submitted by ${item.author.displayName} · ${formatRelativeTime(item.createdAt)}`}
+        actions={
+          canEdit ? (
+            <EditItemDrawer
               orgSlug={slug}
               boardSlug={boardSlug}
               itemSlug={itemSlug}
-              criteria={scoreCriteria.map((c) => ({
-                id: c.id,
-                name: c.name,
-                description: c.description,
-              }))}
-              scores={itemScores.map((s) => ({
-                criterionId: s.criterionId,
-                value: s.value,
-              }))}
-              computed={computedScore}
-            />
-          </section>
-        </>
-      ) : null}
-
-      <Separator />
-
-      <Tabs defaultValue="discussion">
-        <TabsList>
-          <TabsTrigger value="discussion">
-            Discussion ({commentCount})
-          </TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-        <TabsContent value="discussion">
-          <CommentSection
-            orgSlug={slug}
-            boardSlug={boardSlug}
-            itemSlug={itemSlug}
-            comments={comments.map(toCommentData)}
-            currentUserId={profile.id}
-            canComment={canComment}
-            canModerate={canModerate}
-          />
-        </TabsContent>
-        <TabsContent value="activity">
-          <ActivityFeed activities={activities} />
-        </TabsContent>
-      </Tabs>
-
-      {canEdit ? (
-        <>
-          <Separator />
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold">Edit item</h2>
-            <UpdateItemForm
-              orgSlug={slug}
-              boardSlug={boardSlug}
-              itemSlug={itemSlug}
-              initialTitle={item.title}
-              initialDescription={item.description ?? ""}
-              initialItemTypeId={item.itemTypeId}
-              initialStatusId={item.statusId}
-              initialPriorityId={item.priorityId}
-              initialCategoryId={item.categoryId ?? ""}
-              initialTags={item.tags.map(({ tag }) => tag.name)}
+              title={item.title}
+              archived={!!item.archivedAt}
+              canArchive={canArchive}
+              initial={{
+                title: item.title,
+                description: item.description ?? "",
+                itemTypeId: item.itemTypeId,
+                statusId: item.statusId,
+                priorityId: item.priorityId,
+                categoryId: item.categoryId ?? "",
+                tags: item.tags.map(({ tag }) => tag.name),
+              }}
               itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
-              statuses={statuses.map((s) => ({ id: s.id, name: s.name }))}
+              statuses={statuses.map((st) => ({ id: st.id, name: st.name }))}
               priorities={priorities.map((p) => ({ id: p.id, name: p.name }))}
               categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             />
-          </section>
-        </>
-      ) : null}
+          ) : null
+        }
+      />
 
-      {canArchive ? (
-        <>
-          <Separator />
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold">
-              {item.archivedAt ? "Restore item" : "Archive item"}
-            </h2>
-            <ArchiveItemControl
-              orgSlug={slug}
-              boardSlug={boardSlug}
-              itemSlug={itemSlug}
-              archived={!!item.archivedAt}
-            />
-          </section>
-        </>
-      ) : null}
-    </div>
+      {/* Reads top to bottom on a phone (what it is → where it stands →
+          the conversation); on a wide screen the assessment rail sits beside
+          the description and discussion. */}
+      <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[auto_1fr]">
+        <section
+          aria-label="Description"
+          className="lg:col-start-1 lg:row-start-1"
+        >
+          {item.description ? (
+            <p className="max-w-prose text-base leading-7 whitespace-pre-wrap">
+              {item.description}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No description provided.
+            </p>
+          )}
+        </section>
+
+        <aside
+          aria-label="Assessment"
+          className="lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        >
+          <Card className="gap-0 divide-y py-0">
+            <RailSection title="Decision">
+              <DecisionPanel
+                orgSlug={slug}
+                boardSlug={boardSlug}
+                itemSlug={itemSlug}
+                canRecord={canRecord}
+                history={decisions}
+              />
+            </RailSection>
+
+            <RailSection title="Details">
+              <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 text-sm">
+                <dt className="text-muted-foreground">Type</dt>
+                <dd>{item.itemType.name}</dd>
+
+                <dt className="text-muted-foreground">Priority</dt>
+                <dd>
+                  {priorityIsSet ? (
+                    <Badge variant="warning" style={tint(item.priority.color)}>
+                      {item.priority.name}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">None</span>
+                  )}
+                </dd>
+
+                {item.category ? (
+                  <>
+                    <dt className="text-muted-foreground">Category</dt>
+                    <dd>{item.category.name}</dd>
+                  </>
+                ) : null}
+
+                {item.tags.length > 0 ? (
+                  <>
+                    <dt className="text-muted-foreground">Tags</dt>
+                    <dd className="flex flex-wrap gap-1.5">
+                      {item.tags.map(({ tag }) => (
+                        <Badge key={tag.id} variant="outline">
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </dd>
+                  </>
+                ) : null}
+              </dl>
+            </RailSection>
+
+            <RailSection
+              title="Community signal"
+              hint="Interest, not priority."
+            >
+              <div className="flex flex-wrap gap-2">
+                <VoteButton
+                  orgSlug={slug}
+                  boardSlug={boardSlug}
+                  itemSlug={itemSlug}
+                  initialVoted={hasVoted}
+                  initialCount={voteCount}
+                />
+                <FollowButton
+                  orgSlug={slug}
+                  boardSlug={boardSlug}
+                  itemSlug={itemSlug}
+                  initialFollowing={following}
+                  initialCount={followerCount}
+                />
+              </div>
+            </RailSection>
+
+            {canScore ? (
+              <RailSection
+                title="Business signal"
+                hint="How the team rates it."
+              >
+                <ScorePanel
+                  orgSlug={slug}
+                  boardSlug={boardSlug}
+                  itemSlug={itemSlug}
+                  criteria={scoreCriteria.map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                    description: c.description,
+                  }))}
+                  scores={itemScores.map((sc) => ({
+                    criterionId: sc.criterionId,
+                    value: sc.value,
+                  }))}
+                  computed={computedScore}
+                />
+              </RailSection>
+            ) : null}
+          </Card>
+        </aside>
+
+        <section
+          aria-label="Discussion and activity"
+          className="border-t pt-8 lg:col-start-1 lg:row-start-2"
+        >
+          <Tabs defaultValue="discussion">
+            <TabsList>
+              <TabsTrigger value="discussion">
+                Discussion ({commentCount})
+              </TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
+            <TabsContent value="discussion" className="pt-4">
+              <CommentSection
+                orgSlug={slug}
+                boardSlug={boardSlug}
+                itemSlug={itemSlug}
+                comments={comments.map(toCommentData)}
+                currentUserId={profile.id}
+                canComment={canComment}
+                canModerate={canModerate}
+              />
+            </TabsContent>
+            <TabsContent value="activity" className="pt-4">
+              <ActivityFeed activities={activities} />
+            </TabsContent>
+          </Tabs>
+        </section>
+      </div>
+    </PageContainer>
   );
 }

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { settingsTrail } from "@/lib/breadcrumb-trails";
 import { notFound } from "next/navigation";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { hasAtLeastRole } from "@/features/organizations/permissions";
@@ -45,6 +47,10 @@ export default async function AuditLogPage({
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...settingsTrail(slug), { label: "Audit log" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Audit log</h1>
         <p className="text-muted-foreground text-sm">
           Significant administrative and security events for this organisation,

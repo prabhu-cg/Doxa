@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireSpaceForOrgMember } from "@/features/spaces/queries";
 import { canManageSpaces } from "@/features/spaces/permissions";
 import { Separator } from "@/components/ui/separator";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { spaceTrail } from "@/lib/breadcrumb-trails";
 import { UpdateSpaceForm } from "./update-space-form";
 import { ArchiveSpaceControl } from "./archive-space-control";
 
@@ -20,6 +22,10 @@ export default async function SpaceSettingsPage({
   return (
     <div className="mx-auto w-full max-w-md space-y-8 px-4 py-10">
       <div>
+        <Breadcrumbs
+          items={[...spaceTrail(slug, space), { label: "Settings" }]}
+          className="mb-3"
+        />
         <h1 className="text-2xl font-bold tracking-tight">Space settings</h1>
         <p className="text-muted-foreground text-sm">{space.name}</p>
       </div>
