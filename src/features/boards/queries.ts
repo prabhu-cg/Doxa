@@ -49,6 +49,7 @@ function withLastActivity<
   };
 }
 
+/** Newest board first, in both board lists — they only feed card grids. */
 export async function listBoardsForOrganization(
   organizationId: string,
   options: { includeArchived?: boolean } = {},
@@ -59,7 +60,7 @@ export async function listBoardsForOrganization(
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
     include: { space: true, ...boardSummaryInclude },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
   return boards.map(withLastActivity);
 }
@@ -74,7 +75,7 @@ export async function listBoardsForSpace(
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
     include: boardSummaryInclude,
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
   return boards.map(withLastActivity);
 }

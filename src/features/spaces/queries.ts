@@ -14,9 +14,11 @@ export type SpaceWithCounts = Space & {
   lastActivityAt: Date;
 };
 
+/** Oldest first by default: the "New board" form pre-selects the first space.
+ * Pass `newestFirst` for a grid where the latest addition should lead. */
 export async function listSpacesForOrganization(
   organizationId: string,
-  options: { includeArchived?: boolean } = {},
+  options: { includeArchived?: boolean; newestFirst?: boolean } = {},
 ): Promise<SpaceWithCounts[]> {
   const liveItems = { deletedAt: null, archivedAt: null };
   const spaces = await db.space.findMany({
@@ -33,7 +35,9 @@ export async function listSpacesForOrganization(
         take: 1,
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: options.newestFirst
+      ? [{ createdAt: "desc" as const }, { id: "desc" as const }]
+      : [{ createdAt: "asc" as const }],
   });
   return spaces.map(({ items, ...space }) => ({
     ...space,

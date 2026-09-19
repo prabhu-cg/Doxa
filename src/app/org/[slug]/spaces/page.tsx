@@ -21,6 +21,7 @@ export default async function SpacesPage({
   const { membership } = await requireOrganizationMembership(slug);
   const spaces = await listSpacesForOrganization(membership.organization.id, {
     includeArchived: true,
+    newestFirst: true,
   });
   const terminology = getItemTerminology(membership.organization);
 
