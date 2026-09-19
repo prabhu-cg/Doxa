@@ -67,6 +67,8 @@ export const boardFiltersSchema = z.object({
   status: z.string().optional(),
   category: z.string().optional(),
   tag: z.string().optional(),
+  /** Who created it: the team, or the community (customers on a public board). */
+  origin: z.enum(["team", "community"]).optional(),
   sort: z.enum(BOARD_SORTS).optional().default("newest"),
 });
 

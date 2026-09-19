@@ -27,6 +27,7 @@ export function ItemCard({
   updatedAt,
   archived,
   awaitingReview,
+  origin,
 }: {
   href: string;
   title: string;
@@ -48,6 +49,8 @@ export function ItemCard({
   archived?: boolean;
   /** A community submission the team hasn't approved yet. */
   awaitingReview?: boolean;
+  /** Who created it. Only a community submission is marked; the team's own is the default. */
+  origin?: "TEAM" | "COMMUNITY";
 }) {
   return (
     <EntityCard
@@ -59,6 +62,9 @@ export function ItemCard({
             {statusName}
           </Badge>
           <Badge variant="outline">{itemTypeName}</Badge>
+          {origin === "COMMUNITY" ? (
+            <Badge variant="info">Community</Badge>
+          ) : null}
           {decisionType ? <DecisionBadge type={decisionType} /> : null}
           {archived ? <Badge variant="secondary">Archived</Badge> : null}
           {awaitingReview ? (

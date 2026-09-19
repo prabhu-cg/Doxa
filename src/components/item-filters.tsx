@@ -38,6 +38,7 @@ export function ItemFilters({
     status?: string;
     category?: string;
     tag?: string;
+    origin?: "team" | "community";
     sort?: BoardSort;
   };
 }) {
@@ -46,7 +47,8 @@ export function ItemFilters({
     !!current.itemType ||
     !!current.status ||
     !!current.category ||
-    !!current.tag;
+    !!current.tag ||
+    !!current.origin;
 
   return (
     <form
@@ -118,6 +120,16 @@ export function ItemFilters({
           ))}
         </select>
       ) : null}
+      <select
+        name="origin"
+        defaultValue={current.origin ?? ""}
+        className={selectClass}
+        aria-label="Filter by who submitted it"
+      >
+        <option value="">Everyone</option>
+        <option value="team">Team</option>
+        <option value="community">Community</option>
+      </select>
       <select
         name="sort"
         defaultValue={current.sort ?? "newest"}

@@ -37,6 +37,7 @@ export type BoardFilters = {
   statusSlug?: string;
   categorySlug?: string;
   tagSlug?: string;
+  origin?: "team" | "community";
   sort?: BoardSort;
 };
 
@@ -87,6 +88,9 @@ export async function listItemsForBoard(
         : {}),
       ...(filters.tagSlug
         ? { tags: { some: { tag: { slug: filters.tagSlug } } } }
+        : {}),
+      ...(filters.origin
+        ? { origin: filters.origin === "team" ? "TEAM" : "COMMUNITY" }
         : {}),
     },
     include: itemRelationsInclude,

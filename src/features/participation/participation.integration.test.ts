@@ -197,6 +197,32 @@ describe("community participation", () => {
     });
   });
 
+  describe("who submitted it", () => {
+    it("filters a board's items to the team's own or the community's", async () => {
+      const teamItem = await makeItem({ origin: "TEAM", authorId: teamId });
+      const everyone = await listItemsForBoard(
+        boardId,
+        {},
+        { includePending: true },
+      );
+      const community = await listItemsForBoard(
+        boardId,
+        { origin: "community" },
+        { includePending: true },
+      );
+      const team = await listItemsForBoard(
+        boardId,
+        { origin: "team" },
+        { includePending: true },
+      );
+
+      expect(team.map((i) => i.slug)).toEqual([teamItem.slug]);
+      expect(community.every((i) => i.origin === "COMMUNITY")).toBe(true);
+      expect(community.length + team.length).toBe(everyone.length);
+      expect(community.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("team labels", () => {
     it("labels a team member's comment as the team's, and a customer's as not", async () => {
       const item = await makeItem();

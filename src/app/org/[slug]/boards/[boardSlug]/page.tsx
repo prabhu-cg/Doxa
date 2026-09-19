@@ -40,6 +40,7 @@ export default async function BoardAdminPage({
     status: rawFilters.status,
     category: rawFilters.category,
     tag: rawFilters.tag,
+    origin: rawFilters.origin,
     sort: rawFilters.sort,
   });
   const filters: Partial<BoardFiltersValues> = parsedFilters.success
@@ -55,6 +56,7 @@ export default async function BoardAdminPage({
         statusSlug: filters.status,
         categorySlug: filters.category,
         tagSlug: filters.tag,
+        origin: filters.origin,
         sort: filters.sort,
       },
       { includeArchived: true, includePending: true },
@@ -154,6 +156,7 @@ export default async function BoardAdminPage({
               updatedAt={item.updatedAt}
               archived={!!item.archivedAt}
               awaitingReview={item.awaitingReview}
+              origin={item.origin}
             />
           ))}
         </EntityGrid>
