@@ -18,11 +18,13 @@ export function PlanPicker({
   plans,
   currentPlanKey,
   currentBillingPeriod,
+  paidPlansAvailable,
 }: {
   orgSlug: string;
   plans: Plan[];
   currentPlanKey: string;
   currentBillingPeriod: string;
+  paidPlansAvailable: boolean;
 }) {
   const router = useRouter();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -52,6 +54,7 @@ export function PlanPicker({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {plans.map((plan) => {
           const isCurrent = plan.key === currentPlanKey;
+          const unavailable = plan.key !== "FREE" && !paidPlansAvailable;
           return (
             <Card key={plan.key} className={isCurrent ? "border-primary" : ""}>
               <CardHeader>
@@ -71,12 +74,14 @@ export function PlanPicker({
                   <Button
                     size="sm"
                     className="w-full"
-                    disabled={pendingKey !== null}
+                    disabled={pendingKey !== null || unavailable}
                     onClick={() => onSelect(plan.key)}
                   >
-                    {pendingKey === plan.key
-                      ? "Switching…"
-                      : `Switch to ${plan.name}`}
+                    {unavailable
+                      ? "Not available yet"
+                      : pendingKey === plan.key
+                        ? "Switching…"
+                        : `Switch to ${plan.name}`}
                   </Button>
                 ) : null}
               </CardContent>

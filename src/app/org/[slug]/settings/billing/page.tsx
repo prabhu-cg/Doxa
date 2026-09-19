@@ -8,6 +8,7 @@ import {
 } from "@/features/billing/queries";
 import { getUsageForOrganization } from "@/features/entitlements/queries";
 import { canManageBilling } from "@/features/billing/permissions";
+import { isStripeConfigured } from "@/features/billing/stripe";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanPicker } from "./plan-picker";
@@ -97,6 +98,7 @@ export default async function BillingSettingsPage({
             plans={plans}
             currentPlanKey={plan.key}
             currentBillingPeriod={subscription.billingPeriod}
+            paidPlansAvailable={isStripeConfigured()}
           />
           {plan.key !== "FREE" && !subscription.cancelAtPeriodEnd ? (
             <CancelSubscriptionControl orgSlug={slug} />

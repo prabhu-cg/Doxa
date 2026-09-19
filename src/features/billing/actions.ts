@@ -6,6 +6,7 @@ import { clientEnv } from "@/lib/env/client";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { logAuditEvent } from "@/features/audit-log/log";
 import { getStripeClient } from "./stripe";
+import { planChangeBlockedReason } from "./checkout";
 import { changePlanSchema } from "./schema";
 import { canManageBilling } from "./permissions";
 
@@ -18,14 +19,10 @@ type ActionResult = { success: true } | { success: false; error: string };
  * is applied later, by the webhook handling `checkout.session.completed`
  * (src/app/api/webhooks/stripe/route.ts), once payment is confirmed.
  *
- * When Stripe is NOT configured (every local dev environment, per
- * docs/environment.md's "never required for local development"), or the
- * target plan is FREE (which never needs payment), the plan is changed
- * directly on the local Subscription row. This keeps every plan change
- * testable without Stripe — in a real production deployment,
- * STRIPE_SECRET_KEY is set, so a paid-plan change always goes through
- * checkout there; the direct-write path only ever fires for FREE
- * downgrades or in an environment that hasn't configured billing at all.
+ * Without Stripe there is no way to take payment, so a paid plan is
+ * refused (see planChangeBlockedReason) rather than granted for free. Only a
+ * FREE downgrade, which never needs payment, is written directly to the
+ * Subscription row.
  */
 export async function changePlan(
   orgSlug: string,
@@ -58,6 +55,12 @@ export async function changePlan(
   }
 
   const stripe = getStripeClient();
+  const blockedReason = planChangeBlockedReason(
+    targetPlan.key,
+    stripe !== null,
+  );
+  if (blockedReason) return { success: false, error: blockedReason };
+
   const needsCheckout = targetPlan.key !== "FREE" && stripe !== null;
 
   if (needsCheckout) {
