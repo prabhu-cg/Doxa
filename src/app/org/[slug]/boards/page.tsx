@@ -8,6 +8,7 @@ import { LinkButton } from "@/components/link-button";
 import { EntityCard, EntityGrid, EntityMeta } from "@/components/entity-card";
 import { getItemTerminology } from "@/features/organizations/terminology";
 import { formatRelativeTime } from "@/lib/utils";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export const metadata: Metadata = { title: "Boards" };
 
@@ -24,21 +25,18 @@ export default async function BoardsPage({
   const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Boards</h1>
-          <p className="text-muted-foreground text-sm">
-            A Board is where people submit and browse Items for one specific
-            area of feedback — e.g. &quot;Mobile bugs&quot; or &quot;Feature
-            requests&quot;. Boards live inside a Space and can be Public (anyone
-            with the link) or Private (members only).
-          </p>
-        </div>
-        {canManageBoards(membership.role) ? (
-          <LinkButton href={`/org/${slug}/boards/new`}>New board</LinkButton>
-        ) : null}
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Boards"
+        description={
+          'A Board is where people submit and browse Items for one specific area of feedback — e.g. "Mobile bugs" or "Feature requests". Boards live inside a Space and can be Public (anyone with the link) or Private (members only).'
+        }
+        actions={
+          canManageBoards(membership.role) ? (
+            <LinkButton href={`/org/${slug}/boards/new`}>New board</LinkButton>
+          ) : undefined
+        }
+      />
 
       {boards.length === 0 ? (
         <p className="text-muted-foreground text-sm">No boards yet.</p>
@@ -81,6 +79,6 @@ export default async function BoardsPage({
           ))}
         </EntityGrid>
       )}
-    </div>
+    </PageContainer>
   );
 }

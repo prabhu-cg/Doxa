@@ -17,6 +17,7 @@ import { LinkButton } from "@/components/link-button";
 import { ItemFilters } from "@/components/item-filters";
 import { ItemCard } from "@/components/item-card";
 import { EntityGrid } from "@/components/entity-card";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export default async function BoardAdminPage({
   params,
@@ -64,20 +65,22 @@ export default async function BoardAdminPage({
   const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{board.name}</h1>
+    <PageContainer>
+      <PageHeader
+        title={board.name}
+        badges={
+          <>
             <Badge variant="outline">{board.visibility}</Badge>
             {board.status === "ARCHIVED" ? (
               <Badge variant="secondary">Archived</Badge>
             ) : null}
-          </div>
-          {board.description ? (
-            <p className="text-muted-foreground text-sm">{board.description}</p>
+          </>
+        }
+        description={
+          board.description ? (
+            board.description
           ) : canManageBoards(membership.role) ? (
-            <p className="text-muted-foreground text-sm italic">
+            <span className="italic">
               No description yet —{" "}
               <Link
                 href={`${basePath}/settings`}
@@ -86,22 +89,24 @@ export default async function BoardAdminPage({
                 add one
               </Link>{" "}
               so contributors know what belongs on this board.
-            </p>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          {canCreateItem(membership.role) && board.status === "ACTIVE" ? (
-            <LinkButton href={`${basePath}/items/new`}>
-              New {terminology.singular}
-            </LinkButton>
-          ) : null}
-          {canManageBoards(membership.role) ? (
-            <LinkButton variant="outline" href={`${basePath}/settings`}>
-              Settings
-            </LinkButton>
-          ) : null}
-        </div>
-      </div>
+            </span>
+          ) : null
+        }
+        actions={
+          <>
+            {canCreateItem(membership.role) && board.status === "ACTIVE" ? (
+              <LinkButton href={`${basePath}/items/new`}>
+                New {terminology.singular}
+              </LinkButton>
+            ) : null}
+            {canManageBoards(membership.role) ? (
+              <LinkButton variant="outline" href={`${basePath}/settings`}>
+                Settings
+              </LinkButton>
+            ) : null}
+          </>
+        }
+      />
 
       <ItemFilters
         basePath={basePath}
@@ -140,6 +145,6 @@ export default async function BoardAdminPage({
           ))}
         </EntityGrid>
       )}
-    </div>
+    </PageContainer>
   );
 }

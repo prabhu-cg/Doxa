@@ -9,6 +9,7 @@ import {
 import type { RoadmapItem } from "@/features/roadmap/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export const metadata: Metadata = { title: "Roadmap" };
 
@@ -22,15 +23,11 @@ export default async function RoadmapPage({
   const board = await listRoadmapForOrganization(membership.organization.id);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Roadmap</h1>
-        <p className="text-muted-foreground text-sm">
-          A basic Now / Next / Later view built from Items and the decisions
-          recorded about them — an Item lands here only once an owner or admin
-          explicitly places it, not because it got votes.
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Roadmap"
+        description="A basic Now / Next / Later view built from Items and the decisions recorded about them — an Item lands here only once an owner or admin explicitly places it, not because it got votes."
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {ROADMAP_STAGES.map((stage) => (
@@ -53,7 +50,7 @@ export default async function RoadmapPage({
           </div>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

@@ -19,6 +19,7 @@ import { hasFeature } from "@/features/entitlements/queries";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/link-button";
 import { PrioritizationFilters } from "./prioritization-filters";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export const metadata: Metadata = { title: "Prioritisation" };
 
@@ -40,15 +41,17 @@ export default async function PrioritizationPage({
   );
   if (!canUseAdvancedPrioritisation) {
     return (
-      <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Prioritisation</h1>
-        <p className="text-muted-foreground text-sm">
-          Cross-board prioritisation — sorting and filtering every Item by
-          votes, priority, status, type, category, and score — requires the Pro
-          plan or higher.
-        </p>
-        <LinkButton href={`/org/${slug}/settings/billing`}>Upgrade</LinkButton>
-      </div>
+      <PageContainer>
+        <PageHeader
+          title="Prioritisation"
+          description="Cross-board prioritisation — sorting and filtering every Item by votes, priority, status, type, category, and score — requires the Pro plan or higher."
+          actions={
+            <LinkButton href={`/org/${slug}/settings/billing`}>
+              Upgrade
+            </LinkButton>
+          }
+        />
+      </PageContainer>
     );
   }
 
@@ -75,15 +78,11 @@ export default async function PrioritizationPage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Prioritisation</h1>
-        <p className="text-muted-foreground text-sm">
-          What should we consider next? Community signal (votes) and business
-          signal (priority, score) side by side, across every board — never
-          collapsed into one number.
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Prioritisation"
+        description="What should we consider next? Community signal (votes) and business signal (priority, score) side by side, across every board — never collapsed into one number."
+      />
 
       <PrioritizationFilters
         basePath={`/org/${slug}/prioritization`}
@@ -118,7 +117,7 @@ export default async function PrioritizationPage({
           </table>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

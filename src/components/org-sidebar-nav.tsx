@@ -42,11 +42,11 @@ export function OrgSidebarNav({
           },
         ]
       : []),
+    { href: `${base}/settings`, label: "Settings", icon: Settings },
   ];
 
   const footerItems: NavItem[] = [
     { href: `${base}/help`, label: "Help", icon: HelpCircle },
-    { href: `${base}/settings`, label: "Settings", icon: Settings },
   ];
 
   // A link to `/org/slug/boards` should still read as active on

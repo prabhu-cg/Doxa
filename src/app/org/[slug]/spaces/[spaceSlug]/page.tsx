@@ -8,6 +8,7 @@ import { LinkButton } from "@/components/link-button";
 import { EntityCard, EntityGrid, EntityMeta } from "@/components/entity-card";
 import { getItemTerminology } from "@/features/organizations/terminology";
 import { formatRelativeTime } from "@/lib/utils";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export default async function SpaceDetailPage({
   params,
@@ -20,38 +21,34 @@ export default async function SpaceDetailPage({
   const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{space.name}</h1>
-            {space.archivedAt ? (
-              <Badge variant="secondary">Archived</Badge>
+    <PageContainer>
+      <PageHeader
+        title={space.name}
+        badges={
+          space.archivedAt ? <Badge variant="secondary">Archived</Badge> : null
+        }
+        description={space.description}
+        actions={
+          <>
+            {canManageBoards(membership.role) && !space.archivedAt ? (
+              <LinkButton
+                variant="outline"
+                href={`/org/${slug}/boards/new?space=${space.slug}`}
+              >
+                New board
+              </LinkButton>
             ) : null}
-          </div>
-          {space.description ? (
-            <p className="text-muted-foreground text-sm">{space.description}</p>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          {canManageBoards(membership.role) && !space.archivedAt ? (
-            <LinkButton
-              variant="outline"
-              href={`/org/${slug}/boards/new?space=${space.slug}`}
-            >
-              New board
-            </LinkButton>
-          ) : null}
-          {canManageSpaces(membership.role) ? (
-            <LinkButton
-              variant="outline"
-              href={`/org/${slug}/spaces/${space.slug}/settings`}
-            >
-              Settings
-            </LinkButton>
-          ) : null}
-        </div>
-      </div>
+            {canManageSpaces(membership.role) ? (
+              <LinkButton
+                variant="outline"
+                href={`/org/${slug}/spaces/${space.slug}/settings`}
+              >
+                Settings
+              </LinkButton>
+            ) : null}
+          </>
+        }
+      />
 
       {boards.length === 0 ? (
         <p className="text-muted-foreground text-sm">No boards yet.</p>
@@ -91,6 +88,6 @@ export default async function SpaceDetailPage({
           ))}
         </EntityGrid>
       )}
-    </div>
+    </PageContainer>
   );
 }

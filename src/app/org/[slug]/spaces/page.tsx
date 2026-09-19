@@ -8,6 +8,7 @@ import { LinkButton } from "@/components/link-button";
 import { EntityCard, EntityGrid, EntityMeta } from "@/components/entity-card";
 import { getItemTerminology } from "@/features/organizations/terminology";
 import { formatRelativeTime } from "@/lib/utils";
+import { PageContainer, PageHeader } from "@/components/page-shell";
 
 export const metadata: Metadata = { title: "Spaces" };
 
@@ -24,19 +25,18 @@ export default async function SpacesPage({
   const terminology = getItemTerminology(membership.organization);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Spaces</h1>
-          <p className="text-muted-foreground text-sm">
-            Logical groupings of boards, like &quot;Product&quot; or
-            &quot;Customer Feedback.&quot;
-          </p>
-        </div>
-        {canManageSpaces(membership.role) ? (
-          <LinkButton href={`/org/${slug}/spaces/new`}>New space</LinkButton>
-        ) : null}
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Spaces"
+        description={
+          'Logical groupings of boards, like "Product" or "Customer Feedback."'
+        }
+        actions={
+          canManageSpaces(membership.role) ? (
+            <LinkButton href={`/org/${slug}/spaces/new`}>New space</LinkButton>
+          ) : undefined
+        }
+      />
 
       {spaces.length === 0 ? (
         <p className="text-muted-foreground text-sm">No spaces yet.</p>
@@ -72,6 +72,6 @@ export default async function SpacesPage({
           ))}
         </EntityGrid>
       )}
-    </div>
+    </PageContainer>
   );
 }
