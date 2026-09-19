@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { requireItemForOrgMember } from "@/features/items/queries";
 import { logActivity } from "@/features/activity/log";
 import { logAuditEvent } from "@/features/audit-log/log";
+import { notifyDecisionRecorded } from "@/features/notifications/create";
 import { recordDecisionSchema } from "./schema";
 import { canRecordDecision } from "./permissions";
 
@@ -77,6 +78,19 @@ export async function recordDecision(
       data: { decisionType: parsed.data.type, itemTitle: item.title },
     }),
   ]);
+
+  // The decision is already saved, so a failure to notify must not undo it.
+  try {
+    await notifyDecisionRecorded({
+      organizationId: membership.organization.id,
+      itemId: item.id,
+      actorId: profile.id,
+      decisionType: parsed.data.type,
+      roadmapStage: parsed.data.roadmapStage,
+    });
+  } catch (error) {
+    console.error("Could not notify voters about a decision", error);
+  }
 
   revalidatePath(`/org/${orgSlug}/boards/${boardSlug}/items/${itemSlug}`);
   revalidatePath(`/b/${orgSlug}/${boardSlug}/${itemSlug}`);

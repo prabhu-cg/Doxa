@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateBoardSchema } from "@/features/boards/schema";
@@ -50,6 +51,7 @@ export function UpdateBoardForm({
   initialDescription: string;
   initialVisibility: "PUBLIC" | "PRIVATE";
 }) {
+  const router = useRouter();
   const [rootError, setRootError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const {
@@ -75,6 +77,8 @@ export function UpdateBoardForm({
       return;
     }
     setSaved(true);
+    // Visibility may have changed, which shows or hides the public link.
+    router.refresh();
   }
 
   return (

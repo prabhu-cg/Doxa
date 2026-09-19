@@ -105,6 +105,7 @@ export async function createItem(
         priorityId: defaultPriority.id,
         categoryId,
         authorId: profile.id,
+        origin: "TEAM",
         title: parsed.data.title,
         description: parsed.data.description,
         slug,

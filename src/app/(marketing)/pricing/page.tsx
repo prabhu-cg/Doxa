@@ -13,7 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PRICING_PLANS } from "@/lib/pricing-plans";
+import {
+  CHECKOUT_LIVE,
+  PRICING_PLANS,
+  formatLimit,
+  planByKey,
+} from "@/lib/pricing-plans";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -22,19 +27,34 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
 };
 
-const COMPARISON_ROWS: {
+type Row = {
   label: string;
   free: boolean | string;
   pro: boolean | string;
   business: boolean | string;
-}[] = [
-  { label: "Organisations", free: "1", pro: "1", business: "Multiple" },
-  {
-    label: "Members",
-    free: "Unlimited",
-    pro: "Unlimited",
-    business: "Unlimited",
-  },
+};
+
+const FREE = planByKey("FREE");
+const PRO = planByKey("PRO");
+const BUSINESS = planByKey("BUSINESS");
+
+/** A limit that comes straight from the plan data, so this table can't drift
+ * from what the app enforces. */
+const limitRow = (
+  label: string,
+  pick: (plan: typeof FREE) => number | null,
+): Row => ({
+  label,
+  free: formatLimit(pick(FREE)),
+  pro: formatLimit(pick(PRO)),
+  business: formatLimit(pick(BUSINESS)),
+});
+
+const COMPARISON_ROWS: Row[] = [
+  limitRow("Organisations", (p) => p.maxOrganizations),
+  limitRow("Team members", (p) => p.maxMembers),
+  limitRow("Boards", (p) => p.maxBoards),
+  limitRow("Items created by your team", (p) => p.maxItems),
   {
     label: "Feedback, voting & discussion",
     free: true,
@@ -42,19 +62,28 @@ const COMPARISON_ROWS: {
     business: true,
   },
   {
-    label: "Prioritisation & roadmaps",
-    free: false,
+    label: "Decision records, with public reasons",
+    free: true,
     pro: true,
     business: true,
   },
-  { label: "Decision records", free: false, pro: true, business: true },
-  { label: "Advanced permissions", free: false, pro: false, business: true },
-  { label: "Branding controls", free: false, pro: false, business: true },
   {
-    label: "Support",
-    free: "Community",
-    pro: "Priority",
-    business: "Dedicated",
+    label: "Public boards & public roadmap",
+    free: true,
+    pro: true,
+    business: true,
+  },
+  {
+    label: "Cross-board prioritisation",
+    free: FREE.advancedPrioritisation,
+    pro: PRO.advancedPrioritisation,
+    business: BUSINESS.advancedPrioritisation,
+  },
+  {
+    label: "Your logo & accent colour on public pages",
+    free: FREE.branding,
+    pro: PRO.branding,
+    business: BUSINESS.branding,
   },
 ];
 
@@ -65,14 +94,17 @@ const FAQ_ITEMS = [
       "Yes. You can create an organisation and start collecting feedback on the Free plan with no credit card required.",
   },
   {
-    question: "What happens when Pro and Business launch?",
+    question: "What counts toward my plan's limits?",
     answer:
-      "Pricing for Pro and Business hasn't been finalised yet. Existing Free organisations won't be forced to pay to keep using what they already have.",
+      "Your team: its members, its boards, and the items your team creates. Doxa never charges per voter, commenter or contributor, so how many people give you feedback doesn't change your bill.",
   },
   {
-    question: "Can I change plans later?",
-    answer:
-      "Yes — plans are designed so you can upgrade as your organisation's needs grow, without migrating your data.",
+    question: CHECKOUT_LIVE
+      ? "How do I upgrade?"
+      : "Can I pay for Pro or Business yet?",
+    answer: CHECKOUT_LIVE
+      ? "Open your organisation's billing settings and choose a plan. You can change or cancel at any time."
+      : "Not yet. Pro and Business are priced, but paid checkout isn't open, so every organisation starts on Free. We'll announce when it opens, and Free organisations won't be forced to pay to keep what they already have.",
   },
   {
     question: "Do you offer discounts for non-profits or communities?",
@@ -111,13 +143,24 @@ export default function PricingPage() {
         <SectionHeading
           eyebrow="Pricing"
           title="Start free. Upgrade when you need more."
-          description="Final pricing for Pro and Business hasn't been set yet — start on Free today."
+          description="Priced per team, never per voter. Start on Free today."
         />
 
         <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
           {PRICING_PLANS.map((plan) => (
             <PricingCard key={plan.name} plan={plan} />
           ))}
+        </div>
+
+        <div className="mx-auto mt-16 max-w-3xl text-center">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Priced per team, never per voter
+          </h2>
+          <p className="text-muted-foreground mt-3">
+            Your plan depends on your team: its members, its boards, and the
+            items it creates. It never depends on how many people vote, comment
+            or contribute, so getting more feedback never raises your bill.
+          </p>
         </div>
 
         <div className="mx-auto mt-20 max-w-4xl">

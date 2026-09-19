@@ -51,9 +51,8 @@ export default function WhyDoxaPage() {
               Signals inform. People decide.
             </h2>
             <p className="text-muted-foreground mt-3">
-              Doxa is designed to combine votes and comments with impact, effort
-              and strategic fit — so prioritisation reflects more than who
-              shouted loudest.
+              Doxa combines votes and comments with impact, effort and strategic
+              fit — so prioritisation reflects more than who shouted loudest.
             </p>
           </div>
           <div className="flex justify-center lg:justify-end">

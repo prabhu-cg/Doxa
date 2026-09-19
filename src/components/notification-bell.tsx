@@ -9,14 +9,17 @@ import {
 } from "@/features/notifications/actions";
 import { Badge } from "@/components/ui/badge";
 import {
+  notificationMessage,
+  type NotificationKind,
+} from "@/components/notification-message";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type NotificationType =
-  "ITEM_COMMENT" | "COMMENT_REPLY" | "ITEM_STATUS_CHANGED" | "MENTION";
+export type NotificationType = NotificationKind;
 
 export type NotificationItem = {
   id: string;
@@ -28,21 +31,6 @@ export type NotificationItem = {
   readAt: Date | null;
   createdAt: Date;
 };
-
-function messageFor(n: NotificationItem): string {
-  const actor = n.actorName ?? "Someone";
-  const title = n.itemTitle ?? "an item";
-  switch (n.type) {
-    case "ITEM_COMMENT":
-      return `${actor} commented on "${title}"`;
-    case "COMMENT_REPLY":
-      return `${actor} replied to your comment on "${title}"`;
-    case "ITEM_STATUS_CHANGED":
-      return `"${title}" changed from ${n.data.fromStatus} to ${n.data.toStatus}`;
-    case "MENTION":
-      return `${actor} mentioned you on "${title}"`;
-  }
-}
 
 export function NotificationBell({
   orgSlug,
@@ -133,7 +121,7 @@ export function NotificationBell({
                     notification.readAt ? "" : "bg-accent/40 font-medium"
                   }`}
                 >
-                  <p>{messageFor(notification)}</p>
+                  <p>{notificationMessage(notification)}</p>
                   <p className="text-muted-foreground text-xs font-normal">
                     {new Date(notification.createdAt).toLocaleString(
                       undefined,

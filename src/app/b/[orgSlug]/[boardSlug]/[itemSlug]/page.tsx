@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVisibleItem } from "@/features/items/queries";
 import { getFollowerCountForItem } from "@/features/followers/queries";
-import { getCurrentDecisionForItem } from "@/features/decisions/queries";
+import { listPublicDecisionsForItem } from "@/features/decisions/transparency";
+import { PublicDecisionHistory } from "@/components/public-decision-history";
 import { Badge } from "@/components/ui/badge";
-import { DecisionBadge } from "@/components/decision-badge";
 
 export async function generateMetadata({
   params,
@@ -30,9 +30,9 @@ export default async function PublicItemPage({
   const visible = await getVisibleItem(orgSlug, boardSlug, itemSlug);
   if (!visible) notFound();
   const { organization, board, item } = visible;
-  const [followerCount, currentDecision] = await Promise.all([
+  const [followerCount, decisions] = await Promise.all([
     getFollowerCountForItem(item.id),
-    getCurrentDecisionForItem(item.id),
+    listPublicDecisionsForItem(item.id),
   ]);
 
   return (
@@ -95,19 +95,7 @@ export default async function PublicItemPage({
         </p>
       </div>
 
-      {currentDecision ? (
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DecisionBadge type={currentDecision.type} />
-            <span className="text-muted-foreground text-xs">
-              {currentDecision.createdAt.toLocaleDateString()}
-            </span>
-          </div>
-          <p className="text-sm whitespace-pre-wrap">
-            {currentDecision.rationale}
-          </p>
-        </div>
-      ) : null}
+      <PublicDecisionHistory decisions={decisions} />
 
       {item.description ? (
         <p className="text-sm whitespace-pre-wrap">{item.description}</p>

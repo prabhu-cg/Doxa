@@ -19,6 +19,9 @@ import { ItemCard } from "@/components/item-card";
 import { EntityGrid } from "@/components/entity-card";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { spaceTrail } from "@/lib/breadcrumb-trails";
+import { getCurrentDecisionTypesForItems } from "@/features/decisions/transparency";
+import { publicBoardPath } from "@/lib/public-links";
+import { CopyLinkButton } from "@/components/public-link";
 
 export default async function BoardAdminPage({
   params,
@@ -62,6 +65,9 @@ export default async function BoardAdminPage({
     listTagsForOrganization(membership.organization.id),
   ]);
 
+  const decisionTypes = await getCurrentDecisionTypesForItems(
+    items.map((item) => item.id),
+  );
   const basePath = `/org/${slug}/boards/${boardSlug}`;
   const terminology = getItemTerminology(membership.organization);
 
@@ -101,6 +107,9 @@ export default async function BoardAdminPage({
                 New {terminology.singular}
               </LinkButton>
             ) : null}
+            {board.visibility === "PUBLIC" && board.status === "ACTIVE" ? (
+              <CopyLinkButton path={publicBoardPath(slug, boardSlug)} />
+            ) : null}
             {canManageBoards(membership.role) ? (
               <LinkButton variant="outline" href={`${basePath}/settings`}>
                 Settings
@@ -133,6 +142,7 @@ export default async function BoardAdminPage({
               statusName={item.status.name}
               statusColor={item.status.color}
               categoryName={item.category?.name}
+              decisionType={decisionTypes.get(item.id)}
               tagNames={item.tags.map((t) => t.tag.name)}
               authorName={item.author.displayName}
               voteCount={item._count.votes}

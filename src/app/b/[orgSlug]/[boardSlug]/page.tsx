@@ -13,6 +13,13 @@ import { listCategoriesForOrganization } from "@/features/categories/queries";
 import { listTagsForOrganization } from "@/features/tags/queries";
 import { ItemFilters } from "@/components/item-filters";
 import { ItemCard } from "@/components/item-card";
+import {
+  getCurrentDecisionTypesForItems,
+  getResponseSummaryForBoard,
+} from "@/features/decisions/transparency";
+import { getItemTerminology } from "@/features/organizations/terminology";
+import { describeResponsiveness } from "@/lib/decision-stats";
+import { publicRoadmapPath } from "@/lib/public-links";
 
 export async function generateMetadata({
   params,
@@ -68,6 +75,15 @@ export default async function PublicBoardPage({
     listTagsForOrganization(organization.id),
   ]);
 
+  const [decisionTypes, responsiveness] = await Promise.all([
+    getCurrentDecisionTypesForItems(items.map((item) => item.id)),
+    getResponseSummaryForBoard(board.id),
+  ]);
+  const responsivenessLine = describeResponsiveness(
+    responsiveness,
+    getItemTerminology(organization),
+  );
+
   const basePath = `/b/${orgSlug}/${boardSlug}`;
 
   return (
@@ -103,6 +119,19 @@ export default async function PublicBoardPage({
           {organization.name}
           {board.description ? ` · ${board.description}` : ""}
         </p>
+        {responsivenessLine ? (
+          <p className="text-muted-foreground mt-1 text-sm">
+            {responsivenessLine}
+          </p>
+        ) : null}
+        <p className="mt-1 text-sm">
+          <Link
+            href={publicRoadmapPath(orgSlug)}
+            className="text-foreground underline underline-offset-4"
+          >
+            See the roadmap
+          </Link>
+        </p>
       </div>
 
       <ItemFilters
@@ -128,6 +157,7 @@ export default async function PublicBoardPage({
               statusName={item.status.name}
               statusColor={item.status.color}
               categoryName={item.category?.name}
+              decisionType={decisionTypes.get(item.id)}
               tagNames={item.tags.map((t) => t.tag.name)}
               authorName={item.author.displayName}
               voteCount={item._count.votes}

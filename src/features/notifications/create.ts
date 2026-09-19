@@ -116,3 +116,46 @@ export async function notifyStatusChanged(params: {
     })),
   );
 }
+
+/**
+ * Tells everyone who voted on an Item, or follows it, that a decision was
+ * recorded on it — the point of recording a reason is that the people who
+ * cared get to hear it. Voting doesn't make someone a follower, so both groups
+ * are needed; each person gets one notification, and whoever recorded the
+ * decision gets none.
+ */
+export async function notifyDecisionRecorded(params: {
+  organizationId: string;
+  itemId: string;
+  actorId: string;
+  decisionType: string;
+  roadmapStage?: string | null;
+}) {
+  const [voters, followers] = await Promise.all([
+    db.vote.findMany({
+      where: { itemId: params.itemId },
+      select: { userId: true },
+    }),
+    db.itemFollower.findMany({
+      where: { itemId: params.itemId },
+      select: { userId: true },
+    }),
+  ]);
+
+  const recipients = new Set([...voters, ...followers].map((r) => r.userId));
+  recipients.delete(params.actorId);
+
+  await createNotifications(
+    [...recipients].map((userId) => ({
+      organizationId: params.organizationId,
+      userId,
+      type: "ITEM_DECISION" as const,
+      itemId: params.itemId,
+      actorId: params.actorId,
+      data: {
+        decisionType: params.decisionType,
+        ...(params.roadmapStage ? { roadmapStage: params.roadmapStage } : {}),
+      },
+    })),
+  );
+}

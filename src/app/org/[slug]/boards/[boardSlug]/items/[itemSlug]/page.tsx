@@ -33,6 +33,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { formatRelativeTime } from "@/lib/utils";
 import { boardTrail } from "@/lib/breadcrumb-trails";
+import { publicItemPath } from "@/lib/public-links";
+import { CopyLinkButton } from "@/components/public-link";
 import { EditItemDrawer } from "./edit-item-drawer";
 import { VoteButton } from "./vote-button";
 import { FollowButton } from "./follow-button";
@@ -123,6 +125,13 @@ export default async function ItemAdminPage({
   const computedScore = computeItemScore(itemScores);
 
   const priorityIsSet = item.priority.slug !== "none";
+  // The public page exists only for a Public, active board and a live item.
+  const publicPath =
+    board.visibility === "PUBLIC" &&
+    board.status === "ACTIVE" &&
+    !item.archivedAt
+      ? publicItemPath(slug, boardSlug, itemSlug)
+      : null;
 
   return (
     <PageContainer>
@@ -141,29 +150,43 @@ export default async function ItemAdminPage({
         }
         description={`Submitted by ${item.author.displayName} · ${formatRelativeTime(item.createdAt)}`}
         actions={
-          canEdit ? (
-            <EditItemDrawer
-              orgSlug={slug}
-              boardSlug={boardSlug}
-              itemSlug={itemSlug}
-              title={item.title}
-              archived={!!item.archivedAt}
-              canArchive={canArchive}
-              initial={{
-                title: item.title,
-                description: item.description ?? "",
-                itemTypeId: item.itemTypeId,
-                statusId: item.statusId,
-                priorityId: item.priorityId,
-                categoryId: item.categoryId ?? "",
-                tags: item.tags.map(({ tag }) => tag.name),
-              }}
-              itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
-              statuses={statuses.map((st) => ({ id: st.id, name: st.name }))}
-              priorities={priorities.map((p) => ({ id: p.id, name: p.name }))}
-              categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-            />
-          ) : null
+          publicPath || canEdit ? (
+            <>
+              {publicPath ? <CopyLinkButton path={publicPath} /> : null}
+              {canEdit ? (
+                <EditItemDrawer
+                  orgSlug={slug}
+                  boardSlug={boardSlug}
+                  itemSlug={itemSlug}
+                  title={item.title}
+                  archived={!!item.archivedAt}
+                  canArchive={canArchive}
+                  initial={{
+                    title: item.title,
+                    description: item.description ?? "",
+                    itemTypeId: item.itemTypeId,
+                    statusId: item.statusId,
+                    priorityId: item.priorityId,
+                    categoryId: item.categoryId ?? "",
+                    tags: item.tags.map(({ tag }) => tag.name),
+                  }}
+                  itemTypes={itemTypes.map((t) => ({ id: t.id, name: t.name }))}
+                  statuses={statuses.map((st) => ({
+                    id: st.id,
+                    name: st.name,
+                  }))}
+                  priorities={priorities.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                  }))}
+                  categories={categories.map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                  }))}
+                />
+              ) : null}
+            </>
+          ) : undefined
         }
       />
 

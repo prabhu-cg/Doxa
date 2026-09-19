@@ -1,5 +1,7 @@
 import { MessageSquare, ThumbsUp, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DecisionBadge } from "@/components/decision-badge";
+import type { DECISION_TYPES } from "@/features/decisions/schema";
 import { EntityCard, EntityMeta } from "@/components/entity-card";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -17,6 +19,7 @@ export function ItemCard({
   priorityName,
   priorityColor,
   categoryName,
+  decisionType,
   tagNames,
   authorName,
   voteCount,
@@ -34,6 +37,8 @@ export function ItemCard({
   priorityName?: string | null;
   priorityColor?: string | null;
   categoryName?: string | null;
+  /** The item's current decision, if the team has made one. */
+  decisionType?: (typeof DECISION_TYPES)[number] | null;
   tagNames: string[];
   authorName: string;
   voteCount: number;
@@ -51,6 +56,7 @@ export function ItemCard({
             {statusName}
           </Badge>
           <Badge variant="outline">{itemTypeName}</Badge>
+          {decisionType ? <DecisionBadge type={decisionType} /> : null}
           {archived ? <Badge variant="secondary">Archived</Badge> : null}
         </>
       }

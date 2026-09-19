@@ -10,7 +10,7 @@ export function DifferentiationSection() {
             align="left"
             eyebrow="Not just a voting board"
             title="Votes are a signal, not a decision."
-            description="A popularity contest doesn't tell you what to build. Doxa is designed to bring votes and comments together with the other things that actually go into a decision."
+            description="A popularity contest doesn't tell you what to build. Doxa brings votes and comments together with the other things that actually go into a decision."
           />
           <div className="flex justify-center lg:justify-end">
             <SignalsPreview />

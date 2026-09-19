@@ -61,7 +61,11 @@ export async function getUsageForOrganization(
   const [members, boards, items] = await Promise.all([
     db.membership.count({ where: { organizationId } }),
     db.board.count({ where: { organizationId } }),
-    db.item.count({ where: { organizationId, deletedAt: null } }),
+    // Only what the team creates counts: pricing is per team, so what the
+    // community submits (origin COMMUNITY) never raises anyone's bill.
+    db.item.count({
+      where: { organizationId, deletedAt: null, origin: "TEAM" },
+    }),
   ]);
   return { members, boards, items };
 }

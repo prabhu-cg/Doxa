@@ -46,12 +46,19 @@ export default function AboutPage() {
             trusting an ID supplied by the browser.
           </p>
 
-          <h2 className="text-foreground">What&apos;s coming</h2>
+          <h2 className="text-foreground">
+            What&apos;s live, and what&apos;s next
+          </h2>
           <p>
-            Organisation setup is live today. The rest of the loop is what Doxa
-            is being built to support next: voting and discussion on items,
-            prioritisation against impact and effort, roadmaps, and decisions
-            recorded with their rationale rather than just a status change.
+            Live today: organisations, spaces and boards; feedback with voting
+            and discussion; prioritisation against impact and effort; decisions
+            recorded with their rationale and shared publicly; roadmaps, both
+            for your team and public; and in-app notifications.
+          </p>
+          <p>
+            Next: letting customers sign in to vote, comment and submit on
+            public boards. After that: email notifications, integrations and an
+            API.
           </p>
 
           <h2 className="text-foreground">Who&apos;s building it</h2>

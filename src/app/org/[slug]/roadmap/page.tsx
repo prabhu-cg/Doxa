@@ -10,6 +10,9 @@ import type { RoadmapItem } from "@/features/roadmap/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageContainer, PageHeader } from "@/components/page-shell";
+import { CopyLinkButton } from "@/components/public-link";
+import { hasPublicBoard } from "@/features/roadmap/public";
+import { publicRoadmapPath } from "@/lib/public-links";
 
 export const metadata: Metadata = { title: "Roadmap" };
 
@@ -21,12 +24,21 @@ export default async function RoadmapPage({
   const { slug } = await params;
   const { membership } = await requireOrganizationMembership(slug);
   const board = await listRoadmapForOrganization(membership.organization.id);
+  const isPublic = await hasPublicBoard(membership.organization.id);
 
   return (
     <PageContainer>
       <PageHeader
         title="Roadmap"
         description="A basic Now / Next / Later view built from Items and the decisions recorded about them — an Item lands here only once an owner or admin explicitly places it, not because it got votes."
+        actions={
+          isPublic ? (
+            <CopyLinkButton
+              path={publicRoadmapPath(slug)}
+              label="Copy public roadmap link"
+            />
+          ) : undefined
+        }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

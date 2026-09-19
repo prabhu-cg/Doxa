@@ -465,8 +465,16 @@ model ItemScore {
 /// author or an org admin; `deletedAt` is reserved for a future
 /// moderation/hard-delete feature and is never set by Phase 2 code — see
 /// the "archived/deleted state" field in the Phase 2 brief.
+/// Who created an Item. Only TEAM items count toward a plan's `maxItems` —
+/// pricing is per team, so what the community submits never raises anyone's bill.
+/// Every Item is TEAM until community submissions exist.
+enum ItemOrigin {
+  TEAM
+  COMMUNITY
+}
+
 model Item {
-  id             String    @id @default(cuid())
+  id             String     @id @default(cuid())
   organizationId String
   spaceId        String
   boardId        String
@@ -474,14 +482,15 @@ model Item {
   statusId       String
   priorityId     String
   categoryId     String?
-  authorId       String    @db.Uuid
+  authorId       String     @db.Uuid
+  origin         ItemOrigin @default(TEAM)
   title          String
   slug           String
   description    String?
   archivedAt     DateTime?
   deletedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   space         Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
@@ -682,6 +691,8 @@ enum NotificationType {
   ITEM_COMMENT
   COMMENT_REPLY
   ITEM_STATUS_CHANGED
+  /// A decision was recorded on an Item the recipient voted on or follows.
+  ITEM_DECISION
   MENTION
 }
 

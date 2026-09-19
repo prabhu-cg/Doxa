@@ -46,7 +46,11 @@ export default async function BillingSettingsPage({
   const usageRows: { label: string; used: number; limit: number | null }[] = [
     { label: "Members", used: usage.members, limit: plan.maxMembers },
     { label: "Boards", used: usage.boards, limit: plan.maxBoards },
-    { label: "Items", used: usage.items, limit: plan.maxItems },
+    {
+      label: "Items created by your team",
+      used: usage.items,
+      limit: plan.maxItems,
+    },
   ];
 
   return (

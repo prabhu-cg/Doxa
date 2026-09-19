@@ -22,6 +22,9 @@ import {
   Webhook,
   Plug,
   LineChart,
+  Globe,
+  LogIn,
+  ScrollText,
 } from "lucide-react";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { CTASection } from "@/components/marketing/cta-section";
@@ -33,7 +36,7 @@ import { AdminPreview } from "@/components/marketing/product-preview/admin-previ
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "What Doxa does today, and what it's designed to support as it's built out — feedback, prioritisation, decisions, and organisation controls.",
+    "What Doxa does today — feedback, prioritisation, decisions, public boards and roadmaps, and organisation controls — and what's coming next.",
   alternates: { canonical: "/features" },
 };
 
@@ -49,30 +52,40 @@ const COMMUNITY: Feature[] = [
     icon: MessageSquare,
     title: "Feedback",
     description: "Collect ideas, requests and issues in one place.",
-    planned: true,
   },
   {
     icon: ArrowUp,
     title: "Voting",
-    description: "Let people signal what matters to them.",
-    planned: true,
+    description:
+      "Signal what matters most — votes are evidence, not a verdict.",
   },
   {
     icon: MessageCircle,
     title: "Comments",
-    description: "Discuss and add context to any item.",
-    planned: true,
+    description:
+      "Discuss and add context to any item, with replies and mentions.",
   },
   {
     icon: Users,
     title: "Followers",
     description: "Follow an item to hear when it changes.",
-    planned: true,
   },
   {
     icon: Bell,
     title: "Notifications",
-    description: "Know when something you care about moves.",
+    description:
+      "In-app alerts for comments, replies, mentions, status changes and decisions — voters hear the answer.",
+  },
+  {
+    icon: Globe,
+    title: "Public boards",
+    description: "Share a link anyone can browse, no account needed.",
+  },
+  {
+    icon: LogIn,
+    title: "Customer participation",
+    description:
+      "Let customers sign in to vote, comment and submit on public boards.",
     planned: true,
   },
 ];
@@ -81,38 +94,35 @@ const PRODUCT_MANAGEMENT: Feature[] = [
   {
     icon: ListOrdered,
     title: "Prioritisation",
-    description: "Weigh demand against impact and effort.",
-    planned: true,
+    description:
+      "Weigh demand against impact and effort, across every board (Pro).",
   },
   {
     icon: Tag,
     title: "Statuses",
     description: "Track where each item stands.",
-    planned: true,
   },
   {
     icon: FolderTree,
     title: "Categories",
     description: "Group items by area or theme.",
-    planned: true,
   },
   {
     icon: Tags,
     title: "Tags",
     description: "Label items for fast filtering.",
-    planned: true,
   },
   {
     icon: Map,
     title: "Roadmaps",
-    description: "Show what's planned, in progress and shipped.",
-    planned: true,
+    description:
+      "Now / Next / Later for your team, and a public roadmap you can share.",
   },
   {
     icon: CheckCircle2,
     title: "Decisions",
-    description: "Record what was decided, and why.",
-    planned: true,
+    description:
+      "Record what was decided, and why, with a history anyone can read.",
   },
 ];
 
@@ -126,7 +136,6 @@ const ADMINISTRATION: Feature[] = [
     icon: LayoutGrid,
     title: "Spaces & boards",
     description: "Organise items by team or product area.",
-    planned: true,
   },
   {
     icon: Shield,
@@ -136,14 +145,17 @@ const ADMINISTRATION: Feature[] = [
   {
     icon: Palette,
     title: "Branding",
-    description: "Make your Doxa instance feel like yours.",
-    planned: true,
+    description: "Your logo and accent colour on public pages (Pro).",
   },
   {
     icon: ShieldCheck,
     title: "Moderation",
-    description: "Keep discussion on-topic and civil.",
-    planned: true,
+    description: "Admins can remove comments and members.",
+  },
+  {
+    icon: ScrollText,
+    title: "Audit log",
+    description: "A record of who changed what, visible to admins.",
   },
 ];
 
@@ -207,7 +219,7 @@ export default function FeaturesPage() {
         <SectionHeading
           eyebrow="Features"
           title="What Doxa does, and what it's built to do"
-          description="Organisation setup is live today. Everything else here is what the rest of the loop is designed to support as it's built out."
+          description="Most of the loop is live today. Anything marked Planned is on the way."
         />
 
         <div className="mt-20 grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -216,9 +228,10 @@ export default function FeaturesPage() {
               Where input comes in
             </h2>
             <p className="text-muted-foreground mt-3">
-              People submit feedback, vote on what matters to them, and discuss
-              it in the open — so demand is visible instead of scattered across
-              inboxes and spreadsheets.
+              Your team collects feedback, votes on what matters and discusses
+              it in one place — and public boards let anyone browse it, so
+              demand is visible instead of scattered across inboxes and
+              spreadsheets. Letting customers take part directly is next.
             </p>
             <FeatureList features={COMMUNITY} />
           </div>
@@ -250,8 +263,8 @@ export default function FeaturesPage() {
               How organisations run Doxa
             </h2>
             <p className="text-muted-foreground mt-3">
-              Organisations and permissions are live today. Spaces, branding and
-              moderation are designed to layer on top as an organisation grows.
+              Organisations, spaces, boards, permissions, branding and an audit
+              log are live today, and grow with your organisation.
             </p>
             <FeatureList features={ADMINISTRATION} />
           </div>
@@ -286,8 +299,8 @@ export default function FeaturesPage() {
       </div>
       <CTASection
         variant="banner"
-        title="Start with the basics today."
-        description="Create an organisation now — the rest of the loop is on the way."
+        title="Start free today."
+        description="Create an organisation and run your first feedback loop."
       />
     </>
   );

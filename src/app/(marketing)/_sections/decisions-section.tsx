@@ -21,8 +21,8 @@ export function DecisionsSection() {
               title="Don't just collect feedback. Close the loop."
             />
             <p className="text-muted-foreground mt-4 max-w-md">
-              Doxa is designed to let teams record a decision alongside the item
-              it belongs to:
+              Doxa lets teams record a decision alongside the item it belongs
+              to, and share it publicly:
             </p>
             <ul className="mt-4 space-y-2">
               {RECORDED.map((line) => (

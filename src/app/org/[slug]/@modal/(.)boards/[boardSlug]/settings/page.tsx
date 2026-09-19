@@ -3,6 +3,8 @@ import { requireBoardForOrgMember } from "@/features/boards/queries";
 import { canManageBoards } from "@/features/boards/permissions";
 import { RouteModal } from "@/components/route-modal";
 import { Separator } from "@/components/ui/separator";
+import { PublicLinkField } from "@/components/public-link";
+import { publicBoardPath } from "@/lib/public-links";
 import { UpdateBoardForm } from "@/app/org/[slug]/boards/[boardSlug]/settings/update-board-form";
 import { ArchiveBoardControl } from "@/app/org/[slug]/boards/[boardSlug]/settings/archive-board-control";
 
@@ -28,6 +30,21 @@ export default async function BoardSettingsModal({
           initialDescription={board.description ?? ""}
           initialVisibility={board.visibility}
         />
+
+        {board.visibility === "PUBLIC" && board.status === "ACTIVE" ? (
+          <>
+            <Separator />
+
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold">Public link</h2>
+              <p className="text-muted-foreground text-sm">
+                Anyone with this link can browse this board — no account needed.
+                Share it anywhere.
+              </p>
+              <PublicLinkField path={publicBoardPath(slug, boardSlug)} />
+            </section>
+          </>
+        ) : null}
 
         <Separator />
 
