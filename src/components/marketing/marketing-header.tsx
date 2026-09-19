@@ -11,9 +11,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
-import { ContactForm } from "@/components/marketing/contact-form";
+import { useContactDrawer } from "@/components/marketing/contact-drawer";
 import { DoxaLogo } from "@/components/doxa-logo";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +26,7 @@ const NAV_LINKS = [
 export function MarketingHeader() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
+  const contact = useContactDrawer();
 
   return (
     <header className="bg-background/95 sticky top-0 z-40 border-b backdrop-blur-sm">
@@ -53,7 +52,7 @@ export function MarketingHeader() {
           ))}
           <button
             type="button"
-            onClick={() => setContactOpen(true)}
+            onClick={() => contact?.open()}
             className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors"
           >
             Contact
@@ -87,7 +86,7 @@ export function MarketingHeader() {
                 type="button"
                 onClick={() => {
                   setMobileOpen(false);
-                  setContactOpen(true);
+                  contact?.open();
                 }}
                 className="hover:bg-muted rounded-md px-3 py-2.5 text-left text-sm font-medium"
               >
@@ -116,20 +115,6 @@ export function MarketingHeader() {
           >
             <Menu className="size-5" />
           </Button>
-        </Sheet>
-
-        <Sheet open={contactOpen} onOpenChange={setContactOpen}>
-          <SheetContent side="right">
-            <SheetHeader>
-              <SheetTitle>Get in touch</SheetTitle>
-              <SheetDescription>
-                Questions about Doxa? Send us a message.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              <ContactForm />
-            </div>
-          </SheetContent>
         </Sheet>
       </div>
     </header>

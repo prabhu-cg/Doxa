@@ -94,5 +94,6 @@ export const PRICING_PLANS: PricingPlan[] = [
     ],
     ctaLabel: "Contact Us",
     ctaHref: "/contact",
+    ctaAction: "contact",
   },
 ];

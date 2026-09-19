@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { LinkButton } from "@/components/link-button";
+import { ContactLinkButton } from "@/components/marketing/contact-drawer";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,8 @@ export type PricingPlan = {
   features: string[];
   ctaLabel: string;
   ctaHref: string;
+  /** "contact": the button opens the site's contact drawer (and is still a link to ctaHref). */
+  ctaAction?: "contact";
   highlighted?: boolean;
 };
 
@@ -48,13 +51,23 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
           </li>
         ))}
       </ul>
-      <LinkButton
-        variant={plan.highlighted ? "default" : "outline"}
-        href={plan.ctaHref}
-        className="w-full"
-      >
-        {plan.ctaLabel}
-      </LinkButton>
+      {plan.ctaAction === "contact" ? (
+        <ContactLinkButton
+          variant={plan.highlighted ? "default" : "outline"}
+          href={plan.ctaHref}
+          className="w-full"
+        >
+          {plan.ctaLabel}
+        </ContactLinkButton>
+      ) : (
+        <LinkButton
+          variant={plan.highlighted ? "default" : "outline"}
+          href={plan.ctaHref}
+          className="w-full"
+        >
+          {plan.ctaLabel}
+        </LinkButton>
+      )}
     </div>
   );
 }

@@ -133,6 +133,44 @@ test.describe("contact form", () => {
   });
 });
 
+test.describe("contact drawer", () => {
+  test("Contact Us on the pricing page opens the same drawer as the nav's Contact", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+    await page.waitForLoadState("networkidle"); // wait for hydration: a click before it just follows the link
+
+    await page.getByRole("link", { name: "Contact Us" }).click();
+    const drawer = page.getByRole("dialog");
+    await expect(drawer.getByText("Get in touch")).toBeVisible();
+    await expect(
+      drawer.getByRole("button", { name: "Send message" }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/pricing$/); // no navigation
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // The nav's own Contact is the same drawer.
+    await page
+      .getByRole("navigation", { name: "Main" })
+      .getByRole("button", { name: "Contact" })
+      .click();
+    await expect(
+      page.getByRole("dialog").getByText("Get in touch"),
+    ).toBeVisible();
+  });
+
+  test("the pricing button is still a link to the contact page", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+    await expect(
+      page.getByRole("link", { name: "Contact Us" }),
+    ).toHaveAttribute("href", "/contact");
+  });
+});
+
 test.describe("SEO", () => {
   test("homepage has the expected title and meta description", async ({
     page,
