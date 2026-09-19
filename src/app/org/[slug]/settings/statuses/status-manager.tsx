@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusSchema } from "@/features/statuses/schema";
@@ -36,7 +37,11 @@ export function StatusManager({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   async function toggleArchive(id: string, archived: boolean) {
-    await (archived ? restoreStatus : archiveStatus)(orgSlug, id);
+    const result = await (archived ? restoreStatus : archiveStatus)(
+      orgSlug,
+      id,
+    );
+    if (!result.success) toast.error(result.error);
     router.refresh();
   }
 

@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import { NAME_RACE_MESSAGE, nameTakenMessage } from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { categorySchema } from "./schema";
 import { generateUniqueCategorySlug } from "./slug";
+import { isCategoryNameTaken } from "./queries";
 import { canManageCategories } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -29,18 +32,28 @@ export async function createCategory(
     };
   }
 
+  if (await isCategoryNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("category", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueCategorySlug(
     membership.organization.id,
     parsed.data.name,
   );
 
-  await db.category.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      slug,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.category.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        slug,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/categories`);
   return { success: true };
@@ -64,6 +77,19 @@ export async function updateCategory(
     return {
       success: false,
       error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  if (
+    await isCategoryNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      categoryId,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("category", parsed.data.name),
     };
   }
 

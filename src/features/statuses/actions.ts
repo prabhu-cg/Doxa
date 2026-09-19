@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { statusSchema } from "./schema";
 import { generateUniqueStatusSlug } from "./slug";
+import { isStatusNameTaken } from "./queries";
 import { canManageStatuses } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -29,19 +36,29 @@ export async function createStatus(
     };
   }
 
+  if (await isStatusNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("status", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueStatusSlug(
     membership.organization.id,
     parsed.data.name,
   );
 
-  await db.status.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      color: parsed.data.color,
-      slug,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.status.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        color: parsed.data.color,
+        slug,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/statuses`);
   return { success: true };
@@ -68,6 +85,19 @@ export async function updateStatus(
     };
   }
 
+  if (
+    await isStatusNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      statusId,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("status", parsed.data.name),
+    };
+  }
+
   const { count } = await db.status.updateMany({
     where: { id: statusId, organizationId: membership.organization.id },
     data: { name: parsed.data.name, color: parsed.data.color },
@@ -89,6 +119,26 @@ async function setArchived(
       success: false,
       error: "Only owners and admins can manage statuses",
     };
+  }
+
+  if (archivedAt === null) {
+    const current = await db.status.findFirst({
+      where: { id: statusId, organizationId: membership.organization.id },
+      select: { name: true },
+    });
+    if (!current) return { success: false, error: "Status not found" };
+    if (
+      await isStatusNameTaken(
+        membership.organization.id,
+        current.name,
+        statusId,
+      )
+    ) {
+      return {
+        success: false,
+        error: restoreBlockedMessage("status", current.name),
+      };
+    }
   }
 
   const { count } = await db.status.updateMany({

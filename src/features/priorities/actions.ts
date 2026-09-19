@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { prioritySchema } from "./schema";
 import { generateUniquePrioritySlug } from "./slug";
+import { isPriorityNameTaken } from "./queries";
 import { canManagePriorities } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -29,6 +36,13 @@ export async function createPriority(
     };
   }
 
+  if (await isPriorityNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("priority", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniquePrioritySlug(
     membership.organization.id,
     parsed.data.name,
@@ -39,15 +53,18 @@ export async function createPriority(
     orderBy: { sortOrder: "desc" },
   });
 
-  await db.priority.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      color: parsed.data.color,
-      slug,
-      sortOrder: (highest?.sortOrder ?? -1) + 1,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.priority.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        color: parsed.data.color,
+        slug,
+        sortOrder: (highest?.sortOrder ?? -1) + 1,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/priorities`);
   return { success: true };
@@ -74,6 +91,19 @@ export async function updatePriority(
     };
   }
 
+  if (
+    await isPriorityNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      priorityId,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("priority", parsed.data.name),
+    };
+  }
+
   const { count } = await db.priority.updateMany({
     where: { id: priorityId, organizationId: membership.organization.id },
     data: { name: parsed.data.name, color: parsed.data.color },
@@ -95,6 +125,26 @@ async function setArchived(
       success: false,
       error: "Only owners and admins can manage priorities",
     };
+  }
+
+  if (archivedAt === null) {
+    const current = await db.priority.findFirst({
+      where: { id: priorityId, organizationId: membership.organization.id },
+      select: { name: true },
+    });
+    if (!current) return { success: false, error: "Priority not found" };
+    if (
+      await isPriorityNameTaken(
+        membership.organization.id,
+        current.name,
+        priorityId,
+      )
+    ) {
+      return {
+        success: false,
+        error: restoreBlockedMessage("priority", current.name),
+      };
+    }
   }
 
   const { count } = await db.priority.updateMany({

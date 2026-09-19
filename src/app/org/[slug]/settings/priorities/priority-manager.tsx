@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { prioritySchema } from "@/features/priorities/schema";
@@ -36,7 +37,11 @@ export function PriorityManager({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   async function toggleArchive(id: string, archived: boolean) {
-    await (archived ? restorePriority : archivePriority)(orgSlug, id);
+    const result = await (archived ? restorePriority : archivePriority)(
+      orgSlug,
+      id,
+    );
+    if (!result.success) toast.error(result.error);
     router.refresh();
   }
 

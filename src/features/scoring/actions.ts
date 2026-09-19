@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { requireItemForOrgMember } from "@/features/items/queries";
 import { scoreCriterionSchema, scoreValueSchema } from "./schema";
 import { generateUniqueScoreCriterionSlug } from "./slug";
+import { isScoreCriterionNameTaken } from "./queries";
 import { canManageScoreCriteria, canScoreItem } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -30,6 +37,18 @@ export async function createScoreCriterion(
     };
   }
 
+  if (
+    await isScoreCriterionNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("scoring criterion", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueScoreCriterionSlug(
     membership.organization.id,
     parsed.data.name,
@@ -40,16 +59,19 @@ export async function createScoreCriterion(
     orderBy: { sortOrder: "desc" },
   });
 
-  await db.scoreCriterion.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      weight: parsed.data.weight,
-      slug,
-      sortOrder: (highest?.sortOrder ?? -1) + 1,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.scoreCriterion.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        description: parsed.data.description,
+        weight: parsed.data.weight,
+        slug,
+        sortOrder: (highest?.sortOrder ?? -1) + 1,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/scoring`);
   return { success: true };
@@ -73,6 +95,19 @@ export async function updateScoreCriterion(
     return {
       success: false,
       error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  if (
+    await isScoreCriterionNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      criterionId,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("scoring criterion", parsed.data.name),
     };
   }
 
@@ -101,6 +136,27 @@ async function setArchived(
       success: false,
       error: "Only owners and admins can manage scoring criteria",
     };
+  }
+
+  if (archivedAt === null) {
+    const current = await db.scoreCriterion.findFirst({
+      where: { id: criterionId, organizationId: membership.organization.id },
+      select: { name: true },
+    });
+    if (!current)
+      return { success: false, error: "Scoring criterion not found" };
+    if (
+      await isScoreCriterionNameTaken(
+        membership.organization.id,
+        current.name,
+        criterionId,
+      )
+    ) {
+      return {
+        success: false,
+        error: restoreBlockedMessage("scoring criterion", current.name),
+      };
+    }
   }
 
   const { count } = await db.scoreCriterion.updateMany({

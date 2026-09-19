@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { itemTypeSchema } from "./schema";
 import { generateUniqueItemTypeSlug } from "./slug";
+import { isItemTypeNameTaken } from "./queries";
 import { canManageItemTypes } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -29,19 +36,29 @@ export async function createItemType(
     };
   }
 
+  if (await isItemTypeNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("item type", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueItemTypeSlug(
     membership.organization.id,
     parsed.data.name,
   );
 
-  await db.itemType.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      slug,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.itemType.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        description: parsed.data.description,
+        slug,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/item-types`);
   return { success: true };
@@ -68,6 +85,19 @@ export async function updateItemType(
     };
   }
 
+  if (
+    await isItemTypeNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      itemTypeId,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("item type", parsed.data.name),
+    };
+  }
+
   const { count } = await db.itemType.updateMany({
     where: { id: itemTypeId, organizationId: membership.organization.id },
     data: { name: parsed.data.name, description: parsed.data.description },
@@ -89,6 +119,26 @@ async function setArchived(
       success: false,
       error: "Only owners and admins can manage item types",
     };
+  }
+
+  if (archivedAt === null) {
+    const current = await db.itemType.findFirst({
+      where: { id: itemTypeId, organizationId: membership.organization.id },
+      select: { name: true },
+    });
+    if (!current) return { success: false, error: "Item type not found" };
+    if (
+      await isItemTypeNameTaken(
+        membership.organization.id,
+        current.name,
+        itemTypeId,
+      )
+    ) {
+      return {
+        success: false,
+        error: restoreBlockedMessage("item type", current.name),
+      };
+    }
   }
 
   const { count } = await db.itemType.updateMany({

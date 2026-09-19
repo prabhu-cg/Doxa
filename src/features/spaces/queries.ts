@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
+import { otherThan, sameName } from "@/lib/names";
 import {
   requireOrganizationMembership,
   type MembershipWithOrganization,
@@ -67,4 +68,23 @@ export async function requireSpaceForOrgMember(
   const space = await getSpaceBySlug(membership.organization.id, spaceSlug);
   if (!space) notFound();
   return { profile, membership, space };
+}
+
+/** Whether an active space in this organisation already has this name, ignoring case. Pass `excludeId`
+ * when renaming or restoring so the row doesn't collide with itself. */
+export async function isSpaceNameTaken(
+  organizationId: string,
+  name: string,
+  excludeId?: string,
+): Promise<boolean> {
+  const existing = await db.space.findFirst({
+    where: {
+      organizationId,
+      archivedAt: null,
+      name: sameName(name),
+      ...otherThan(excludeId),
+    },
+    select: { id: true },
+  });
+  return existing !== null;
 }

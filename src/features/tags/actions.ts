@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import { NAME_RACE_MESSAGE, nameTakenMessage } from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
 import { generateUniqueSlug, slugify } from "@/lib/slug";
 import { tagSchema } from "./schema";
+import { isTagNameTaken } from "./queries";
 import { canManageTags } from "./permissions";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -26,6 +29,13 @@ export async function createTag(
     };
   }
 
+  if (await isTagNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("tag", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueSlug(
     slugify(parsed.data.name),
     async (candidate) => {
@@ -41,13 +51,16 @@ export async function createTag(
     },
   );
 
-  await db.tag.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      slug,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.tag.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        slug,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/settings/tags`);
   return { success: true };
@@ -68,6 +81,15 @@ export async function updateTag(
     return {
       success: false,
       error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  if (
+    await isTagNameTaken(membership.organization.id, parsed.data.name, tagId)
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("tag", parsed.data.name),
     };
   }
 

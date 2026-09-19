@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { scoreCriterionFieldSchema } from "@/features/scoring/schema";
@@ -34,10 +35,10 @@ export function ScoreCriteriaManager({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   async function toggleArchive(id: string, archived: boolean) {
-    await (archived ? restoreScoreCriterion : archiveScoreCriterion)(
-      orgSlug,
-      id,
-    );
+    const result = await (
+      archived ? restoreScoreCriterion : archiveScoreCriterion
+    )(orgSlug, id);
+    if (!result.success) toast.error(result.error);
     router.refresh();
   }
 

@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
-import { requireBoardForOrgMember } from "./queries";
+import { isBoardNameTaken, requireBoardForOrgMember } from "./queries";
 import { createBoardSchema, updateBoardSchema } from "./schema";
 import { generateUniqueBoardSlug } from "./slug";
 import { canManageBoards } from "./permissions";
@@ -59,18 +65,28 @@ export async function createBoard(
     return { success: false, error: "Choose a valid, active space" };
   }
 
+  if (await isBoardNameTaken(space.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("board", parsed.data.name, "in this space"),
+    };
+  }
+
   const slug = await generateUniqueBoardSlug(organizationId, parsed.data.name);
 
-  const board = await db.board.create({
-    data: {
-      organizationId,
-      spaceId: space.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      visibility: parsed.data.visibility,
-      slug,
-    },
-  });
+  const board = await insertOrNull(() =>
+    db.board.create({
+      data: {
+        organizationId,
+        spaceId: space.id,
+        name: parsed.data.name,
+        description: parsed.data.description,
+        visibility: parsed.data.visibility,
+        slug,
+      },
+    }),
+  );
+  if (!board) return { success: false, error: NAME_RACE_MESSAGE };
   await logAuditEvent(db, {
     organizationId,
     actorId: profile.id,
@@ -107,6 +123,13 @@ export async function updateBoard(
     return {
       success: false,
       error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  if (await isBoardNameTaken(board.spaceId, parsed.data.name, board.id)) {
+    return {
+      success: false,
+      error: nameTakenMessage("board", parsed.data.name, "in this space"),
     };
   }
 
@@ -169,6 +192,13 @@ export async function restoreBoard(
     return {
       success: false,
       error: "Only owners and admins can restore boards",
+    };
+  }
+
+  if (await isBoardNameTaken(board.spaceId, board.name, board.id)) {
+    return {
+      success: false,
+      error: restoreBlockedMessage("board", board.name),
     };
   }
 

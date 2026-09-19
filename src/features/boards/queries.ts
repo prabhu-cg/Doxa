@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
+import { otherThan, sameName } from "@/lib/names";
 import { getAuthenticatedSupabaseUser } from "@/features/auth/queries";
 import {
   requireOrganizationMembership,
@@ -140,4 +141,23 @@ export async function getVisibleBoard(
   }
 
   return { organization, board };
+}
+
+/** Whether an active board in this space already has this name, ignoring case. Pass `excludeId`
+ * when renaming or restoring so the row doesn't collide with itself. */
+export async function isBoardNameTaken(
+  spaceId: string,
+  name: string,
+  excludeId?: string,
+): Promise<boolean> {
+  const existing = await db.board.findFirst({
+    where: {
+      spaceId,
+      status: "ACTIVE",
+      name: sameName(name),
+      ...otherThan(excludeId),
+    },
+    select: { id: true },
+  });
+  return existing !== null;
 }

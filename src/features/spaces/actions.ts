@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
+import {
+  NAME_RACE_MESSAGE,
+  nameTakenMessage,
+  restoreBlockedMessage,
+} from "@/lib/names";
+import { insertOrNull } from "@/server/db-errors";
 import { requireOrganizationMembership } from "@/features/organizations/queries";
-import { requireSpaceForOrgMember } from "./queries";
+import { isSpaceNameTaken, requireSpaceForOrgMember } from "./queries";
 import { createSpaceSchema, updateSpaceSchema } from "./schema";
 import { generateUniqueSpaceSlug } from "./slug";
 import { canManageSpaces } from "./permissions";
@@ -30,19 +36,29 @@ export async function createSpace(
     };
   }
 
+  if (await isSpaceNameTaken(membership.organization.id, parsed.data.name)) {
+    return {
+      success: false,
+      error: nameTakenMessage("space", parsed.data.name),
+    };
+  }
+
   const slug = await generateUniqueSpaceSlug(
     membership.organization.id,
     parsed.data.name,
   );
 
-  await db.space.create({
-    data: {
-      organizationId: membership.organization.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      slug,
-    },
-  });
+  const created = await insertOrNull(() =>
+    db.space.create({
+      data: {
+        organizationId: membership.organization.id,
+        name: parsed.data.name,
+        description: parsed.data.description,
+        slug,
+      },
+    }),
+  );
+  if (!created) return { success: false, error: NAME_RACE_MESSAGE };
 
   revalidatePath(`/org/${orgSlug}/spaces`);
   return { success: true, slug };
@@ -66,6 +82,19 @@ export async function updateSpace(
     return {
       success: false,
       error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  if (
+    await isSpaceNameTaken(
+      membership.organization.id,
+      parsed.data.name,
+      space.id,
+    )
+  ) {
+    return {
+      success: false,
+      error: nameTakenMessage("space", parsed.data.name),
     };
   }
 
@@ -115,6 +144,15 @@ export async function restoreSpace(
     return {
       success: false,
       error: "Only owners and admins can restore spaces",
+    };
+  }
+
+  if (
+    await isSpaceNameTaken(membership.organization.id, space.name, space.id)
+  ) {
+    return {
+      success: false,
+      error: restoreBlockedMessage("space", space.name),
     };
   }
 

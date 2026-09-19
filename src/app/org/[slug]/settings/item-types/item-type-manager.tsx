@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { itemTypeSchema } from "@/features/item-types/schema";
@@ -35,7 +36,11 @@ export function ItemTypeManager({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   async function toggleArchive(id: string, archived: boolean) {
-    await (archived ? restoreItemType : archiveItemType)(orgSlug, id);
+    const result = await (archived ? restoreItemType : archiveItemType)(
+      orgSlug,
+      id,
+    );
+    if (!result.success) toast.error(result.error);
     router.refresh();
   }
 
