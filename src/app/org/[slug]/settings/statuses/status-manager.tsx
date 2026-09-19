@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusSchema } from "@/features/statuses/schema";
 import {
@@ -16,6 +16,7 @@ import type { Status } from "@/generated/prisma/client";
 import { FormField } from "@/components/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/color-picker";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ConfigEditRow, ConfigList, ConfigRow } from "@/components/config-list";
@@ -123,6 +124,7 @@ function CreateForm({
   const [rootError, setRootError] = useState<string | null>(null);
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -150,9 +152,20 @@ function CreateForm({
           <Input id="name" placeholder="In Review" {...register("name")} />
         </FormField>
       </div>
-      <div className="w-28">
+      <div className="w-32">
         <FormField label="Color" htmlFor="color" error={errors.color?.message}>
-          <Input id="color" placeholder="#64748b" {...register("color")} />
+          <Controller
+            control={control}
+            name="color"
+            render={({ field }) => (
+              <ColorPicker
+                id="color"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                aria-invalid={!!errors.color}
+              />
+            )}
+          />
         </FormField>
       </div>
       <Button type="submit" disabled={isSubmitting} className="mt-5">
@@ -179,6 +192,7 @@ function EditForm({
   const [rootError, setRootError] = useState<string | null>(null);
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -198,16 +212,37 @@ function EditForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
-      <FormField label="Name" htmlFor="edit-name" error={errors.name?.message}>
-        <Input id="edit-name" {...register("name")} />
-      </FormField>
-      <FormField
-        label="Color"
-        htmlFor="edit-color"
-        error={errors.color?.message}
-      >
-        <Input id="edit-color" {...register("color")} />
-      </FormField>
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-40 flex-1">
+          <FormField
+            label="Name"
+            htmlFor="edit-name"
+            error={errors.name?.message}
+          >
+            <Input id="edit-name" {...register("name")} />
+          </FormField>
+        </div>
+        <div className="w-32">
+          <FormField
+            label="Color"
+            htmlFor="edit-color"
+            error={errors.color?.message}
+          >
+            <Controller
+              control={control}
+              name="color"
+              render={({ field }) => (
+                <ColorPicker
+                  id="edit-color"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  aria-invalid={!!errors.color}
+                />
+              )}
+            />
+          </FormField>
+        </div>
+      </div>
       {rootError ? (
         <p className="text-destructive text-sm">{rootError}</p>
       ) : null}
