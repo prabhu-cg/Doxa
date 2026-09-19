@@ -12,7 +12,14 @@ import { Button } from "@/components/ui/button";
 
 type FormValues = { name: string };
 
-export function CreateOrganizationForm() {
+export function CreateOrganizationForm({
+  onCreated,
+  onCancel,
+}: {
+  /** Called once the organisation exists, just before navigating to it. */
+  onCreated: () => void;
+  onCancel: () => void;
+}) {
   const router = useRouter();
   const [rootError, setRootError] = useState<string | null>(null);
   const {
@@ -28,6 +35,7 @@ export function CreateOrganizationForm() {
       setRootError(result.error);
       return;
     }
+    onCreated();
     router.push(`/org/${result.slug}`);
   }
 
@@ -48,9 +56,14 @@ export function CreateOrganizationForm() {
       {rootError ? (
         <p className="text-destructive text-sm">{rootError}</p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Creating…" : "Create organisation"}
-      </Button>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating…" : "Create organisation"}
+        </Button>
+      </div>
     </form>
   );
 }

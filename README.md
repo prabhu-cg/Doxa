@@ -543,7 +543,8 @@ tags}` (inline create/rename/archive-or-delete list managers, linked
   one org gets a plain 404 hitting another org's slug, never a data leak
   or a tell. See `docs/multi-tenancy.md`.
 - **Onboarding**: one combined form (name + first org name) for brand-new
-  users; `/org/new` for creating additional organisations later.
+  users; a "New organisation" dialog in the org switcher for creating additional
+  organisations later.
 - **UI**: login, register, forgot/reset password, org creation, org
   switcher (dropdown, shared `AppShell`), org settings (rename, member
   list, leave-organisation with a sole-owner guard), profile settings.

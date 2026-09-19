@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronsUpDown, Plus } from "lucide-react";
 import {
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { NewOrganizationDialog } from "@/components/new-organization-dialog";
 import { cn } from "@/lib/utils";
 
 type OrgOption = { slug: string; name: string };
@@ -25,39 +27,40 @@ export function OrgSwitcher({
   options: OrgOption[];
   className?: string;
 }) {
+  const [newOrgOpen, setNewOrgOpen] = useState(false);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="outline"
-            className={cn("w-full justify-between gap-2", className)}
-          >
-            <span className="truncate">{current.name}</span>
-            <ChevronsUpDown className="size-4 opacity-50" />
-          </Button>
-        }
-      />
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Organisations</DropdownMenuLabel>
-          {options.map((org) => (
-            <DropdownMenuItem
-              key={org.slug}
-              render={<Link href={`/org/${org.slug}`}>{org.name}</Link>}
-            />
-          ))}
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
           render={
-            <Link href="/org/new">
-              <Plus className="size-4" />
-              New organisation
-            </Link>
+            <Button
+              variant="outline"
+              className={cn("w-full justify-between gap-2", className)}
+            >
+              <span className="truncate">{current.name}</span>
+              <ChevronsUpDown className="size-4 opacity-50" />
+            </Button>
           }
         />
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Organisations</DropdownMenuLabel>
+            {options.map((org) => (
+              <DropdownMenuItem
+                key={org.slug}
+                render={<Link href={`/org/${org.slug}`}>{org.name}</Link>}
+              />
+            ))}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setNewOrgOpen(true)}>
+            <Plus className="size-4" />
+            New organisation
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <NewOrganizationDialog open={newOrgOpen} onOpenChange={setNewOrgOpen} />
+    </>
   );
 }
