@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
+import { byRecentActivity } from "@/lib/recent-activity";
 import { otherThan, sameName } from "@/lib/names";
 import {
   requireOrganizationMembership,
@@ -15,10 +16,11 @@ export type SpaceWithCounts = Space & {
 };
 
 /** Oldest first by default: the "New board" form pre-selects the first space.
- * Pass `newestFirst` for a grid where the latest addition should lead. */
+ * Pass `recentFirst` for a card grid: the most recently edited or created
+ * space leads, whatever its status. */
 export async function listSpacesForOrganization(
   organizationId: string,
-  options: { includeArchived?: boolean; newestFirst?: boolean } = {},
+  options: { includeArchived?: boolean; recentFirst?: boolean } = {},
 ): Promise<SpaceWithCounts[]> {
   const liveItems = { deletedAt: null, archivedAt: null };
   const spaces = await db.space.findMany({
@@ -35,17 +37,18 @@ export async function listSpacesForOrganization(
         take: 1,
       },
     },
-    orderBy: options.newestFirst
-      ? [{ createdAt: "desc" as const }, { id: "desc" as const }]
-      : [{ createdAt: "asc" as const }],
+    orderBy: { createdAt: "asc" },
   });
-  return spaces.map(({ items, ...space }) => ({
+  const withActivity = spaces.map(({ items, ...space }) => ({
     ...space,
     lastActivityAt:
       items[0] && items[0].updatedAt > space.updatedAt
         ? items[0].updatedAt
         : space.updatedAt,
   }));
+  return options.recentFirst
+    ? withActivity.sort(byRecentActivity)
+    : withActivity;
 }
 
 /** Returns null for both "no such space" and "space belongs to a different

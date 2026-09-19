@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
+import { byRecentActivity } from "@/lib/recent-activity";
 import { otherThan, sameName } from "@/lib/names";
 import { getAuthenticatedSupabaseUser } from "@/features/auth/queries";
 import {
@@ -49,7 +50,8 @@ function withLastActivity<
   };
 }
 
-/** Newest board first, in both board lists — they only feed card grids. */
+/** Most recently edited or created board first, whatever its status, in both
+ * board lists — they only feed card grids. */
 export async function listBoardsForOrganization(
   organizationId: string,
   options: { includeArchived?: boolean } = {},
@@ -60,9 +62,9 @@ export async function listBoardsForOrganization(
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
     include: { space: true, ...boardSummaryInclude },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    orderBy: { createdAt: "desc" },
   });
-  return boards.map(withLastActivity);
+  return boards.map(withLastActivity).sort(byRecentActivity);
 }
 
 export async function listBoardsForSpace(
@@ -75,9 +77,9 @@ export async function listBoardsForSpace(
       ...(options.includeArchived ? {} : { status: "ACTIVE" }),
     },
     include: boardSummaryInclude,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    orderBy: { createdAt: "desc" },
   });
-  return boards.map(withLastActivity);
+  return boards.map(withLastActivity).sort(byRecentActivity);
 }
 
 /** Returns null for both "no such board" and "board belongs to a different
