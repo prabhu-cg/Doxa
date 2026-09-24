@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { db } from "@/server/db";
 import type { Decision } from "@/generated/prisma/client";
 import {
@@ -17,23 +18,26 @@ export type PublicDecision = Pick<
 >;
 
 /** Every decision on an item, newest first — the whole history, so people can
- * see how a call changed and why. */
-export async function listPublicDecisionsForItem(
-  itemId: string,
-): Promise<PublicDecision[]> {
-  return db.decision.findMany({
-    where: { itemId },
-    select: {
-      id: true,
-      type: true,
-      rationale: true,
-      targetDate: true,
-      roadmapStage: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
+ * see how a call changed and why. Memoised per request: an item drawer's header
+ * and body both ask. */
+export const listPublicDecisionsForItem = cache(
+  async function listPublicDecisionsForItem(
+    itemId: string,
+  ): Promise<PublicDecision[]> {
+    return db.decision.findMany({
+      where: { itemId },
+      select: {
+        id: true,
+        type: true,
+        rationale: true,
+        targetDate: true,
+        roadmapStage: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+);
 
 /** Each item's current decision type, for badges on a list of cards. Items
  * with no decision are simply absent from the map. */

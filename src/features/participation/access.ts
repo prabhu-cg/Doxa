@@ -50,20 +50,23 @@ async function resolveViewer(
     knownUser === undefined ? await getAuthenticatedSupabaseUser() : knownUser;
   if (!user) return { status: "anonymous" };
 
-  const profile = await getOrCreateProfile(user.id, user.email);
-  const membership = await db.membership.findUnique({
-    where: { organizationId_userId: { organizationId, userId: user.id } },
-  });
+  // Independent lookups, asked together: each is a round trip to the database.
+  const [profile, membership, block] = await Promise.all([
+    getOrCreateProfile(user.id, user.email),
+    db.membership.findUnique({
+      where: { organizationId_userId: { organizationId, userId: user.id } },
+    }),
+    db.participantBlock.findUnique({
+      where: { organizationId_userId: { organizationId, userId: user.id } },
+      select: { id: true },
+    }),
+  ]);
   if (membership) {
     return { status: "active", profile, role: membership.role };
   }
 
   if (!user.email_confirmed_at) return { status: "unverified", profile };
 
-  const block = await db.participantBlock.findUnique({
-    where: { organizationId_userId: { organizationId, userId: user.id } },
-    select: { id: true },
-  });
   if (block) return { status: "blocked", profile };
 
   return { status: "active", profile, role: null };

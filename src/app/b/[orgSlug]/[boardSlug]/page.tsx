@@ -101,9 +101,6 @@ export default async function PublicBoardPage({
     typeof rawFilters.item === "string" && rawFilters.item
       ? rawFilters.item
       : null;
-  const openItem = openItemSlug
-    ? await findPublicItem(orgSlug, boardSlug, openItemSlug)
-    : null;
 
   const terminology = getItemTerminology(organization);
   const basePath = publicBoardPath(orgSlug, boardSlug);
@@ -118,7 +115,9 @@ export default async function PublicBoardPage({
     sort: filters.sort,
   };
 
+  // The open item loads alongside the board, not before it.
   const [
+    openItem,
     viewer,
     items,
     matching,
@@ -129,6 +128,7 @@ export default async function PublicBoardPage({
     totals,
     summary,
   ] = await Promise.all([
+    openItemSlug ? findPublicItem(orgSlug, boardSlug, openItemSlug) : null,
     getViewer(organization.id, user),
     listItemsForBoard(board.id, boardFilters, { take: limit }),
     countItemsForBoard(board.id, boardFilters),

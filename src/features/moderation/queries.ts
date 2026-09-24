@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { db } from "@/server/db";
 
 export type BlockedParticipant = {
@@ -23,8 +24,8 @@ export async function listBlockedParticipants(
 }
 
 /** The user ids on the organisation's team — used to label their words as
- * the team's. */
-export async function listTeamMemberIds(
+ * the team's. Memoised per request: an item drawer's header and body both ask. */
+export const listTeamMemberIds = cache(async function listTeamMemberIds(
   organizationId: string,
 ): Promise<Set<string>> {
   const members = await db.membership.findMany({
@@ -32,4 +33,4 @@ export async function listTeamMemberIds(
     select: { userId: true },
   });
   return new Set(members.map((member) => member.userId));
-}
+});
