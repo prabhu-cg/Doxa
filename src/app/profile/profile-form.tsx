@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateProfileSchema } from "@/features/profile/schema";
@@ -19,6 +20,7 @@ export function ProfileForm({
   initialDisplayName: string;
   initialUsername: string;
 }) {
+  const router = useRouter();
   const [rootError, setRootError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const {
@@ -42,6 +44,8 @@ export function ProfileForm({
       return;
     }
     setSaved(true);
+    // The account menu in the app header shows the display name.
+    router.refresh();
   }
 
   return (
@@ -49,6 +53,7 @@ export function ProfileForm({
       <FormField
         label="Display name"
         htmlFor="displayName"
+        hint="How your team and community see you across Doxa."
         error={errors.displayName?.message}
       >
         <Input
@@ -61,10 +66,13 @@ export function ProfileForm({
       <FormField
         label="Username (optional)"
         htmlFor="username"
+        hint="3–30 letters, numbers, - or _."
         error={errors.username?.message}
       >
         <Input
           id="username"
+          autoComplete="username"
+          spellCheck={false}
           aria-invalid={!!errors.username}
           {...register("username")}
         />

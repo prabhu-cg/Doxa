@@ -40,6 +40,7 @@ export default async function OrgLayout({
         name: m.organization.name,
       }))}
       displayName={profile.displayName}
+      username={profile.username}
       showPrioritisation={canViewPrioritization(membership.role)}
       notifications={notifications.map((n) => ({
         id: n.id,

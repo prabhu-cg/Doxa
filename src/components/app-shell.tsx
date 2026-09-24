@@ -20,6 +20,7 @@ export function AppShell({
   currentOrganization,
   organizations,
   displayName,
+  username,
   showPrioritisation,
   notifications,
   unreadNotificationCount,
@@ -29,6 +30,7 @@ export function AppShell({
   currentOrganization: OrgOption;
   organizations: OrgOption[];
   displayName: string;
+  username: string | null;
   showPrioritisation: boolean;
   notifications: NotificationItem[];
   unreadNotificationCount: number;
@@ -80,7 +82,7 @@ export function AppShell({
               notifications={notifications}
               initialUnreadCount={unreadNotificationCount}
             />
-            <UserMenu displayName={displayName} />
+            <UserMenu displayName={displayName} username={username} />
           </div>
         </header>
         <main className="flex flex-1 flex-col overflow-y-auto">{children}</main>
