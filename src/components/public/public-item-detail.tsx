@@ -238,13 +238,13 @@ export async function PublicItemDetail({
 
   const body = (
     <>
-      <h2 className="text-sm font-semibold">Description</h2>
+      <h2 className="text-sm font-semibold">Details</h2>
       {item.description ? (
         <p className="max-w-prose text-[15px] leading-7 whitespace-pre-wrap">
           {item.description}
         </p>
       ) : (
-        <p className="text-muted-foreground text-sm">No description.</p>
+        <p className="text-muted-foreground text-sm">No details given.</p>
       )}
       {item.tags.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
@@ -291,11 +291,11 @@ export async function PublicItemDetail({
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">Details</h2>
           {item.description ? (
-            <p className="text-base leading-7 whitespace-pre-wrap">
+            <p className="max-w-prose text-[15px] leading-7 whitespace-pre-wrap">
               {item.description}
             </p>
           ) : (
-            <p className="text-muted-foreground">No description.</p>
+            <p className="text-muted-foreground text-sm">No details given.</p>
           )}
           {item.tags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-1">

@@ -78,6 +78,8 @@ export function ItemGrid({
   orgSlug,
   boardSlug,
   sort,
+  nounSingular,
+  nounPlural,
   sortHref,
   itemHref,
 }: {
@@ -88,6 +90,9 @@ export function ItemGrid({
   orgSlug: string;
   boardSlug: string;
   sort: BoardSort;
+  /** What the organisation calls an item ("Idea"), for the column and caption. */
+  nounSingular: string;
+  nounPlural: string;
   sortHref: (sort: BoardSort) => string;
   /** The board's address with this item's drawer open. */
   itemHref: (itemSlug: string) => string;
@@ -110,7 +115,7 @@ export function ItemGrid({
 
   return (
     <table className="w-full border-separate border-spacing-0 text-sm">
-      <caption className="sr-only">Items on this board</caption>
+      <caption className="sr-only">{nounPlural} on this board</caption>
       <thead className="max-md:sr-only">
         <tr>
           <SortHeader
@@ -124,7 +129,7 @@ export function ItemGrid({
             scope="col"
             className={cn(TH, "sticky top-[var(--public-topbar)] z-10")}
           >
-            Item
+            {nounSingular}
           </th>
           <th
             scope="col"
@@ -220,7 +225,12 @@ export function ItemGrid({
           ) : null;
 
           return (
-            <GridRow key={item.id} href={href} itemSlug={item.slug}>
+            <GridRow
+              key={item.id}
+              href={href}
+              itemSlug={item.slug}
+              itemTitle={item.title}
+            >
               <td className="border-b py-3 pr-1 pl-1 align-top">
                 <VoteChip
                   // The chip keeps its own optimistic copy of the count; a new
@@ -239,6 +249,7 @@ export function ItemGrid({
                 <Link
                   href={href}
                   scroll={false}
+                  data-row-title
                   className="hover:text-primary-text focus-visible:ring-ring line-clamp-2 rounded-sm text-[15px] leading-snug font-semibold outline-none focus-visible:ring-2"
                 >
                   {item.title}

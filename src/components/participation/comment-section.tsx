@@ -43,7 +43,7 @@ function CommentForm({
     const result = await onSubmit(value);
     setPending(false);
     if (!result.success) {
-      setError(result.error ?? "Something went wrong");
+      setError(result.error ?? "Couldn't save your comment. Try again.");
       return;
     }
     setValue("");

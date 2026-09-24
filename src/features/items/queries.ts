@@ -60,42 +60,67 @@ const SORT_ORDER_BY: Record<BoardSort, Prisma.ItemOrderByWithRelationInput> = {
 /** `includePending` is for the team's own views: a community submission that
  * hasn't been approved yet is otherwise left out, so the public board never
  * lists it. */
+function boardItemsWhere(
+  boardId: string,
+  filters: BoardFilters,
+  options: { includeArchived?: boolean; includePending?: boolean },
+): Prisma.ItemWhereInput {
+  return {
+    boardId,
+    deletedAt: null,
+    ...(options.includeArchived ? {} : { archivedAt: null }),
+    ...(options.includePending ? {} : { awaitingReview: false }),
+    ...(filters.q
+      ? {
+          OR: [
+            { title: { contains: filters.q, mode: "insensitive" } },
+            { description: { contains: filters.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+    ...(filters.itemTypeSlug
+      ? { itemType: { slug: filters.itemTypeSlug } }
+      : {}),
+    ...(filters.statusSlug ? { status: { slug: filters.statusSlug } } : {}),
+    ...(filters.categorySlug
+      ? { category: { slug: filters.categorySlug } }
+      : {}),
+    ...(filters.tagSlug
+      ? { tags: { some: { tag: { slug: filters.tagSlug } } } }
+      : {}),
+    ...(filters.origin
+      ? { origin: filters.origin === "team" ? "TEAM" : "COMMUNITY" }
+      : {}),
+  };
+}
+
+/** `take` loads only the first page — the public board shows 50 at a time and
+ * counts the rest with `countItemsForBoard`, rather than loading every item
+ * with its relations to show a slice of them. */
 export async function listItemsForBoard(
   boardId: string,
   filters: BoardFilters = {},
-  options: { includeArchived?: boolean; includePending?: boolean } = {},
+  options: {
+    includeArchived?: boolean;
+    includePending?: boolean;
+    take?: number;
+  } = {},
 ): Promise<ItemWithRelations[]> {
   return db.item.findMany({
-    where: {
-      boardId,
-      deletedAt: null,
-      ...(options.includeArchived ? {} : { archivedAt: null }),
-      ...(options.includePending ? {} : { awaitingReview: false }),
-      ...(filters.q
-        ? {
-            OR: [
-              { title: { contains: filters.q, mode: "insensitive" } },
-              { description: { contains: filters.q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-      ...(filters.itemTypeSlug
-        ? { itemType: { slug: filters.itemTypeSlug } }
-        : {}),
-      ...(filters.statusSlug ? { status: { slug: filters.statusSlug } } : {}),
-      ...(filters.categorySlug
-        ? { category: { slug: filters.categorySlug } }
-        : {}),
-      ...(filters.tagSlug
-        ? { tags: { some: { tag: { slug: filters.tagSlug } } } }
-        : {}),
-      ...(filters.origin
-        ? { origin: filters.origin === "team" ? "TEAM" : "COMMUNITY" }
-        : {}),
-    },
+    where: boardItemsWhere(boardId, filters, options),
     include: itemRelationsInclude,
     orderBy: SORT_ORDER_BY[filters.sort ?? "newest"],
+    ...(options.take ? { take: options.take } : {}),
   });
+}
+
+/** How many items `listItemsForBoard` would find with the same filters. */
+export async function countItemsForBoard(
+  boardId: string,
+  filters: BoardFilters = {},
+  options: { includeArchived?: boolean; includePending?: boolean } = {},
+): Promise<number> {
+  return db.item.count({ where: boardItemsWhere(boardId, filters, options) });
 }
 
 /** For admin views — visible regardless of archive state (so an admin can

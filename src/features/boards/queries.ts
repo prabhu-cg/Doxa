@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
 import { byRecentActivity } from "@/lib/recent-activity";
@@ -120,8 +121,10 @@ export async function requireBoardForOrgMember(
  * Deliberately the same shape for all of these so a visitor can't
  * distinguish "doesn't exist" from "exists but you can't see it" — the
  * public-route version of the multi-tenancy IDOR rule.
+ *
+ * Memoised per request: `generateMetadata` and the page both look it up.
  */
-export async function getVisibleBoard(
+export const getVisibleBoard = cache(async function getVisibleBoard(
   orgSlug: string,
   boardSlug: string,
 ): Promise<{ organization: Organization; board: BoardWithSpace } | null> {
@@ -148,7 +151,7 @@ export async function getVisibleBoard(
   }
 
   return { organization, board };
-}
+});
 
 /** Whether an active board in this space already has this name, ignoring case. Pass `excludeId`
  * when renaming or restoring so the row doesn't collide with itself. */

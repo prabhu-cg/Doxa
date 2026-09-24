@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { ListFilter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { BOARD_SORTS, type BoardSort } from "@/features/items/schema";
 
 type Option = { slug: string; name: string };
@@ -30,6 +31,9 @@ const control =
  * filtered view can be shared and survives a reload — and applies as soon as it
  * is made: selects at once, search once typing pauses. `basePath` is the board's
  * own address, passed in because the URL is the item's while its drawer is open.
+ *
+ * On a phone the filters fold behind one "Filters" button beside the sort, so
+ * the first row of the board is on screen without scrolling past four selects.
  */
 export function GridToolbar({
   basePath,
@@ -51,6 +55,7 @@ export function GridToolbar({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [q, setQ] = useState(current.q ?? "");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const latest = useRef(current);
   latest.current = current;
 
@@ -82,6 +87,14 @@ export function GridToolbar({
     !!current.status ||
     !!current.category ||
     !!current.tag;
+  const activeFilters = [
+    current.itemType,
+    current.status,
+    current.category,
+    current.tag,
+  ].filter(Boolean).length;
+  const hasFilterOptions =
+    itemTypes.length + statuses.length + categories.length + tags.length > 0;
 
   function select(
     key: keyof Current,
@@ -95,7 +108,7 @@ export function GridToolbar({
         aria-label={label}
         value={current[key] ?? ""}
         onChange={(event) => go({ ...current, [key]: event.target.value })}
-        className={`${control} w-full sm:w-auto`}
+        className={cn(control, "w-full sm:w-auto")}
       >
         <option value="">{allLabel}</option>
         {options.map((option) => (
@@ -124,13 +137,39 @@ export function GridToolbar({
           onChange={(event) => setQ(event.target.value)}
           placeholder={`Search ${itemNounPlural.toLowerCase()}…`}
           aria-label={`Search ${itemNounPlural.toLowerCase()}`}
-          className={`${control} w-full pl-8`}
+          className={cn(control, "w-full pl-8")}
         />
       </div>
-      {select("itemType", "Filter by type", "All types", itemTypes)}
-      {select("status", "Filter by status", "All statuses", statuses)}
-      {select("category", "Filter by category", "All categories", categories)}
-      {select("tag", "Filter by tag", "All tags", tags)}
+      {hasFilterOptions ? (
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={filtersOpen}
+          aria-controls="board-filters"
+          onClick={() => setFiltersOpen((open) => !open)}
+          className="h-9 sm:hidden"
+        >
+          <ListFilter />
+          Filters
+          {activeFilters > 0 ? (
+            <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-xs tabular-nums">
+              {activeFilters}
+            </span>
+          ) : null}
+        </Button>
+      ) : null}
+      <div
+        id="board-filters"
+        className={cn(
+          "col-span-2 grid grid-cols-2 gap-2 sm:contents",
+          !filtersOpen && "max-sm:hidden",
+        )}
+      >
+        {select("itemType", "Filter by type", "All types", itemTypes)}
+        {select("status", "Filter by status", "All statuses", statuses)}
+        {select("category", "Filter by category", "All categories", categories)}
+        {select("tag", "Filter by tag", "All tags", tags)}
+      </div>
       {hasFilters ? (
         <Button
           type="button"
@@ -151,7 +190,14 @@ export function GridToolbar({
         onChange={(event) =>
           go({ ...current, sort: event.target.value as BoardSort })
         }
-        className={`${control} col-span-2 w-full sm:col-auto sm:ml-auto sm:w-auto`}
+        className={cn(
+          control,
+          "w-full sm:ml-auto sm:w-auto",
+          // Beside "Filters" on a phone, full width when there are none.
+          hasFilterOptions
+            ? "max-sm:col-start-2 max-sm:row-start-2"
+            : "col-span-2",
+        )}
       >
         {BOARD_SORTS.map((sort) => (
           <option key={sort} value={sort}>

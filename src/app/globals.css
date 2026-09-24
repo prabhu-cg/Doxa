@@ -194,3 +194,69 @@
   background: var(--primary-soft);
   color: var(--foreground);
 }
+
+/* The band under the top bar that introduces a board or the roadmap: a breath
+   of the organisation's accent over the page background, so it holds in dark
+   mode and with any accent. */
+.public-masthead {
+  background: color-mix(in oklab, var(--primary) 5%, var(--background));
+}
+
+/* While a search or filter is on its way, the results it will replace step
+   back, so the wait reads as "working" and not as a stale list. */
+.public-results table {
+  transition: opacity 150ms ease-out;
+}
+.public-results:has([role="search"][aria-busy="true"]) table {
+  opacity: 0.55;
+  transition-delay: 120ms;
+}
+
+/* A vote: the count rolls one notch in the direction it moved, and a first
+   vote sends one ring out from the chip. */
+.vote-roll[data-dir="up"] {
+  animation: vote-roll-up 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vote-roll[data-dir="down"] {
+  animation: vote-roll-down 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes vote-roll-up {
+  from {
+    transform: translateY(0.9em);
+    opacity: 0;
+  }
+}
+@keyframes vote-roll-down {
+  from {
+    transform: translateY(-0.9em);
+    opacity: 0;
+  }
+}
+.vote-chip[data-pulse]::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: vote-pulse 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes vote-pulse {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the count's change visible as a fade, without the travel. */
+  .vote-roll[data-dir] {
+    animation: vote-fade 200ms ease-out !important;
+  }
+  @keyframes vote-fade {
+    from {
+      opacity: 0.2;
+    }
+  }
+}

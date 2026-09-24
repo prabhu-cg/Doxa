@@ -8,7 +8,6 @@ import {
   ROADMAP_STAGE_LABELS,
 } from "@/features/decisions/schema";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils";
 import { formatDate } from "@/lib/format-date";
 import { OrgIdentity } from "@/components/public/org-identity";
@@ -45,7 +44,7 @@ export default async function PublicRoadmapPage({
     <>
       <section
         aria-label="About the roadmap"
-        className="border-b bg-[color-mix(in_srgb,var(--primary)_5%,white)]"
+        className="public-masthead border-b"
       >
         <div className="mx-auto flex w-full max-w-[1400px] items-start gap-4 px-4 py-8 sm:gap-5 sm:px-6 lg:px-8">
           <OrgIdentity
@@ -84,34 +83,53 @@ export default async function PublicRoadmapPage({
 
       <div className="mx-auto w-full max-w-[1400px] space-y-10 px-4 py-8 sm:px-6 lg:px-8">
         {isEmpty ? (
-          <p className="text-muted-foreground text-sm">
-            Nothing on the roadmap yet — check back soon.
-          </p>
+          <div className="rounded-xl border border-dashed px-6 py-16 text-center">
+            <p className="font-semibold">Nothing on the roadmap yet</p>
+            <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
+              When {organization.name} decides to plan, start or ship something,
+              it appears here with the reason why.
+            </p>
+            {boards[0] ? (
+              <Link
+                href={publicBoardPath(orgSlug, boards[0].slug)}
+                className="text-primary-text mt-4 inline-block text-sm font-semibold underline-offset-4 hover:underline"
+              >
+                See what people are asking for
+              </Link>
+            ) : null}
+          </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-3">
               {ROADMAP_STAGES.map((stage) => (
-                <section key={stage} className="space-y-3">
-                  <h2 className="text-sm font-semibold">
-                    {ROADMAP_STAGE_LABELS[stage]}{" "}
-                    <span className="text-muted-foreground font-normal">
-                      ({stages[stage].length})
+                <section
+                  key={stage}
+                  aria-labelledby={`stage-${stage}`}
+                  className="min-w-0"
+                >
+                  <h2
+                    id={`stage-${stage}`}
+                    className="border-foreground flex items-baseline justify-between border-b-2 pb-2 text-sm font-semibold"
+                  >
+                    {ROADMAP_STAGE_LABELS[stage]}
+                    <span className="text-muted-foreground font-medium tabular-nums">
+                      {stages[stage].length}
                     </span>
                   </h2>
                   {stages[stage].length === 0 ? (
-                    <p className="text-muted-foreground text-xs">
-                      Nothing here yet.
+                    <p className="text-muted-foreground py-4 text-sm">
+                      Nothing decided for this stage yet.
                     </p>
                   ) : (
-                    <div className="space-y-3">
+                    <ul className="divide-y">
                       {stages[stage].map((item) => (
-                        <RoadmapCard
+                        <RoadmapEntry
                           key={item.id}
                           orgSlug={orgSlug}
                           item={item}
                         />
                       ))}
-                    </div>
+                    </ul>
                   )}
                 </section>
               ))}
@@ -119,8 +137,10 @@ export default async function PublicRoadmapPage({
 
             {shipped.length > 0 ? (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold">Recently shipped</h2>
-                <ul className="divide-y border-y">
+                <h2 className="border-foreground border-b-2 pb-2 text-sm font-semibold">
+                  Recently shipped
+                </h2>
+                <ul className="divide-y border-b">
                   {shipped.map((item) => (
                     <li
                       key={item.id}
@@ -132,11 +152,11 @@ export default async function PublicRoadmapPage({
                           item.boardSlug,
                           item.slug,
                         )}
-                        className="text-sm font-medium hover:underline"
+                        className="hover:text-primary-text text-sm font-semibold underline-offset-4 hover:underline"
                       >
                         {item.title}
                       </Link>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-xs tabular-nums">
                         {item.votes} {item.votes === 1 ? "vote" : "votes"} ·
                         shipped {formatRelativeTime(item.decidedAt)}
                       </span>
@@ -152,7 +172,9 @@ export default async function PublicRoadmapPage({
   );
 }
 
-function RoadmapCard({
+/** One decided item under its stage: the title, the team's reason, and the
+ * numbers — a ruled list rather than cards, so the reasons read as prose. */
+function RoadmapEntry({
   orgSlug,
   item,
 }: {
@@ -160,29 +182,27 @@ function RoadmapCard({
   item: PublicRoadmapItem;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">
-          <Link
-            href={publicItemPath(orgSlug, item.boardSlug, item.slug)}
-            className="hover:underline"
-          >
-            {item.title}
-          </Link>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Badge variant="outline" className="text-xs">
-          {item.itemTypeName}
-        </Badge>
-        <p className="text-muted-foreground line-clamp-3 text-xs">
+    <li className="space-y-1.5 py-4">
+      <Link
+        href={publicItemPath(orgSlug, item.boardSlug, item.slug)}
+        className="hover:text-primary-text block text-[15px] leading-snug font-semibold underline-offset-4 hover:underline"
+      >
+        {item.title}
+      </Link>
+      {item.rationale ? (
+        <p className="text-muted-foreground line-clamp-3 text-[13px] leading-5">
           {item.rationale}
         </p>
-        <p className="text-muted-foreground text-xs">
+      ) : null}
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums">
+        <Badge variant="outline">{item.itemTypeName}</Badge>
+        <span>
           {item.votes} {item.votes === 1 ? "vote" : "votes"}
-          {item.targetDate ? ` · target ${formatDate(item.targetDate)}` : ""}
-        </p>
-      </CardContent>
-    </Card>
+        </span>
+        {item.targetDate ? (
+          <span>· target {formatDate(item.targetDate)}</span>
+        ) : null}
+      </p>
+    </li>
   );
 }

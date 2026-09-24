@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { db } from "@/server/db";
 import { getAuthenticatedSupabaseUser } from "@/features/auth/queries";
 import { getOrCreateProfile } from "@/features/profile/queries";
@@ -69,8 +70,9 @@ async function resolveViewer(
 }
 
 /** For the public pages: what the current visitor may do on this organisation's
- * boards. Never throws — a signed-out visitor is just "anonymous". */
-export const getViewer = resolveViewer;
+ * boards. Never throws — a signed-out visitor is just "anonymous". Memoised per
+ * request, since the shell and the page both ask. */
+export const getViewer = cache(resolveViewer);
 
 export type ParticipationContext = {
   profile: Profile;

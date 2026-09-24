@@ -7,9 +7,10 @@ import { ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { addVote, removeVote } from "@/features/votes/actions";
 import { cn } from "@/lib/utils";
+import { expectReorder } from "@/lib/vote-reorder";
 
 const chip =
-  "focus-visible:ring-ring flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-lg border text-[13px] leading-none font-bold tabular-nums transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed";
+  "vote-chip focus-visible:ring-ring relative flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-lg border text-[13px] leading-none font-bold tabular-nums transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed";
 
 /**
  * The vote at the head of a grid row: one click, right where you are. Signed-out
@@ -40,11 +41,22 @@ export function VoteChip({
   const [voted, setVoted] = useState(initialVoted);
   const [count, setCount] = useState(initialCount);
   const [pending, setPending] = useState(false);
+  // Which way the count last moved, so it rolls that way; null until you vote,
+  // so the grid doesn't animate on load.
+  const [direction, setDirection] = useState<"up" | "down" | null>(null);
 
   const body = (
     <>
       <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.5} />
-      <span className="mt-0.5">{count}</span>
+      <span className="mt-0.5 overflow-hidden">
+        <span
+          key={count}
+          data-dir={direction ?? undefined}
+          className="vote-roll block"
+        >
+          {count}
+        </span>
+      </span>
     </>
   );
   const idle =
@@ -83,6 +95,7 @@ export function VoteChip({
     const next = !voted;
     setVoted(next);
     setCount((c) => c + (next ? 1 : -1));
+    setDirection(next ? "up" : "down");
 
     const result = next
       ? await addVote(orgSlug, boardSlug, itemSlug)
@@ -92,9 +105,11 @@ export function VoteChip({
     if (!result.success) {
       setVoted(!next);
       setCount((c) => c + (next ? -1 : 1));
+      setDirection(next ? "down" : "up");
       toast.error(result.error);
       return;
     }
+    expectReorder();
     router.refresh();
   }
 
@@ -103,6 +118,7 @@ export function VoteChip({
       type="button"
       onClick={onClick}
       aria-pressed={voted}
+      data-pulse={voted && direction === "up" ? "" : undefined}
       aria-label={`${voted ? "Remove your vote from" : "Vote for"} ${itemTitle}`}
       className={cn(
         chip,

@@ -43,6 +43,7 @@ export function SubmitDrawer({
   itemTypes,
   singular,
   requiresReview,
+  triggerVariant = "default",
   blockedNotice,
 }: {
   orgSlug: string;
@@ -52,6 +53,9 @@ export function SubmitDrawer({
   singular: string;
   /** Whether a submission waits for the team's approval. */
   requiresReview: boolean;
+  /** The masthead's is the page's primary action; a second one (the empty
+   * board) is outline, so there is never more than one filled button. */
+  triggerVariant?: "default" | "outline";
   /** Set when the visitor can't submit; explains why and how to fix it. */
   blockedNotice?: React.ReactNode;
 }) {
@@ -88,7 +92,11 @@ export function SubmitDrawer({
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant={triggerVariant}
+        onClick={() => setOpen(true)}
+      >
         <Plus />
         Submit {singular.toLowerCase()}
       </Button>
@@ -189,7 +197,9 @@ export function SubmitDrawer({
               </p>
             ) : null}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting…" : "Submit"}
+              {isSubmitting
+                ? "Submitting…"
+                : `Submit ${singular.toLowerCase()}`}
             </Button>
           </form>
         )}
