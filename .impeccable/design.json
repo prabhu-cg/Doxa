@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-19T22:31:18.048Z",
+  "generatedAt": "2026-09-25T14:26:08.000Z",
   "title": "Design System: Doxa",
   "extensions": {
     "colorMeta": {
@@ -187,11 +187,6 @@
     },
     "shadows": [
       {
-        "name": "card",
-        "value": "0 1px 2px 0 #1010140a, 0 1px 3px 0 #1010140f",
-        "purpose": "Roadmap stage cards."
-      },
-      {
         "name": "drawer",
         "value": "Tailwind shadow-lg over bg-black/10 scrim with backdrop-blur-xs",
         "purpose": "The right-hand sheet only."
@@ -201,7 +196,7 @@
       {
         "name": "drawer-slide",
         "value": "300ms ease-out translate-x",
-        "purpose": "Drawer opens on the next frame, slides out before ?item is removed."
+        "purpose": "Panel slides in from the right on the click (the host stays mounted, so it never waits for the server) and slides out before ?item is removed."
       },
       {
         "name": "state-transition",
@@ -212,6 +207,26 @@
         "name": "reduced-motion",
         "value": "animation and transition durations 0.01ms under prefers-reduced-motion",
         "purpose": "Global override in globals.css."
+      },
+      {
+        "name": "vote-roll",
+        "value": "280ms cubic-bezier(0.16, 1, 0.3, 1), translateY 0.9em + fade",
+        "purpose": "The vote count rolls one notch the way it moved. Only after a vote; never on load. Reduced motion: 200ms fade."
+      },
+      {
+        "name": "vote-pulse",
+        "value": "520ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow ring 0 to 10px, accent at 45%",
+        "purpose": "A first vote sends one ring out from the chip. Dropped under reduced motion."
+      },
+      {
+        "name": "row-glide",
+        "value": "380ms cubic-bezier(0.16, 1, 0.3, 1), FLIP translateY",
+        "purpose": "A row that moves within about 3s of a vote (Most voted sort) glides to its new rank. Filters and Show more do not animate."
+      },
+      {
+        "name": "results-dim",
+        "value": "opacity .55 after a 120ms hold, 150ms ease-out",
+        "purpose": "The grid steps back while a search or filter is on its way (aria-busy)."
       }
     ],
     "breakpoints": [
@@ -258,9 +273,9 @@
       "name": "Vote Chip",
       "kind": "custom",
       "refersTo": "vote-chip",
-      "description": "First cell of every grid row: one click to vote. Idle, voted (accent fill) and closed states.",
+      "description": "First cell of every grid row: one click to vote. Idle, voted (accent fill) and closed states; the count rolls and a first vote pulses one ring.",
       "html": "<div style=\"display:flex;gap:12px\"><button class=\"ds-vote\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m18 15-6-6-6 6\"/></svg><span style=\"margin-top:2px\">42</span></button><button class=\"ds-vote ds-vote-on\" aria-pressed=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m18 15-6-6-6 6\"/></svg><span style=\"margin-top:2px\">43</span></button><button class=\"ds-vote ds-vote-closed\" disabled><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m18 15-6-6-6 6\"/></svg><span style=\"margin-top:2px\">7</span></button></div>",
-      "css": ".ds-vote{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:48px;border-radius:6px;border:1px solid var(--border);font-family:var(--font-sans),Manrope,sans-serif;font-size:13px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;cursor:pointer;transition:colors .15s;background:var(--background);color:var(--foreground);}.ds-vote:hover{border-color:var(--primary);color:var(--primary-text);}.ds-vote:focus-visible{outline:none;box-shadow:0 0 0 1px var(--background),0 0 0 3px var(--ring);}.ds-vote-on{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground);}.ds-vote-on:hover{background:var(--primary-hover);color:var(--primary-foreground);}.ds-vote-closed{background:var(--muted);color:var(--muted-foreground);opacity:.7;cursor:not-allowed;}.ds-vote-closed:hover{border-color:var(--border);color:var(--muted-foreground);}"
+      "css": ".ds-vote{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:48px;border-radius:6px;border:1px solid var(--border);font-family:var(--font-sans),Manrope,sans-serif;font-size:13px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;cursor:pointer;transition:colors .15s;background:var(--background);color:var(--foreground);}.ds-vote:hover{border-color:var(--primary);color:var(--primary-text);}.ds-vote:focus-visible{outline:none;box-shadow:0 0 0 1px var(--background),0 0 0 3px var(--ring);}.ds-vote-on{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground);}.ds-vote-on:hover{background:var(--primary-hover);color:var(--primary-foreground);}.ds-vote-closed{background:var(--muted);color:var(--muted-foreground);opacity:.7;cursor:not-allowed;}.ds-vote-closed:hover{border-color:var(--border);color:var(--muted-foreground);}@keyframes ds-roll{from{transform:translateY(.9em);opacity:0}}.ds-vote-count{display:block;overflow:hidden}.ds-vote-count>span{display:block;animation:ds-roll .28s cubic-bezier(.16,1,.3,1)}"
     },
     {
       "name": "Status and Decision Badges",
@@ -292,13 +307,13 @@
       "refersTo": "masthead",
       "description": "Accent-tinted head of a board: 48px org mark beside the 28px title, description, live facts, Submit primary at the right.",
       "html": "<section class=\"ds-mast\"><div class=\"ds-mast-l\"><span class=\"ds-mono\" role=\"img\" aria-label=\"Acme logo\">AC</span><div><h1 class=\"ds-h1\">Feature requests</h1><p class=\"ds-desc\">Tell us what to build next.</p><p class=\"ds-facts\"><b>128</b> ideas <b>942</b> votes <a href=\"#\">See the roadmap</a></p></div></div><button class=\"ds-mast-btn\">Submit idea</button></section>",
-      "css": ".ds-mast{display:flex;align-items:flex-end;justify-content:space-between;gap:20px 32px;flex-wrap:wrap;padding:32px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--primary) 5%,white);font-family:var(--font-sans),Manrope,sans-serif;color:var(--foreground);}.ds-mast-l{display:flex;align-items:flex-start;gap:20px;max-width:48rem;}.ds-mono{flex:none;width:48px;height:48px;border-radius:6px;background:var(--primary);color:var(--primary-foreground);display:flex;align-items:center;justify-content:center;font-size:19.2px;font-weight:700;letter-spacing:-.025em;}.ds-h1{margin:0;font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-.025em;}.ds-desc{margin:6px 0 0;font-size:15px;line-height:24px;color:color-mix(in srgb,var(--foreground) 75%,transparent);}.ds-facts{margin:12px 0 0;font-size:14px;color:color-mix(in srgb,var(--foreground) 75%,transparent);display:flex;gap:20px;flex-wrap:wrap;}.ds-facts b{color:var(--foreground);font-weight:600;font-variant-numeric:tabular-nums;}.ds-facts a{color:var(--primary-text);font-weight:600;text-underline-offset:4px;}.ds-facts a:hover{text-decoration:underline;}.ds-mast-btn{font-family:inherit;font-size:14px;font-weight:500;height:36px;padding:0 16px;border-radius:6px;border:0;background:var(--primary);color:var(--primary-foreground);cursor:pointer;}.ds-mast-btn:hover{background:var(--primary-hover);}"
+      "css": ".ds-mast{display:flex;align-items:flex-end;justify-content:space-between;gap:20px 32px;flex-wrap:wrap;padding:32px;border-bottom:1px solid var(--border);background:color-mix(in oklab,var(--primary) 5%,var(--background));font-family:var(--font-sans),Manrope,sans-serif;color:var(--foreground);}.ds-mast-l{display:flex;align-items:flex-start;gap:20px;max-width:48rem;}.ds-mono{flex:none;width:48px;height:48px;border-radius:6px;background:var(--primary);color:var(--primary-foreground);display:flex;align-items:center;justify-content:center;font-size:19.2px;font-weight:700;letter-spacing:-.025em;}.ds-h1{margin:0;font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-.025em;}.ds-desc{margin:6px 0 0;font-size:15px;line-height:24px;color:color-mix(in srgb,var(--foreground) 75%,transparent);}.ds-facts{margin:12px 0 0;font-size:14px;color:color-mix(in srgb,var(--foreground) 75%,transparent);display:flex;gap:20px;flex-wrap:wrap;}.ds-facts b{color:var(--foreground);font-weight:600;font-variant-numeric:tabular-nums;}.ds-facts a{color:var(--primary-text);font-weight:600;text-underline-offset:4px;}.ds-facts a:hover{text-decoration:underline;}.ds-mast-btn{font-family:inherit;font-size:14px;font-weight:500;height:36px;padding:0 16px;border-radius:6px;border:0;background:var(--primary);color:var(--primary-foreground);cursor:pointer;}.ds-mast-btn:hover{background:var(--primary-hover);}"
     },
     {
       "name": "Data Grid Rows",
       "kind": "custom",
       "refersTo": "grid-row-selected",
-      "description": "Real table: vote chip first, title link, status and team decision; the selected row (drawer open) carries aria-current and an accent tint.",
+      "description": "Hairline-divided rows; the whole row opens the drawer at once, the selected row is a primary-soft tint from the click, and rows glide to a new rank after a vote.",
       "html": "<table class=\"ds-grid\"><thead><tr><th class=\"ds-th\" style=\"width:72px;padding-left:4px\">Votes</th><th class=\"ds-th\">Item</th><th class=\"ds-th\">Status</th><th class=\"ds-th\">Team decision</th></tr></thead><tbody><tr class=\"ds-tr\"><td class=\"ds-td\" style=\"padding:12px 4px\"><button class=\"ds-vote\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m18 15-6-6-6 6\"/></svg><span style=\"margin-top:2px\">42</span></button></td><td class=\"ds-td\"><a class=\"ds-title\" href=\"#\">Dark mode for the dashboard</a><p class=\"ds-sub\">Please add a dark theme.</p></td><td class=\"ds-td\"><span class=\"ds-badge ds-badge-outline\">Planned</span></td><td class=\"ds-td\"><span class=\"ds-badge\" style=\"background:#e7effd;color:#1d4ea8\">Planned</span></td></tr><tr class=\"ds-tr ds-sel\" aria-current=\"true\"><td class=\"ds-td\" style=\"padding:12px 4px\"><button class=\"ds-vote ds-vote-on\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m18 15-6-6-6 6\"/></svg><span style=\"margin-top:2px\">18</span></button></td><td class=\"ds-td\"><a class=\"ds-title\" href=\"#\">Export to CSV</a></td><td class=\"ds-td\"><span class=\"ds-badge ds-badge-soft\">Under review</span></td><td class=\"ds-td\" style=\"color:var(--muted-foreground)\">—</td></tr></tbody></table>",
       "css": ".ds-grid{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--font-sans),Manrope,sans-serif;font-size:14px;color:var(--foreground);}.ds-th{text-align:left;padding:10px 12px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--muted-foreground);background:var(--background);border-bottom:1px solid var(--border);}.ds-td{padding:12px;vertical-align:top;border-bottom:1px solid var(--border);}.ds-tr{cursor:pointer;transition:background .15s;}.ds-tr:hover{background:color-mix(in srgb,var(--muted) 60%,transparent);}.ds-tr.ds-sel{background:var(--primary-soft);}.ds-title{font-size:15px;font-weight:600;line-height:1.375;color:inherit;text-decoration:none;}.ds-title:hover{color:var(--primary-text);}.ds-title:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring);border-radius:3.6px;}.ds-sub{margin:2px 0 0;font-size:13px;color:var(--muted-foreground);}.ds-vote{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:48px;border-radius:6px;border:1px solid var(--border);font-family:var(--font-sans),Manrope,sans-serif;font-size:13px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;cursor:pointer;transition:colors .15s;background:var(--background);color:var(--foreground);}.ds-vote:hover{border-color:var(--primary);color:var(--primary-text);}.ds-vote-on{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground);}.ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:15.6px;border:1px solid transparent;font-size:12px;font-weight:500;}.ds-badge-outline{border-color:var(--border);}.ds-badge-soft{background:var(--primary-soft);color:var(--primary-text);}"
     },
@@ -309,16 +324,33 @@
       "description": "Mark shown when an organisation has no logo (or it fails to load): initials in a 6px accent tile. 30px in the top bar, 48px in the masthead.",
       "html": "<div style=\"display:flex;gap:12px;align-items:center\"><span class=\"ds-mono\" style=\"width:30px;height:30px;font-size:12px\" role=\"img\" aria-label=\"Acme logo\">AC</span><span class=\"ds-mono\" role=\"img\" aria-label=\"Acme logo\">AC</span></div>",
       "css": ".ds-mono{flex:none;width:48px;height:48px;border-radius:6px;background:var(--primary);color:var(--primary-foreground);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans),Manrope,sans-serif;font-size:19.2px;font-weight:700;letter-spacing:-.025em;}"
+    },
+    {
+      "name": "Roadmap Entry",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "One decided item under a roadmap stage: title link, the team's reason, and a meta line. A ruled list, not a card.",
+      "html": "<section class=\"ds-stage\"><h2 class=\"ds-stage-h\">Now <span>2</span></h2><ul class=\"ds-stage-l\"><li class=\"ds-entry\"><a href=\"#\">Slack notifications</a><p>Most requested this quarter; the first version ships to admins.</p><p class=\"ds-entry-m\"><span class=\"ds-tag\">Feature</span><span>14 votes</span><span>· target 3 Oct 2026</span></p></li><li class=\"ds-entry\"><a href=\"#\">Export items to CSV</a><p>Scoped for the next release.</p><p class=\"ds-entry-m\"><span class=\"ds-tag\">Feature</span><span>9 votes</span></p></li></ul></section>",
+      "css": ".ds-stage{font-family:var(--font-sans),Manrope,sans-serif;color:var(--foreground);max-width:22rem}.ds-stage-h{display:flex;align-items:baseline;justify-content:space-between;margin:0;padding-bottom:8px;border-bottom:2px solid var(--foreground);font-size:14px;font-weight:600}.ds-stage-h span{color:var(--muted-foreground);font-weight:500;font-variant-numeric:tabular-nums}.ds-stage-l{list-style:none;margin:0;padding:0}.ds-entry{padding:16px 0;border-bottom:1px solid var(--border)}.ds-entry:last-child{border-bottom:0}.ds-entry a{display:block;font-size:15px;line-height:1.375;font-weight:600;color:var(--foreground);text-underline-offset:4px;text-decoration:none}.ds-entry a:hover{color:var(--primary-text);text-decoration:underline}.ds-entry p{margin:6px 0 0;font-size:13px;line-height:20px;color:var(--muted-foreground)}.ds-entry-m{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px!important;font-variant-numeric:tabular-nums}.ds-tag{height:20px;padding:2px 8px;border:1px solid var(--border);border-radius:15.6px;color:var(--foreground);font-weight:600;display:inline-flex;align-items:center}"
+    },
+    {
+      "name": "Filters Toggle",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Phone-only outline button that opens the folded filters; an accent pill counts the filters in force.",
+      "html": "<button class=\"ds-filters\" aria-expanded=\"false\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18M7 12h10M10 18h4\"/></svg>Filters<span class=\"ds-filters-n\">2</span></button>",
+      "css": ".ds-filters{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-family:var(--font-sans),Manrope,sans-serif;font-size:14px;font-weight:500;cursor:pointer}.ds-filters:hover{background:var(--muted)}.ds-filters:focus-visible{outline:none;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-filters-n{background:var(--primary);color:var(--primary-foreground);border-radius:9999px;padding:0 6px;font-size:12px;font-variant-numeric:tabular-nums}"
     }
   ],
   "narrative": {
     "northStar": "The Working Ledger",
-    "overview": "Doxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.",
+    "overview": "**Creative North Star: \"The Working Ledger\"**\n\nDoxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy, and so does every movement: a vote rolls its count, a re-ranked row glides to its place, the drawer slides in. Nothing travels between one element and another.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.\n\n- One accent, organisation-owned on public pages, terracotta by default.\n- Warm neutrals: cream (#fffaef) chrome, white grid, hairline (#e8ddc8) rules.\n- Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.\n- Flat depth; the drawer carries the only shadow.\n- Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.\n- The team's decision is first-class content, sitting beside status in the grid.",
     "keyCharacteristics": [
       "One accent, organisation-owned on public pages, terracotta by default.",
       "Warm neutrals: cream (#fffaef) chrome, white grid, hairline (#e8ddc8) rules.",
       "Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.",
-      "Flat depth; shadows exist only for the drawer and roadmap cards.",
+      "Flat depth; the drawer carries the only shadow.",
+      "Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.",
       "The team's decision is first-class content, sitting beside status in the grid."
     ],
     "rules": [
@@ -344,7 +376,7 @@
       },
       {
         "name": "The Masthead Tint Rule",
-        "body": "The masthead ground is 5% of the current `primary` over white (`color-mix(in srgb, var(--primary) 5%, white)`), never a fixed cream, so it belongs to whichever organisation owns the page.",
+        "body": "The masthead ground is 5% of the current `primary` mixed into the page `background` (the `.public-masthead` class: `color-mix(in oklab, var(--primary) 5%, var(--background))`), never a fixed cream and never a literal white, so it belongs to whichever organisation owns the page and holds in dark mode. `/b` and `/r` share the one class.",
         "section": "colors"
       },
       {
@@ -364,7 +396,7 @@
       },
       {
         "name": "The Flat At Rest Rule",
-        "body": "Grid rows, toolbar controls, chips and badges carry no shadow. Elevation belongs to the drawer and the roadmap card.",
+        "body": "Grid rows, toolbar controls, chips, badges and roadmap entries carry no shadow. Elevation belongs to the drawer alone. (A first vote's ring is a passing animation, not a resting shadow.)",
         "section": "elevation"
       }
     ],
@@ -373,7 +405,10 @@
       "**Do** keep the vote first in the row and repeat the vote in the drawer; sign-in returns the visitor to where they were.",
       "**Do** build lists of comparable records as a real table with a caption, `scope=\"col\"` headers and `aria-sort` on sortable headers.",
       "**Do** disclose columns by breakpoint (`md`, `xl`) and fold the essentials under the title on phones.",
-      "**Do** put new detail views in the `?item=` drawer pattern (2xl width, full width below `sm`) so they are shareable and refresh-safe.",
+      "**Do** put new detail views in the `?item=` drawer pattern (2xl width, full width below `sm`) so they are shareable and refresh-safe, and open them on the click, with what is already known and placeholders for the rest, rather than after a server round trip.",
+      "**Do** open create, edit and settings flows from the app as a right-hand drawer (the shared `Drawer` in `src/components/drawer.tsx`), keeping a full page only for direct loads.",
+      "**Do** use the organisation's own word for an item (`terminology`) in column headers, captions, buttons and empty states.",
+      "**Do** keep motion to feedback (a vote, a re-rank, the drawer), 150 to 380ms with exponential ease-out, and give every animation a reduced-motion path that keeps the meaning.",
       "**Do** use `formatDate` for absolute dates and `formatRelativeTime` for activity; use `tabular-nums` on every count.",
       "**Do** design the unbranded state (terracotta, monogram tile) as the finished page."
     ],
@@ -385,7 +420,10 @@
       "**Don't** format dates with `toLocaleDateString` or any locale- or zone-dependent call; server and browser must agree.",
       "**Don't** add shadows to grid rows, chips or badges, and don't lift the selected row; tint it.",
       "**Don't** introduce type sizes outside the fixed scale or fluid type on the public surface.",
-      "**Don't** use a fixed cream in the masthead; it is the accent tint."
+      "**Don't** use a fixed cream or a literal `white` in the masthead; it is the accent tint over the page background.",
+      "**Don't** fly or morph an element from a row into the drawer (tried and rejected); the drawer slides in and the row keeps its place.",
+      "**Don't** put roadmap entries, or any list of comparable records, in same-size cards.",
+      "**Don't** add a second filled primary button to a view; a repeated action is outline."
     ]
   }
 }
