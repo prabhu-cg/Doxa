@@ -1,11 +1,16 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
 import { requireAuthenticatedSupabaseUser } from "@/features/auth/queries";
 import { requireCurrentProfile } from "@/features/profile/queries";
-import { countOwners, requireOrganizationMembership } from "./queries";
+import {
+  countOwners,
+  getInviteByToken,
+  requireOrganizationMembership,
+} from "./queries";
 import {
   createOrganizationSchema,
   onboardingSchema,
@@ -17,6 +22,7 @@ import { generateUniqueOrganizationSlug } from "./slug";
 import {
   canChangeMemberRole,
   canLeaveOrganization,
+  canManageMembers,
   canRemoveMember,
   canUpdateOrganization,
 } from "./permissions";
@@ -24,6 +30,7 @@ import { DEFAULT_ITEM_TYPES } from "@/features/item-types/defaults";
 import { DEFAULT_STATUSES } from "@/features/statuses/defaults";
 import { DEFAULT_PRIORITIES } from "@/features/priorities/defaults";
 import {
+  canAddMember,
   canCreateOrganizationForUser,
   hasFeature,
 } from "@/features/entitlements/queries";
@@ -421,4 +428,141 @@ export async function changeMemberRole(
 
   revalidatePath(`/org/${slug}/settings`);
   return { success: true };
+}
+
+/** Opaque enough to be a bearer credential (not a slug/cuid, which are
+ * predictable-by-design elsewhere in this app) — 24 random bytes, not
+ * derived from anything guessable. */
+function generateInviteToken(): string {
+  return randomBytes(24).toString("base64url");
+}
+
+/**
+ * Creates this organisation's one reusable invite link if it doesn't
+ * already have one. Idempotent on purpose — a "Create invite link" button
+ * can call this without first checking whether a link already exists.
+ */
+export async function createInviteLink(slug: string): Promise<ActionResult> {
+  const { profile, membership } = await requireOrganizationMembership(slug);
+  if (!canManageMembers(membership.role)) {
+    return {
+      success: false,
+      error: "Only owners and admins can create an invite link",
+    };
+  }
+
+  await db.organizationInvite.upsert({
+    where: { organizationId: membership.organization.id },
+    create: {
+      organizationId: membership.organization.id,
+      token: generateInviteToken(),
+      createdById: profile.id,
+    },
+    update: {},
+  });
+
+  revalidatePath(`/org/${slug}/settings`);
+  return { success: true };
+}
+
+/** Rotates the token in place, so a previously shared link stops working
+ * immediately without needing a separate "expired" state. */
+export async function regenerateInviteLink(
+  slug: string,
+): Promise<ActionResult> {
+  const { profile, membership } = await requireOrganizationMembership(slug);
+  if (!canManageMembers(membership.role)) {
+    return {
+      success: false,
+      error: "Only owners and admins can regenerate the invite link",
+    };
+  }
+
+  await db.organizationInvite.upsert({
+    where: { organizationId: membership.organization.id },
+    create: {
+      organizationId: membership.organization.id,
+      token: generateInviteToken(),
+      createdById: profile.id,
+    },
+    update: { token: generateInviteToken() },
+  });
+
+  revalidatePath(`/org/${slug}/settings`);
+  return { success: true };
+}
+
+export async function revokeInviteLink(slug: string): Promise<ActionResult> {
+  const { membership } = await requireOrganizationMembership(slug);
+  if (!canManageMembers(membership.role)) {
+    return {
+      success: false,
+      error: "Only owners and admins can revoke the invite link",
+    };
+  }
+
+  await db.organizationInvite.deleteMany({
+    where: { organizationId: membership.organization.id },
+  });
+
+  revalidatePath(`/org/${slug}/settings`);
+  return { success: true };
+}
+
+/**
+ * Redeems an invite token for the signed-in visitor. Success always
+ * redirects into the organisation (same "redirect on success, return an
+ * ActionResult only on failure" shape as leaveOrganization above), so the
+ * calling form never has to handle navigation itself. Already being a
+ * member is treated as success, not an error — clicking a link you've
+ * already redeemed should just take you back in, not fail.
+ */
+export async function joinOrganizationViaInvite(
+  token: string,
+): Promise<ActionResult> {
+  const profile = await requireCurrentProfile();
+
+  const invite = await getInviteByToken(token);
+  if (!invite) {
+    return { success: false, error: "This invite link is no longer valid." };
+  }
+
+  const existing = await db.membership.findUnique({
+    where: {
+      organizationId_userId: {
+        organizationId: invite.organizationId,
+        userId: profile.id,
+      },
+    },
+  });
+  if (existing) redirect(`/org/${invite.organization.slug}`);
+
+  const limitCheck = await canAddMember(invite.organizationId);
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      error: `${invite.organization.name} has reached its plan's limit of ${limitCheck.limit} member${limitCheck.limit === 1 ? "" : "s"}. Ask an owner to upgrade before you can join.`,
+    };
+  }
+
+  await db.$transaction(async (tx) => {
+    const created = await tx.membership.create({
+      data: {
+        organizationId: invite.organizationId,
+        userId: profile.id,
+        role: "MEMBER",
+      },
+    });
+    await logAuditEvent(tx, {
+      organizationId: invite.organizationId,
+      actorId: profile.id,
+      action: "MEMBER_ADDED",
+      targetType: "Membership",
+      targetId: created.id,
+      data: { via: "inviteLink" },
+    });
+  });
+
+  revalidatePath(`/org/${invite.organization.slug}/settings`);
+  redirect(`/org/${invite.organization.slug}`);
 }

@@ -2,7 +2,12 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/server/db";
-import { getMembershipForSlug, countOwners } from "./queries";
+import {
+  getMembershipForSlug,
+  countOwners,
+  getInviteForOrganization,
+  getInviteByToken,
+} from "./queries";
 import {
   canChangeMemberRole,
   canDeleteOrganization,
@@ -180,6 +185,41 @@ describe("organizations tenant isolation and role enforcement", () => {
     it("an owner can demote another owner only if it isn't the last one", () => {
       expect(canChangeMemberRole("OWNER", "OWNER", "ADMIN", 2)).toBe(true);
       expect(canChangeMemberRole("OWNER", "OWNER", "ADMIN", 1)).toBe(false);
+    });
+  });
+
+  describe("invite link", () => {
+    afterAll(async () => {
+      await db.organizationInvite.deleteMany({ where: { organizationId: orgId } });
+    });
+
+    it("has no invite link until one is created", async () => {
+      expect(await getInviteForOrganization(orgId)).toBeNull();
+    });
+
+    it("resolves a token to its organisation, and returns null for an unknown one", async () => {
+      const invite = await db.organizationInvite.create({
+        data: { organizationId: orgId, token: `test-token-${randomUUID()}`, createdById: ownerId },
+      });
+
+      const found = await getInviteByToken(invite.token);
+      expect(found).not.toBeNull();
+      expect(found?.organization.slug).toBe(slug);
+
+      expect(await getInviteByToken(`nonexistent-${randomUUID()}`)).toBeNull();
+      expect(await getInviteForOrganization(orgId)).not.toBeNull();
+    });
+
+    it("allows only one invite per organisation", async () => {
+      await expect(
+        db.organizationInvite.create({
+          data: {
+            organizationId: orgId,
+            token: `another-token-${randomUUID()}`,
+            createdById: ownerId,
+          },
+        }),
+      ).rejects.toThrow();
     });
   });
 });

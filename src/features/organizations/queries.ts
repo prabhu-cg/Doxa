@@ -5,6 +5,7 @@ import { requireCurrentProfile } from "@/features/profile/queries";
 import type {
   Membership,
   Organization,
+  OrganizationInvite,
   Profile,
 } from "@/generated/prisma/client";
 
@@ -68,5 +69,28 @@ export async function listMembersForOrganization(organizationId: string) {
     where: { organizationId },
     include: { user: true },
     orderBy: { createdAt: "asc" },
+  });
+}
+
+/** The organisation's one reusable invite link, if it has generated one —
+ * see OrganizationInvite in prisma/schema.prisma. */
+export async function getInviteForOrganization(
+  organizationId: string,
+): Promise<OrganizationInvite | null> {
+  return db.organizationInvite.findUnique({ where: { organizationId } });
+}
+
+/**
+ * Resolves an invite token to the organisation it joins into. Like
+ * getMembershipForSlug, an unknown or revoked token just comes back null
+ * rather than distinguishing "never existed" from "revoked" — nothing a
+ * visitor holding the wrong token should be able to tell apart.
+ */
+export async function getInviteByToken(
+  token: string,
+): Promise<(OrganizationInvite & { organization: Organization }) | null> {
+  return db.organizationInvite.findUnique({
+    where: { token },
+    include: { organization: true },
   });
 }

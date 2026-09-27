@@ -175,12 +175,13 @@ model Profile {
   mentionedIn         CommentMention[]
   itemFollows         ItemFollower[]
   activities          ItemActivity[]
-  notifications       Notification[]     @relation("NotificationRecipient")
-  notificationsCaused Notification[]     @relation("NotificationActor")
+  notifications       Notification[]       @relation("NotificationRecipient")
+  notificationsCaused Notification[]       @relation("NotificationActor")
   decisionsRecorded   Decision[]
   auditLogEntries     AuditLog[]
-  participantBlocks   ParticipantBlock[] @relation("BlockedParticipant")
-  participantsBlocked ParticipantBlock[] @relation("BlockedBy")
+  participantBlocks   ParticipantBlock[]   @relation("BlockedParticipant")
+  participantsBlocked ParticipantBlock[]   @relation("BlockedBy")
+  invitesCreated      OrganizationInvite[]
 
   @@map("profiles")
 }
@@ -221,8 +222,33 @@ model Organization {
   subscription      Subscription?
   auditLogs         AuditLog[]
   participantBlocks ParticipantBlock[]
+  invite            OrganizationInvite?
 
   @@map("organizations")
+}
+
+/// A single reusable "join this organisation" link — the quick-win
+/// alternative to per-email invitations (there is still no email delivery
+/// in this app; see the "Not implemented" note this file's Phase 5 section
+/// links to). Anyone holding `token` can join as MEMBER, capped by the
+/// plan's `maxMembers` (features/entitlements/queries.ts), until an
+/// owner/admin revokes it or regenerates it — regenerating rotates
+/// `token` in place, so a previously shared link stops working without
+/// needing a separate "expired" state. One per organisation, not one per
+/// invitee, matching the bearer-link model `/b/[orgSlug]/[boardSlug]`
+/// already uses for public board access.
+model OrganizationInvite {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  token          String   @unique
+  createdById    String   @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    Profile      @relation(fields: [createdById], references: [id])
+
+  @@map("organization_invites")
 }
 
 /// A user's role within one organisation. `(organizationId, userId)` is

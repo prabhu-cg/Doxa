@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   countOwners,
+  getInviteForOrganization,
   listMembersForOrganization,
   requireOrganizationMembership,
 } from "@/features/organizations/queries";
@@ -24,6 +25,7 @@ import { UpdateOrganizationForm } from "./update-organization-form";
 import { LeaveOrganizationDialog } from "./leave-organization-dialog";
 import { RemoveMemberControl } from "./remove-member-control";
 import { MemberRoleControl } from "./member-role-control";
+import { InviteLinkControl } from "./invite-link-control";
 import type { MembershipRole } from "@/generated/prisma/client";
 
 export const metadata: Metadata = { title: "Organisation settings" };
@@ -36,17 +38,20 @@ export default async function OrganizationSettingsPage({
   const { slug } = await params;
   const { membership } = await requireOrganizationMembership(slug);
   const canModerate = canModerateCommunity(membership.role);
-  const [members, ownerCount, blocked] = await Promise.all([
+  const canManage = canManageMembers(membership.role);
+  const [members, ownerCount, blocked, invite] = await Promise.all([
     listMembersForOrganization(membership.organization.id),
     countOwners(membership.organization.id),
     canModerate
       ? listBlockedParticipants(membership.organization.id)
       : Promise.resolve([]),
+    canManage
+      ? getInviteForOrganization(membership.organization.id)
+      : Promise.resolve(null),
   ]);
 
   const canEdit = canUpdateOrganization(membership.role);
   const canLeave = canLeaveOrganization(membership.role, ownerCount);
-  const canManage = canManageMembers(membership.role);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
@@ -123,6 +128,17 @@ export default async function OrganizationSettingsPage({
           ))}
         </ul>
       </section>
+
+      {canManage ? (
+        <>
+          <Separator />
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold">Invite link</h2>
+            <InviteLinkControl slug={slug} token={invite?.token ?? null} />
+          </section>
+        </>
+      ) : null}
 
       {canModerate ? (
         <>
