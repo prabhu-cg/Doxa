@@ -33,13 +33,23 @@ export type ItemWithRelations = Item & {
 
 export type BoardFilters = {
   q?: string;
-  itemTypeSlug?: string;
-  statusSlug?: string;
-  categorySlug?: string;
-  tagSlug?: string;
+  itemTypeSlug?: string | string[];
+  statusSlug?: string | string[];
+  categorySlug?: string | string[];
+  tagSlug?: string | string[];
   origin?: "team" | "community";
   sort?: BoardSort;
 };
+
+/** Normalizes a single-or-many filter value into an array, or `undefined`
+ * for "no filter" — so callers can pass either shape (public/prioritization
+ * callers still pass one slug; the multi-select admin filter passes several)
+ * and `boardItemsWhere` only has to build one kind of clause. */
+function toSlugArray(value?: string | string[]): string[] | undefined {
+  if (!value) return undefined;
+  const values = Array.isArray(value) ? value : [value];
+  return values.length > 0 ? values : undefined;
+}
 
 const itemRelationsInclude = {
   itemType: true,
@@ -78,15 +88,21 @@ function boardItemsWhere(
           ],
         }
       : {}),
-    ...(filters.itemTypeSlug
-      ? { itemType: { slug: filters.itemTypeSlug } }
+    ...(toSlugArray(filters.itemTypeSlug)
+      ? { itemType: { slug: { in: toSlugArray(filters.itemTypeSlug) } } }
       : {}),
-    ...(filters.statusSlug ? { status: { slug: filters.statusSlug } } : {}),
-    ...(filters.categorySlug
-      ? { category: { slug: filters.categorySlug } }
+    ...(toSlugArray(filters.statusSlug)
+      ? { status: { slug: { in: toSlugArray(filters.statusSlug) } } }
       : {}),
-    ...(filters.tagSlug
-      ? { tags: { some: { tag: { slug: filters.tagSlug } } } }
+    ...(toSlugArray(filters.categorySlug)
+      ? { category: { slug: { in: toSlugArray(filters.categorySlug) } } }
+      : {}),
+    ...(toSlugArray(filters.tagSlug)
+      ? {
+          tags: {
+            some: { tag: { slug: { in: toSlugArray(filters.tagSlug) } } },
+          },
+        }
       : {}),
     ...(filters.origin
       ? { origin: filters.origin === "team" ? "TEAM" : "COMMUNITY" }

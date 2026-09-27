@@ -88,6 +88,16 @@ export default async function PublicBoardPage({
   const filters: Partial<BoardFiltersValues> = parsedFilters.success
     ? parsedFilters.data
     : {};
+  /** The public toolbar (GridToolbar) only ever sets one value per filter
+   * key, so its query params never contain more than one — take the first
+   * (only) value the shared, multi-value-capable boardFiltersSchema parsed. */
+  const singleFilters = {
+    q: filters.q,
+    itemType: filters.itemType?.[0],
+    status: filters.status?.[0],
+    category: filters.category?.[0],
+    tag: filters.tag?.[0],
+  };
   const sort: BoardSort = filters.sort ?? "newest";
   const limit = Math.min(
     Math.max(
@@ -153,20 +163,20 @@ export default async function PublicBoardPage({
   const isMember = viewer.status === "active" && viewer.role !== null;
   const responsivenessLine = describeResponsiveness(summary, terminology);
   const hasFilters =
-    !!filters.q ||
-    !!filters.itemType ||
-    !!filters.status ||
-    !!filters.category ||
-    !!filters.tag;
+    !!singleFilters.q ||
+    !!singleFilters.itemType ||
+    !!singleFilters.status ||
+    !!singleFilters.category ||
+    !!singleFilters.tag;
 
   /** The board's own address with the current filters, and a different sort. */
   function href(next: { sort?: BoardSort; limit?: number; item?: string }) {
     const params = new URLSearchParams();
-    if (filters.q) params.set("q", filters.q);
-    if (filters.itemType) params.set("itemType", filters.itemType);
-    if (filters.status) params.set("status", filters.status);
-    if (filters.category) params.set("category", filters.category);
-    if (filters.tag) params.set("tag", filters.tag);
+    if (singleFilters.q) params.set("q", singleFilters.q);
+    if (singleFilters.itemType) params.set("itemType", singleFilters.itemType);
+    if (singleFilters.status) params.set("status", singleFilters.status);
+    if (singleFilters.category) params.set("category", singleFilters.category);
+    if (singleFilters.tag) params.set("tag", singleFilters.tag);
     const nextSort = next.sort ?? sort;
     if (nextSort !== "newest") params.set("sort", nextSort);
     if (limit > PAGE_SIZE || (next.limit && next.limit > PAGE_SIZE)) {
@@ -293,11 +303,11 @@ export default async function PublicBoardPage({
           <GridToolbar
             basePath={basePath}
             current={{
-              q: filters.q,
-              itemType: filters.itemType,
-              status: filters.status,
-              category: filters.category,
-              tag: filters.tag,
+              q: singleFilters.q,
+              itemType: singleFilters.itemType,
+              status: singleFilters.status,
+              category: singleFilters.category,
+              tag: singleFilters.tag,
               sort,
             }}
             itemTypes={itemTypes}

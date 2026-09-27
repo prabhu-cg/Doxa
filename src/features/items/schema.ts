@@ -57,16 +57,31 @@ export const BOARD_SORTS = [
 ] as const;
 export type BoardSort = (typeof BOARD_SORTS)[number];
 
+/** A filter param that may appear once or several times in the query string
+ * (`?tag=a&tag=b`) — Next.js hands us either a bare string or a string[]
+ * depending on repetition, so normalize both into a de-duped array, and an
+ * absent/empty value into `undefined` (no filter), rather than `[]`. */
+const multiSlug = z.preprocess((value) => {
+  if (value === undefined) return undefined;
+  const values = Array.isArray(value) ? value : [value];
+  const cleaned = [
+    ...new Set(values.filter((v): v is string => typeof v === "string" && v.length > 0)),
+  ];
+  return cleaned.length > 0 ? cleaned : undefined;
+}, z.array(z.string()).optional());
+
 /** Search/filter params for both the admin and public board item lists.
  * Parsed with `.safeParse` and defaulted rather than thrown on invalid
  * input — a malformed query string should degrade to "no filter," never a
- * crashed page. */
+ * crashed page. Each of itemType/status/category/tag accepts multiple
+ * values (OR'd within the field, ANDed across fields) so the filter UI can
+ * offer multi-select. */
 export const boardFiltersSchema = z.object({
   q: z.string().trim().max(200).optional(),
-  itemType: z.string().optional(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  tag: z.string().optional(),
+  itemType: multiSlug,
+  status: multiSlug,
+  category: multiSlug,
+  tag: multiSlug,
   /** Who created it: the team, or the community (customers on a public board). */
   origin: z.enum(["team", "community"]).optional(),
   sort: z.enum(BOARD_SORTS).optional().default("newest"),
