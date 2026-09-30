@@ -38,18 +38,18 @@ export default async function BrandingSettingsPage({
           <h2 className="text-sm font-semibold">Logo &amp; accent colour</h2>
           {!canBrand ? (
             <p className="text-muted-foreground text-sm">
-              Custom branding requires the Pro plan or higher —{" "}
+              A logo and accent colour are part of the Pro plan —{" "}
               <a className="underline" href={`/org/${slug}/settings/billing`}>
                 upgrade
               </a>{" "}
-              to set a logo and accent colour. Existing branding stays visible
-              even without the entitlement.
+              to put your own brand on your public boards.
             </p>
           ) : null}
         </div>
-        {canEdit ? (
+        {!canBrand ? null : canEdit ? (
           <BrandingForm
             slug={slug}
+            organizationName={membership.organization.name}
             initialLogoUrl={membership.organization.logoUrl ?? ""}
             initialAccentColor={membership.organization.accentColor ?? ""}
           />

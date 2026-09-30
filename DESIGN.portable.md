@@ -783,7 +783,7 @@ Motion is feedback: it answers an action and stops. No decorative or scroll-link
 
 ### Theme switching (Next.js)
 
-Dark mode is the `dark` class on `<html>`. Wrap the app in `next-themes` with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`, and put `suppressHydrationWarning` on `<html>`. The switcher is a ghost icon button with a three-option radio menu (Light, Dark, System); the trigger icon swaps with `dark:hidden` / `hidden dark:block` so it needs no mounted state. It sits in the top bar of every surface: marketing header (and beside the mobile menu button), app top bar, public board top bar. `color-scheme` is set per theme so native controls and scrollbars follow.
+Dark mode is the `dark` class on `<html>`. Keep the choice (`light`, `dark`, or absent for system) in `localStorage` under `theme`, apply it as the `dark` class on `<html>`, and put `suppressHydrationWarning` on `<html>`. A small inline script in `<head>` (rendered by the root layout, a Server Component) sets the class before first paint so dark never flashes light; a client provider holds the choice with `useSyncExternalStore` and switches without animating every transition. Don't use `next-themes` 0.4.x with React 19: its provider renders the script from a client component, which React warns about. The switcher is a ghost icon button with a three-option radio menu (Light, Dark, System); the trigger icon swaps with `dark:hidden` / `hidden dark:block` so it needs no mounted state. It sits in the top bar of every surface: marketing header (and beside the mobile menu button), app top bar, public board top bar. `color-scheme` is set per theme so native controls and scrollbars follow.
 
 ### Fonts (Next.js)
 
@@ -803,7 +803,7 @@ Outside Next.js, load Manrope 400/500/600/700 and map it to `--font-sans`.
 
 ### Component stack
 
-shadcn `base-nova` style on `@base-ui/react`, `class-variance-authority`, `lucide-react`, `sonner`, `tw-animate-css`, `next-themes`. `components.json`: `"style": "base-nova"`, `"baseColor": "neutral"`, `"cssVariables": true`, `"iconLibrary": "lucide"`. The token names above are the shadcn contract plus the additions `primary-hover`, `primary-soft`, `primary-text`, `surface`, `surface-raised`, `border-strong` and the `*-soft` semantic grounds.
+shadcn `base-nova` style on `@base-ui/react`, `class-variance-authority`, `lucide-react`, `sonner`, `tw-animate-css`. `components.json`: `"style": "base-nova"`, `"baseColor": "neutral"`, `"cssVariables": true`, `"iconLibrary": "lucide"`. The token names above are the shadcn contract plus the additions `primary-hover`, `primary-soft`, `primary-text`, `surface`, `surface-raised`, `border-strong` and the `*-soft` semantic grounds.
 
 ### Org-led theming
 

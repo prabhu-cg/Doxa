@@ -14,11 +14,13 @@ import {
 import {
   createOrganizationSchema,
   onboardingSchema,
-  updateOrganizationBrandingSchema,
+  logoFileError,
+  updateOrganizationAccentColorSchema,
   updateOrganizationSchema,
   updateOrganizationTerminologySchema,
 } from "./schema";
 import { generateUniqueOrganizationSlug } from "./slug";
+import { deleteLogo, uploadLogo } from "./logo-storage";
 import {
   canChangeMemberRole,
   canLeaveOrganization,
@@ -208,17 +210,15 @@ export async function updateOrganization(
 }
 
 /**
- * Logo/accent colour. Gated behind the `branding` Plan entitlement — but
- * only when actually setting a non-default value; clearing branding back
- * to nothing is always allowed (so a downgraded organisation can still
- * remove branding it can no longer add), matching the "the column always
- * accepts a value so a downgraded org doesn't lose data" note in
- * prisma/schema.prisma (clearing is a different, always-safe operation
- * from setting).
+ * The accent colour. Gated behind the `branding` Plan entitlement — but only
+ * when actually setting a colour; clearing it is always allowed (so a
+ * downgraded organisation can still remove branding it can no longer add),
+ * matching the "the column always accepts a value so a downgraded org doesn't
+ * lose data" note in prisma/schema.prisma.
  */
-export async function updateOrganizationBranding(
+export async function updateOrganizationAccentColor(
   slug: string,
-  input: { logoUrl?: string; accentColor?: string },
+  input: { accentColor?: string },
 ): Promise<ActionResult> {
   const { profile, membership } = await requireOrganizationMembership(slug);
   if (!canUpdateOrganization(membership.role)) {
@@ -228,7 +228,7 @@ export async function updateOrganizationBranding(
     };
   }
 
-  const parsed = updateOrganizationBrandingSchema.safeParse(input);
+  const parsed = updateOrganizationAccentColorSchema.safeParse(input);
   if (!parsed.success) {
     return {
       success: false,
@@ -236,8 +236,7 @@ export async function updateOrganizationBranding(
     };
   }
 
-  const isSettingSomething = !!parsed.data.logoUrl || !!parsed.data.accentColor;
-  if (isSettingSomething) {
+  if (parsed.data.accentColor) {
     const canBrand = await hasFeature(membership.organization.id, "branding");
     if (!canBrand) {
       return {
@@ -250,24 +249,112 @@ export async function updateOrganizationBranding(
   await db.$transaction([
     db.organization.update({
       where: { id: membership.organization.id },
-      data: {
-        logoUrl: parsed.data.logoUrl ?? null,
-        accentColor: parsed.data.accentColor ?? null,
-      },
+      data: { accentColor: parsed.data.accentColor ?? null },
     }),
     logAuditEvent(db, {
       organizationId: membership.organization.id,
       actorId: profile.id,
       action: "BRANDING_UPDATED",
-      data: {
-        hasLogo: !!parsed.data.logoUrl,
-        hasAccentColor: !!parsed.data.accentColor,
-      },
+      data: { hasAccentColor: !!parsed.data.accentColor },
     }),
   ]);
 
   revalidatePath(`/org/${slug}/settings/branding`);
   revalidatePath(`/b/${slug}`);
+  revalidatePath(`/r/${slug}`);
+  return { success: true };
+}
+
+/** Uploads the organisation's logo (replacing any current one). Same gate as
+ * the accent colour: setting a logo needs the `branding` entitlement. */
+export async function uploadOrganizationLogo(
+  slug: string,
+  formData: FormData,
+): Promise<ActionResult & { logoUrl?: string }> {
+  const { profile, membership } = await requireOrganizationMembership(slug);
+  if (!canUpdateOrganization(membership.role)) {
+    return {
+      success: false,
+      error: "Only owners and admins can update branding",
+    };
+  }
+
+  const file = formData.get("logo");
+  if (!(file instanceof File)) {
+    return { success: false, error: "Choose an image to upload" };
+  }
+  const fileError = logoFileError(file);
+  if (fileError) return { success: false, error: fileError };
+
+  const canBrand = await hasFeature(membership.organization.id, "branding");
+  if (!canBrand) {
+    return {
+      success: false,
+      error: "Custom branding requires the Pro plan or higher",
+    };
+  }
+
+  const previousUrl = membership.organization.logoUrl;
+  let logoUrl: string;
+  try {
+    logoUrl = await uploadLogo(membership.organization.id, file);
+  } catch {
+    return {
+      success: false,
+      error: "The logo couldn't be uploaded. Try again.",
+    };
+  }
+
+  await db.$transaction([
+    db.organization.update({
+      where: { id: membership.organization.id },
+      data: { logoUrl },
+    }),
+    logAuditEvent(db, {
+      organizationId: membership.organization.id,
+      actorId: profile.id,
+      action: "BRANDING_UPDATED",
+      data: { hasLogo: true },
+    }),
+  ]);
+  await deleteLogo(membership.organization.id, previousUrl);
+
+  revalidatePath(`/org/${slug}`, "layout");
+  revalidatePath(`/b/${slug}`);
+  revalidatePath(`/r/${slug}`);
+  return { success: true, logoUrl };
+}
+
+/** Removes the logo. Always allowed, like clearing the accent colour. */
+export async function removeOrganizationLogo(
+  slug: string,
+): Promise<ActionResult> {
+  const { profile, membership } = await requireOrganizationMembership(slug);
+  if (!canUpdateOrganization(membership.role)) {
+    return {
+      success: false,
+      error: "Only owners and admins can update branding",
+    };
+  }
+
+  const previousUrl = membership.organization.logoUrl;
+  await db.$transaction([
+    db.organization.update({
+      where: { id: membership.organization.id },
+      data: { logoUrl: null },
+    }),
+    logAuditEvent(db, {
+      organizationId: membership.organization.id,
+      actorId: profile.id,
+      action: "BRANDING_UPDATED",
+      data: { hasLogo: false },
+    }),
+  ]);
+  await deleteLogo(membership.organization.id, previousUrl);
+
+  revalidatePath(`/org/${slug}`, "layout");
+  revalidatePath(`/b/${slug}`);
+  revalidatePath(`/r/${slug}`);
   return { success: true };
 }
 

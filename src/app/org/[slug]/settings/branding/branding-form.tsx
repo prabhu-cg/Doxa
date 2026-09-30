@@ -1,86 +1,185 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { updateOrganizationBranding } from "@/features/organizations/actions";
+import { useRef, useState, useTransition } from "react";
+import { ImagePlus, Trash2 } from "lucide-react";
+import {
+  removeOrganizationLogo,
+  updateOrganizationAccentColor,
+  uploadOrganizationLogo,
+} from "@/features/organizations/actions";
+import { LOGO_MAX_BYTES, logoFileError } from "@/features/organizations/schema";
+import { brandTokens, monogram } from "@/lib/brand-color";
+import { ColorPicker } from "@/components/color-picker";
 import { FormField } from "@/components/form-field";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const formSchema = z.object({
-  logoUrl: z.string().trim(),
-  accentColor: z.string().trim(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 export function BrandingForm({
   slug,
+  organizationName,
   initialLogoUrl,
   initialAccentColor,
 }: {
   slug: string;
+  organizationName: string;
   initialLogoUrl: string;
   initialAccentColor: string;
 }) {
-  const [rootError, setRootError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { logoUrl: initialLogoUrl, accentColor: initialAccentColor },
-  });
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [logoPending, startLogo] = useTransition();
 
-  async function onSubmit(values: FormValues) {
-    setRootError(null);
-    setSaved(false);
-    const result = await updateOrganizationBranding(slug, {
-      logoUrl: values.logoUrl,
-      accentColor: values.accentColor,
-    });
-    if (!result.success) {
-      setRootError(result.error);
+  const [accent, setAccent] = useState(initialAccentColor);
+  const [savedAccent, setSavedAccent] = useState(initialAccentColor);
+  const [accentError, setAccentError] = useState<string | null>(null);
+  const [accentSaved, setAccentSaved] = useState(false);
+  const [accentPending, startAccent] = useTransition();
+
+  function onFileChosen(file: File | undefined) {
+    if (!file) return;
+    setLogoError(null);
+    const problem = logoFileError(file);
+    if (problem) {
+      setLogoError(problem);
       return;
     }
-    setSaved(true);
+    const body = new FormData();
+    body.set("logo", file);
+    startLogo(async () => {
+      const result = await uploadOrganizationLogo(slug, body);
+      if (!result.success) {
+        setLogoError(result.error);
+        return;
+      }
+      setLogoUrl(result.logoUrl ?? "");
+    });
+  }
+
+  function onRemoveLogo() {
+    setLogoError(null);
+    startLogo(async () => {
+      const result = await removeOrganizationLogo(slug);
+      if (!result.success) {
+        setLogoError(result.error);
+        return;
+      }
+      setLogoUrl("");
+    });
+  }
+
+  function onSaveAccent() {
+    setAccentError(null);
+    setAccentSaved(false);
+    startAccent(async () => {
+      const result = await updateOrganizationAccentColor(slug, {
+        accentColor: accent,
+      });
+      if (!result.success) {
+        setAccentError(result.error);
+        return;
+      }
+      setSavedAccent(accent);
+      setAccentSaved(true);
+    });
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <div className="space-y-6">
       <FormField
-        label="Logo URL"
-        htmlFor="logoUrl"
-        error={errors.logoUrl?.message}
+        label="Logo"
+        htmlFor="logo"
+        hint={`PNG, JPG, WebP or SVG, up to ${LOGO_MAX_BYTES / 1024} KB. A wide wordmark is shown without the organisation's name beside it.`}
+        error={logoError ?? undefined}
       >
-        <Input
-          id="logoUrl"
-          placeholder="https://example.com/logo.png"
-          {...register("logoUrl")}
-        />
+        <div className="flex items-center gap-4">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a just-uploaded file from storage; next/image adds nothing here.
+            <img
+              src={logoUrl}
+              alt={`${organizationName} logo`}
+              className="bg-muted/50 h-14 w-auto max-w-40 shrink-0 rounded-lg border object-contain p-1.5"
+            />
+          ) : (
+            <span
+              role="img"
+              aria-label="No logo yet: the organisation's initials are shown"
+              style={{
+                backgroundColor: brandTokens(accent)?.primary,
+              }}
+              className="bg-primary text-primary-foreground flex size-14 shrink-0 items-center justify-center rounded-lg text-lg font-bold tracking-tight"
+            >
+              {monogram(organizationName)}
+            </span>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={fileInput}
+              id="logo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="sr-only"
+              onChange={(event) => {
+                onFileChosen(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={logoPending}
+              onClick={() => fileInput.current?.click()}
+            >
+              <ImagePlus />
+              {logoPending
+                ? "Working…"
+                : logoUrl
+                  ? "Replace logo"
+                  : "Upload logo"}
+            </Button>
+            {logoUrl ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={logoPending}
+                onClick={onRemoveLogo}
+              >
+                <Trash2 />
+                Remove
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </FormField>
+
       <FormField
         label="Accent colour"
         htmlFor="accentColor"
-        error={errors.accentColor?.message}
+        hint="Used for buttons, votes and links on your public pages. If it's too light for white text, it's darkened automatically so everything stays readable."
+        error={accentError ?? undefined}
       >
-        <Input
-          id="accentColor"
-          placeholder="#f97316"
-          {...register("accentColor")}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-44">
+            <ColorPicker
+              id="accentColor"
+              value={accent}
+              onChange={(value) => {
+                setAccent(value);
+                setAccentSaved(false);
+              }}
+            />
+          </div>
+          <Button
+            type="button"
+            disabled={accentPending || accent === savedAccent}
+            onClick={onSaveAccent}
+          >
+            {accentPending ? "Saving…" : "Save colour"}
+          </Button>
+          {accentSaved ? (
+            <span className="text-muted-foreground text-sm">Saved.</span>
+          ) : null}
+        </div>
       </FormField>
-      {rootError ? (
-        <p className="text-destructive text-sm">{rootError}</p>
-      ) : null}
-      {saved ? <p className="text-muted-foreground text-sm">Saved.</p> : null}
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : "Save branding"}
-      </Button>
-    </form>
+    </div>
   );
 }

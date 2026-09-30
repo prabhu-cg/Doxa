@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/marketing/hero";
+import { ProductShowcase } from "@/components/marketing/product-showcase";
 import { CTASection } from "@/components/marketing/cta-section";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { clientEnv } from "@/lib/env/client";
@@ -64,6 +65,7 @@ export default function HomePage() {
         }}
       />
       <Hero />
+      <ProductShowcase />
       <ProblemSection />
       <LoopSection />
       <DifferentiationSection />
