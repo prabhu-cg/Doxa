@@ -10,6 +10,12 @@ export type BrandTokens = {
   primaryHover: string;
   primarySoft: string;
   primaryText: string;
+  /** The same roles on the dark theme's ground. `primary` is shared: white text on it passes in both. */
+  dark: {
+    primaryHover: string;
+    primarySoft: string;
+    primaryText: string;
+  };
 };
 
 type Rgb = [number, number, number];
@@ -64,6 +70,21 @@ function mix(from: Rgb, toward: Rgb, amount: number): Rgb {
 const WHITE: Rgb = [255, 255, 255];
 const BLACK: Rgb = [0, 0, 0];
 const MIN_CONTRAST = 4.5;
+/** The dark theme's `--background` in globals.css; dark tints are mixed into it. */
+const DARK_BACKGROUND: Rgb = [0x12, 0x10, 0x0e];
+
+/** `color` moved toward white in 6% steps until it reaches 4.5:1 on `ground`. */
+function lightenUntilReadable(color: Rgb, ground: Rgb): Rgb {
+  let text = color;
+  for (
+    let step = 0;
+    step < 40 && contrastRatio(toHex(text), toHex(ground)) < MIN_CONTRAST;
+    step++
+  ) {
+    text = mix(text, WHITE, 0.06);
+  }
+  return text;
+}
 
 /** Null when the value isn't a six-digit hex colour, so callers keep Doxa's own accent. */
 export function brandTokens(
@@ -93,11 +114,20 @@ export function brandTokens(
     text = mix(text, BLACK, 0.06);
   }
 
+  // Dark theme: the tint is the accent over the dark ground, and the accent as
+  // text is lightened (not darkened) until it reads on that tint.
+  const darkSoft = mix(DARK_BACKGROUND, primary, 0.16);
+
   return {
     primary: toHex(primary),
     primaryHover: toHex(mix(primary, BLACK, 0.16)),
     primarySoft: toHex(soft),
     primaryText: toHex(text),
+    dark: {
+      primaryHover: toHex(mix(primary, WHITE, 0.14)),
+      primarySoft: toHex(darkSoft),
+      primaryText: toHex(lightenUntilReadable(primary, darkSoft)),
+    },
   };
 }
 
@@ -133,4 +163,22 @@ export function badgeColors(
     text = mix(text, BLACK, 0.06);
   }
   return { background: toHex(ground), color: toHex(text) };
+}
+
+/**
+ * `badgeColors` for both themes at once: CSS `light-dark()` picks the light pair
+ * or a dark pair (the colour at 22% over the dark ground, lightened until it
+ * reads on it), following the page's `color-scheme`.
+ */
+export function badgeStyle(
+  color: string | null | undefined,
+): { background: string; color: string } | undefined {
+  const light = badgeColors(color);
+  const parsed = color ? parseHex(color) : null;
+  if (!light || !parsed) return undefined;
+  const ground = mix(DARK_BACKGROUND, parsed, 0.22);
+  return {
+    background: `light-dark(${light.background}, ${toHex(ground)})`,
+    color: `light-dark(${light.color}, ${toHex(lightenUntilReadable(parsed, ground))})`,
+  };
 }

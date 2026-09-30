@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { DoxaLogo } from "@/components/doxa-logo";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeMenu } from "@/components/theme-menu";
 import {
   NotificationBell,
   type NotificationItem,
@@ -77,6 +78,7 @@ export function AppShell({
           </div>
           <div className="hidden md:block" />
           <div className="flex items-center gap-1">
+            <ThemeMenu />
             <NotificationBell
               orgSlug={currentOrganization.slug}
               notifications={notifications}

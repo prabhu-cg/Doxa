@@ -19,7 +19,7 @@ import { listTeamMemberIds } from "@/features/moderation/queries";
 import { hasAtLeastRole } from "@/features/organizations/permissions";
 import { hasUserVotedForItem } from "@/features/votes/queries";
 import { formatRelativeTime } from "@/lib/utils";
-import { badgeColors } from "@/lib/brand-color";
+import { badgeStyle } from "@/lib/brand-color";
 import { authPath } from "@/lib/safe-next";
 import { LinkButton } from "@/components/link-button";
 import { ChevronUp } from "lucide-react";
@@ -27,7 +27,7 @@ import { DECISION_TYPE_LABELS } from "@/features/decisions/schema";
 import { publicItemPath } from "@/lib/public-links";
 
 function tint(color?: string | null) {
-  const badge = badgeColors(color);
+  const badge = badgeStyle(color);
   return badge
     ? { backgroundColor: badge.background, color: badge.color }
     : undefined;

@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useContactDrawer } from "@/components/marketing/contact-drawer";
+import { ThemeMenu } from "@/components/theme-menu";
 import { DoxaLogo } from "@/components/doxa-logo";
 import { cn } from "@/lib/utils";
 
@@ -60,62 +61,65 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeMenu />
           <LinkButton variant="ghost" href="/login">
             Log in
           </LinkButton>
           <LinkButton href="/signup">Start Free</LinkButton>
         </div>
 
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Doxa</SheetTitle>
-            </SheetHeader>
-            <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="hover:bg-muted rounded-md px-3 py-2.5 text-sm font-medium"
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeMenu />
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Doxa</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="hover:bg-muted rounded-md px-3 py-2.5 text-sm font-medium"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    contact?.open();
+                  }}
+                  className="hover:bg-muted rounded-md px-3 py-2.5 text-left text-sm font-medium"
                 >
-                  {link.label}
-                </Link>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  contact?.open();
-                }}
-                className="hover:bg-muted rounded-md px-3 py-2.5 text-left text-sm font-medium"
-              >
-                Contact
-              </button>
-            </nav>
-            <div className="mt-4 flex flex-col gap-2 border-t px-4 pt-4">
-              <LinkButton
-                variant="outline"
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-              >
-                Log in
-              </LinkButton>
-              <LinkButton href="/signup" onClick={() => setMobileOpen(false)}>
-                Start Free
-              </LinkButton>
-            </div>
-          </SheetContent>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            aria-label="Open menu"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="size-5" />
-          </Button>
-        </Sheet>
+                  Contact
+                </button>
+              </nav>
+              <div className="mt-4 flex flex-col gap-2 border-t px-4 pt-4">
+                <LinkButton
+                  variant="outline"
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Log in
+                </LinkButton>
+                <LinkButton href="/signup" onClick={() => setMobileOpen(false)}>
+                  Start Free
+                </LinkButton>
+              </div>
+            </SheetContent>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open menu"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="size-5" />
+            </Button>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

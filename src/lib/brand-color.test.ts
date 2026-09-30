@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   badgeColors,
+  badgeStyle,
   brandTokens,
   contrastRatio,
   monogram,
@@ -33,6 +34,24 @@ describe("brandTokens", () => {
         contrastRatio(tokens.primaryText, tokens.primarySoft),
       ).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(tokens.primary, "#ffffff")).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    }
+  });
+
+  it("keeps the accent readable as text on its tint in the dark theme", () => {
+    for (const accent of [
+      "#ffd400",
+      "#3b82f6",
+      "#22c55e",
+      "#7c3aed",
+      "#c74504",
+    ]) {
+      const { dark } = brandTokens(accent)!;
+      expect(
+        contrastRatio(dark.primaryText, dark.primarySoft),
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(dark.primaryText, "#12100e")).toBeGreaterThanOrEqual(
         4.5,
       );
     }
@@ -82,5 +101,20 @@ describe("badgeColors", () => {
   it("has nothing to say about a missing or invalid colour", () => {
     expect(badgeColors(null)).toBeUndefined();
     expect(badgeColors("amber")).toBeUndefined();
+  });
+});
+
+describe("badgeStyle", () => {
+  it("carries a light pair and a dark pair", () => {
+    const style = badgeStyle("#f59e0b")!;
+    expect(style.background).toMatch(
+      /^light-dark\(#[0-9a-f]{6}, #[0-9a-f]{6}\)$/,
+    );
+    expect(style.color).toMatch(/^light-dark\(#[0-9a-f]{6}, #[0-9a-f]{6}\)$/);
+  });
+
+  it("has nothing to say about a missing or invalid colour", () => {
+    expect(badgeStyle(null)).toBeUndefined();
+    expect(badgeStyle("amber")).toBeUndefined();
   });
 });

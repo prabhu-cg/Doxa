@@ -7,7 +7,7 @@ import type { ItemWithRelations } from "@/features/items/queries";
 import type { BoardSort } from "@/features/items/schema";
 import type { Viewer } from "@/features/participation/access";
 import { authPath } from "@/lib/safe-next";
-import { badgeColors } from "@/lib/brand-color";
+import { badgeStyle } from "@/lib/brand-color";
 import { DECISION_TYPE_LABELS } from "@/features/decisions/schema";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { GridRow } from "./grid-row";
@@ -16,7 +16,7 @@ import { VoteChip } from "./vote-chip";
 type Decision = (typeof DECISION_TYPES)[number];
 
 function tint(color?: string | null) {
-  const badge = badgeColors(color);
+  const badge = badgeStyle(color);
   return badge
     ? { backgroundColor: badge.background, color: badge.color }
     : undefined;

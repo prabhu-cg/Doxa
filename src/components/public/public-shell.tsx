@@ -6,6 +6,7 @@ import type { Organization } from "@/generated/prisma/client";
 import { ShellIdentity } from "./shell-identity";
 import { PublicNav } from "./public-nav";
 import { ViewerMenu } from "./viewer-menu";
+import { ThemeMenu } from "@/components/theme-menu";
 import { publicBoardPath, publicRoadmapPath } from "@/lib/public-links";
 
 /**
@@ -60,7 +61,8 @@ export async function PublicShell({
             tabs={tabs}
             className="hidden min-w-0 overflow-x-auto md:flex"
           />
-          <div className="ml-auto shrink-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <ThemeMenu />
             <ViewerMenu viewer={viewer} />
           </div>
         </div>
