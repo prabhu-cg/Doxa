@@ -328,6 +328,10 @@ Three stages (Now, Next, Later, from the decision's `roadmapStage`), each a sect
 
 A dashed hairline panel, 8.4px radius, centred, 64px vertical padding: a 14px semibold statement, one line of Stone copy at most `max-w-sm`, then the single next action. An empty board says "No ideas here yet", invites the visitor by naming the organisation, and offers the outline Submit; a filtered board says "No ideas match" and offers "Clear filters" as a text link. An empty roadmap says what will appear there and links to the first board. The noun is the organisation's own word for an item.
 
+### Auth Panel
+
+On the sign-in and sign-up pages Doxa's own left panel (from `lg`, 58% wide) is a photograph of a terracotta wall in low sun, under a 35% terracotta multiply tint and a dark-brown scrim (62% to 38% to 86%), so the white logo, quote (1.6rem 600, soft shadow), attribution and copyright stay readable. It is the warm world of the product as an image, not a flat orange field. It steps aside entirely when the sign-in belongs to an organisation, which leads with its own mark, name and accent, and Doxa appears only as "Powered by".
+
 ### Not Found
 
 The app-wide 404. A `surface` radial wash behind a centred stack: a soft "Error 404" pill, then a 4, Doxa's own speech-bubble mark in a dashed `hairline-strong` halo as the 0, and a 4 (96px, 128px from `sm`, bold, tight tracking). Below: "This page didn't get a reply." (20–24px 700), one line of Stone copy, a filled "Back to home" and an outline "Open the app", and the address that failed in a soft `primary-text` code chip. The mark is tilted and still: no looping animation, in line with motion as feedback. No extra colours.
