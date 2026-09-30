@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T14:26:08.000Z",
+  "generatedAt": "2026-09-30T22:07:05.000Z",
   "title": "Design System: Doxa",
   "extensions": {
     "colorMeta": {
@@ -97,16 +97,16 @@
       "ink-muted": {
         "role": "neutral",
         "displayName": "Stone",
-        "canonical": "#6f6963",
+        "canonical": "#6f6963 / oklch(52.4% 0.012 68)",
         "tonalRamp": [
-          "#1a1511",
-          "#322c28",
-          "#4d4642",
-          "#69625d",
-          "#958e88",
-          "#bdb6b0",
-          "#ded6d0",
-          "#f1eeec"
+          "#1a1510",
+          "#322d28",
+          "#4c4741",
+          "#68625c",
+          "#948e88",
+          "#bdb6af",
+          "#ddd6cf",
+          "#f0eeec"
         ]
       },
       "hairline": {
@@ -325,16 +325,41 @@
       "description": "Phone-only outline button that opens the folded filters; an accent pill counts the filters in force.",
       "html": "<button class=\"ds-filters\" aria-expanded=\"false\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18M7 12h10M10 18h4\"/></svg>Filters<span class=\"ds-filters-n\">2</span></button>",
       "css": ".ds-filters{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-family:var(--font-sans),Manrope,sans-serif;font-size:14px;font-weight:500;cursor:pointer}.ds-filters:hover{background:var(--muted)}.ds-filters:focus-visible{outline:none;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-filters-n{background:var(--primary);color:var(--primary-foreground);border-radius:9999px;padding:0 6px;font-size:12px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "App Sidebar Item",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Item in the authenticated app's Oat sidebar. The current page takes the same darker wash as hover with dark semibold text, never an accent tint; idle items are Stone.",
+      "html": "<aside class=\"ds-side\"><a class=\"ds-side-item\" href=\"#\">Spaces</a><a class=\"ds-side-item ds-side-on\" aria-current=\"page\" href=\"#\">Boards</a><a class=\"ds-side-item\" href=\"#\">Roadmap</a><a class=\"ds-side-item\" href=\"#\">Settings</a></aside>",
+      "css": ".ds-side{width:240px;display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--muted);border-right:1px solid var(--border);}.ds-side-item{font-family:var(--font-sans),Manrope,sans-serif;font-size:14px;font-weight:500;padding:8px 12px;border-radius:6px;color:var(--muted-foreground);text-decoration:none;}.ds-side-item:hover{background:color-mix(in srgb,var(--foreground) 5%,transparent);color:var(--foreground);}.ds-side-on,.ds-side-on:hover{background:color-mix(in srgb,var(--foreground) 5%,transparent);color:var(--foreground);font-weight:600;}.ds-side-item:focus-visible{outline:2px solid var(--ring);}"
+    },
+    {
+      "name": "Auth Panel",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Doxa's left panel on sign-in and sign-up (from lg, 58% wide): a photograph of a terracotta wall in low sun under a 35% terracotta tint and a dark-brown scrim, with the white logo, quote, attribution and copyright over it. Shown here with the scrim only; steps aside for an organisation's own sign-in.",
+      "html": "<div class=\"ds-auth\"><div class=\"ds-auth-top\">Doxa</div><div><blockquote>Feedback isn't a to-do list. It's a conversation waiting for a reply.</blockquote><p>— The Doxa loop</p></div><small>© 2026 Doxa. All rights reserved.</small></div>",
+      "css": ".ds-auth{display:flex;flex-direction:column;justify-content:space-between;width:340px;min-height:420px;padding:28px;border-radius:10px;color:#fff;background:linear-gradient(180deg,rgba(24,9,2,.62) 0%,rgba(24,9,2,.38) 52%,rgba(24,9,2,.86) 100%),#8a4a26;font-family:var(--font-sans),Manrope,sans-serif;}.ds-auth-top{font-size:20px;font-weight:700;letter-spacing:-.025em;}.ds-auth blockquote{margin:0;font-size:22px;line-height:1.3;font-weight:600;text-shadow:0 1px 14px rgba(0,0,0,.35);}.ds-auth p{margin:14px 0 0;font-size:14px;font-weight:500;color:rgba(255,255,255,.75);}.ds-auth small{font-size:12px;color:rgba(255,255,255,.6);}"
+    },
+    {
+      "name": "Not Found",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The app-wide 404: a soft Error 404 pill, a 4, Doxa's speech-bubble mark in a dashed halo as the 0, and a 4, then a short heading, one line of Stone copy, a filled and an outline button, and the failed address in a soft code chip. The mark is tilted and still.",
+      "html": "<div class=\"ds-nf\"><span class=\"ds-nf-pill\">Error 404</span><div class=\"ds-nf-num\"><span>4</span><span class=\"ds-nf-halo\"></span><span>4</span></div><h3>This page didn't get a reply.</h3><p>It may have moved, or it never existed. Doxa can't answer what isn't there.</p><div class=\"ds-nf-actions\"><a class=\"ds-nf-btn ds-nf-primary\" href=\"#\">Back to home</a><a class=\"ds-nf-btn\" href=\"#\">Open the app</a></div></div>",
+      "css": ".ds-nf{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:24px;font-family:var(--font-sans),Manrope,sans-serif;color:var(--foreground);}.ds-nf-pill{background:var(--primary-soft);color:var(--primary-text);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:999px;}.ds-nf-num{display:flex;align-items:center;gap:4px;font-size:96px;line-height:1;font-weight:700;letter-spacing:-.05em;}.ds-nf-halo{width:80px;height:80px;border:1.5px dashed var(--border-strong);border-radius:999px;background:radial-gradient(circle at 50% 50%,var(--primary) 0 22px,transparent 23px);}.ds-nf h3{margin:0;font-size:20px;font-weight:700;letter-spacing:-.025em;}.ds-nf p{margin:0;max-width:320px;font-size:15px;line-height:1.6;color:var(--muted-foreground);}.ds-nf-actions{display:flex;gap:10px;margin-top:8px;}.ds-nf-btn{font-size:14px;font-weight:500;padding:8px 16px;border-radius:6px;border:1px solid var(--border);color:var(--foreground);text-decoration:none;background:var(--background);}.ds-nf-primary{background:var(--primary);border-color:transparent;color:var(--primary-foreground);}"
     }
   ],
   "narrative": {
     "northStar": "The Working Ledger",
-    "overview": "**Creative North Star: \"The Working Ledger\"**\n\nDoxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy, and so does every movement: a vote rolls its count, a re-ranked row glides to its place, the drawer slides in. Nothing travels between one element and another.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.\n\n- One accent, organisation-owned on public pages, terracotta by default.\n- Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.\n- Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.\n- Flat depth; the drawer carries the only shadow.\n- Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.\n- The team's decision is first-class content, sitting beside status in the grid.",
+    "overview": "**Creative North Star: \"The Working Ledger\"**\n\nDoxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy, and so does every movement: a vote rolls its count, a re-ranked row glides to its place, the drawer slides in. Nothing travels between one element and another.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.\n\n**Key Characteristics:**\n\n- One accent, organisation-owned on public pages, terracotta by default.\n- Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.\n- Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.\n- Flat depth; the drawer carries the only shadow.\n- Light and dark: a Light / Dark / System switch sits in every header. Dark is a warm brown-black ramp (`#12100e` ground, `#1c1916` cards, `#181512` sidebar, `#302a25` hairlines), not neutral grey, and organisation accents get their own dark values.\n- Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.\n- The team's decision is first-class content, sitting beside status in the grid.",
     "keyCharacteristics": [
       "One accent, organisation-owned on public pages, terracotta by default.",
       "Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.",
       "Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.",
       "Flat depth; the drawer carries the only shadow.",
+      "Light and dark: a Light / Dark / System switch sits in every header. Dark is a warm brown-black ramp (`#12100e` ground, `#1c1916` cards, `#181512` sidebar, `#302a25` hairlines), not neutral grey, and organisation accents get their own dark values.",
       "Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.",
       "The team's decision is first-class content, sitting beside status in the grid."
     ],
