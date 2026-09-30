@@ -7,10 +7,9 @@ colors:
   primary-soft: "#fdefe7"
   primary-foreground: "#ffffff"
   background: "#ffffff"
-  surface-cream: "#fffaef"
   surface-muted: "#f4f2ea"
   ink: "#1c1917"
-  ink-muted: "#78716c"
+  ink-muted: "#6f6963"
   hairline: "#e8ddc8"
   hairline-strong: "#d6c7ab"
   success: "#146c43"
@@ -174,7 +173,7 @@ The system has two layers. The incumbent Doxa tokens live in `src/app/globals.cs
 **Key Characteristics:**
 
 - One accent, organisation-owned on public pages, terracotta by default.
-- Warm neutrals: cream (#fffaef) chrome, white grid, hairline (#e8ddc8) rules.
+- Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.
 - Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.
 - Flat depth; the drawer carries the only shadow.
 - Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.
@@ -193,10 +192,9 @@ A cream-and-white ledger with a single burnt-orange accent that any organisation
 ### Neutral
 
 - **Paper White** (`background`, #ffffff): the grid, the top bar and every working surface.
-- **Cream** (`surface-cream`, #fffaef): chrome that should feel warmer than the grid (sidebar, the item page's vote aside, OG card ground).
-- **Oat** (`surface-muted`, #f4f2ea): hover wash for rows and ghost buttons, disabled and closed states, the auth page ground.
+- **Oat** (`surface-muted`, #f4f2ea): the one warm ground, the same beige as the marketing site's alternating bands. It is the app sidebar and its mobile drawer, the item page's vote aside and decision panel, the editing row in settings lists, the OG card ground, the auth page ground, and the hover wash for rows and ghost buttons, disabled and closed states.
 - **Warm Ink** (`ink`, #1c1917): all primary text. Secondary copy on the masthead is ink at 75% opacity.
-- **Stone** (`ink-muted`, #78716c): column headers, meta text, placeholders' companions.
+- **Stone** (`ink-muted`, #6f6963): column headers, meta text, placeholders' companions. 5.4:1 on white and 4.8:1 on Oat.
 - **Parchment Hairline** (`hairline`, #e8ddc8): every border, row divider and input outline.
 - **Parchment Strong** (`hairline-strong`, #d6c7ab): scrollbar thumb and emphasised dividers.
 
@@ -255,7 +253,7 @@ The roadmap uses three stage columns from `md` (768px), 40px apart, each a ruled
 
 ## Elevation & Depth
 
-Flat and tonal. Surfaces separate by 1px hairlines and by ground (white grid, tinted masthead, cream aside), not by shadow. The selected row is a tint, not a lift. The one shadow on the public surface is the drawer's.
+Flat and tonal. Surfaces separate by 1px hairlines and by ground (white grid, tinted masthead, oat aside), not by shadow. The selected row is a tint, not a lift. The one shadow on the public surface is the drawer's.
 
 ### Shadow Vocabulary
 

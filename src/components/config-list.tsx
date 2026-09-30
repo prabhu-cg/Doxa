@@ -70,7 +70,7 @@ export function ConfigRow({
   );
 }
 
-/** Stands in for a row while it is being edited. The side nav's cream marks
+/** Stands in for a row while it is being edited. The side nav's beige marks
  * it as that row opened up, not another "add" form, and the fields inside
  * stay white so they still read as inputs on it. */
 export function ConfigEditRow({ children }: { children: ReactNode }) {

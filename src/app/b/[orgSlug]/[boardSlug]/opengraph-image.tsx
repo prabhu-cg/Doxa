@@ -36,7 +36,7 @@ export default async function Image({
         flexDirection: "column",
         justifyContent: "space-between",
         padding: 72,
-        background: "#fffaef",
+        background: "#f4f2ea",
         borderTop: `14px solid ${accent}`,
         color: "#1c1917",
       }}
@@ -77,7 +77,7 @@ export default async function Image({
           <div
             style={{
               fontSize: 32,
-              color: "#78716c",
+              color: "#6f6963",
               maxWidth: 900,
               lineHeight: 1.35,
             }}
@@ -87,7 +87,7 @@ export default async function Image({
               : description}
           </div>
         ) : (
-          <div style={{ fontSize: 32, color: "#78716c" }}>
+          <div style={{ fontSize: 32, color: "#6f6963" }}>
             Vote on what matters and see how we respond.
           </div>
         )}
@@ -98,7 +98,7 @@ export default async function Image({
           display: "flex",
           justifyContent: "flex-end",
           fontSize: 24,
-          color: "#78716c",
+          color: "#6f6963",
         }}
       >
         Powered by Doxa

@@ -9,10 +9,10 @@ colors:
   primary-foreground: "#ffffff"
   background: "#ffffff"
   foreground: "#1c1917"
-  surface: "#fffaef"
+  surface: "#f4f2ea"
   surface-raised: "#ffffff"
   muted: "#f4f2ea"
-  muted-foreground: "#78716c"
+  muted-foreground: "#6f6963"
   border: "#e8ddc8"
   border-strong: "#d6c7ab"
   success: "#146c43"
@@ -234,20 +234,20 @@ Extracted from the Doxa codebase (Next.js, Tailwind CSS v4, shadcn `base-nova` o
 
 **Creative North Star: "The Working Ledger"**
 
-Warm paper, one burnt-orange voice. Working surfaces are white, chrome is cream, every border is a parchment-coloured hairline, all type is Manrope, and a single terracotta accent (`primary`, `#c74504`) means "act here" or "this is yours". Nothing decorates: colour, weight and size carry state or hierarchy. Depth is tonal and hairline, not shadow. Motion answers an action and stops.
+Warm paper, one burnt-orange voice. Working surfaces are white, chrome is a warm beige (the marketing site's band colour, `#f4f2ea`), every border is a parchment-coloured hairline, all type is Manrope, and a single terracotta accent (`primary`, `#c74504`) means "act here" or "this is yours". Nothing decorates: colour, weight and size carry state or hierarchy. Depth is tonal and hairline, not shadow. Motion answers an action and stops.
 
 The three surfaces differ in density, not in language:
 
 | Surface      | Mode          | Density                      | Container                         | Signature                                                                                     |
 | ------------ | ------------- | ---------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
 | Marketing    | Persuade      | Airy: 64–80px section rhythm | 1152px, centred                   | Alternating white / oat bands, icon-tile cards, terracotta CTA banner                         |
-| App          | Operate       | Medium: 24px stack rhythm    | 240px cream sidebar + 1152px page | Cream sidebar, bordered cards that lift on hover, right-hand drawers for create/edit/settings |
+| App          | Operate       | Medium: 24px stack rhythm    | 240px beige sidebar + 1152px page | Beige sidebar, bordered cards that lift on hover, right-hand drawers for create/edit/settings |
 | Public board | Scan and vote | Dense: table rows            | 1400px, full-width ledger         | Real data table, vote chip, tinted masthead, org-owned accent                                 |
 
 **Key characteristics**
 
 - One accent. Terracotta by default; on public pages it is replaced at runtime by the organisation's own colour, corrected for contrast.
-- Warm neutrals in light mode: cream `#fffaef` chrome, oat `#f4f2ea` washes, hairline `#e8ddc8` rules.
+- Warm neutrals in light mode: one warm beige, `#f4f2ea` (called oat or cream), for chrome, asides, marketing bands and hover washes, plus hairline `#e8ddc8` rules. Nothing lighter or yellower is used as a second cream.
 - Manrope only. Hierarchy comes from weight (400/500/600/700) and a short size scale, with tight tracking (`-0.025em`) on every heading.
 - Flat at rest. Shadows belong to overlays (drawer, menu, dialog), plus one soft card shadow in the app.
 - Radius is a single 6px base with a multiplier scale; pills for badges.
@@ -273,16 +273,16 @@ A cream-and-white ledger with one orange accent. Every colour is a semantic toke
 
 ### Neutrals
 
-| Token                               | Light     | Dark      | Role                                                                              |
-| ----------------------------------- | --------- | --------- | --------------------------------------------------------------------------------- |
-| `background`                        | `#ffffff` | `#12100e` | Page, grid, top bars, every working surface.                                      |
-| `foreground`                        | `#1c1917` | `#faf7f2` | All primary text (17.5:1 on white, 17.8:1 in dark).                               |
-| `card`, `popover`, `surface-raised` | `#ffffff` | `#1c1916` | Cards, menus, dialogs, drawers.                                                   |
-| `surface`, `sidebar`                | `#fffaef` | `#181512` | Cream chrome: app sidebar, item-edit rows, aside panels.                          |
-| `muted`, `secondary`                | `#f4f2ea` | `#27221e` | Hover washes, disabled, alternating marketing bands, auth form ground, skeletons. |
-| `muted-foreground`                  | `#78716c` | `#a8a097` | Secondary text, meta, placeholders, icons.                                        |
-| `border`, `input`                   | `#e8ddc8` | `#302a25` | Every border, divider and input outline.                                          |
-| `border-strong`                     | `#d6c7ab` | `#453d35` | Scrollbar thumb, drawer header divider, emphasised rules.                         |
+| Token                               | Light     | Dark      | Role                                                                                                       |
+| ----------------------------------- | --------- | --------- | ---------------------------------------------------------------------------------------------------------- |
+| `background`                        | `#ffffff` | `#12100e` | Page, grid, top bars, every working surface.                                                               |
+| `foreground`                        | `#1c1917` | `#faf7f2` | All primary text (17.5:1 on white, 17.8:1 in dark).                                                        |
+| `card`, `popover`, `surface-raised` | `#ffffff` | `#1c1916` | Cards, menus, dialogs, drawers.                                                                            |
+| `surface`, `sidebar`                | `#f4f2ea` | `#181512` | The beige: app sidebar and its mobile drawer, item-edit rows, aside panels, OG card.                       |
+| `muted`, `secondary`                | `#f4f2ea` | `#27221e` | Hover washes, disabled, alternating marketing bands, auth form ground, skeletons. Same value as `surface`. |
+| `muted-foreground`                  | `#6f6963` | `#a8a097` | Secondary text, meta, placeholders, icons.                                                                 |
+| `border`, `input`                   | `#e8ddc8` | `#302a25` | Every border, divider and input outline.                                                                   |
+| `border-strong`                     | `#d6c7ab` | `#453d35` | Scrollbar thumb, drawer header divider, emphasised rules.                                                  |
 
 ### Semantic
 
@@ -314,7 +314,7 @@ Each has a solid (text/icon) and a `-soft` (ground) value. They are used as tint
 
 ### Known gaps
 
-- `muted-foreground` (`#78716c`) on `muted` (`#f4f2ea`) is **4.28:1**, below AA for small text. Fine for 14px+ meta on white (4.80:1) and on cream (4.61:1); avoid 12px meta on oat.
+- `muted-foreground` (`#6f6963`) is 5.42:1 on white and 4.83:1 on the beige, so it passes AA for small text on both. It was darkened from `#78716c` (4.28:1 on the beige) when the sidebar moved to that beige.
 - `border` (`#e8ddc8`) on white is **1.35:1**. It is decorative; input fields rely on the hairline alone, so add a stronger border (`border-strong`) if a WCAG 1.4.11 non-text-contrast pass is required.
 - The app's dark-mode org accent and badge colours are covered by unit tests, not yet checked by eye against a real branded organisation.
 
@@ -380,7 +380,7 @@ Inner measures worth reusing: `max-w-2xl` for centred headings, `max-w-lg` for l
 
 ### App rhythm
 
-- Shell is `h-dvh`: a 240px (`w-60`) cream sidebar (hidden below `md`, reopened as a left sheet `w-64`), a 56px (`h-14`) sticky top bar, and a scrolling `main`.
+- Shell is `h-dvh`: a 240px (`w-60`) beige sidebar (hidden below `md`, reopened as a left sheet `w-64`), a 56px (`h-14`) sticky top bar, and a scrolling `main`.
 - Page = `PageContainer` → `PageHeader` → content. Actions sit **top right** of the header (below the text on phones) so the primary action is always in the same place.
 - Entity grids: `grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4`.
 - Divided lists (`ConfigList`): rows `py-3` separated by hairlines, no boxes.
@@ -395,7 +395,7 @@ Tailwind defaults: `sm` 640, `md` 768, `lg` 1024, `xl` 1280. `md` is where the a
 
 ## Elevation and depth
 
-Flat and tonal. Surfaces separate by 1px hairlines and by ground (white, cream, oat), not by shadow.
+Flat and tonal. Surfaces separate by 1px hairlines and by ground (white and the one beige), not by shadow.
 
 | Token                                     | Value                                                 | Used for                                           |
 | ----------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
@@ -489,7 +489,7 @@ Class strings below are Tailwind v4. They are the exact recipes used in the sour
 
 - **`Table` primitive (app):** 14px, header `h-10 px-2 font-medium`, cells `p-2`, rows `border-b hover:bg-muted/50`, selected `bg-muted`.
 - **Public data grid:** header cells 12px 600 `muted-foreground` on white, sticky under the top bar, row hairline bottom, hover `muted` at 60%, selected `primary-soft` with `aria-current="true"`; `px-3 py-3` cells; whole row clickable except inner links.
-- **`ConfigList`:** `divide-y border-b`, rows `py-3` with a 14px 600 name, optional badges, 12px muted description and a single ellipsis menu. An editing row becomes cream (`bg-sidebar -mx-3 rounded-lg px-3 py-4`) with white fields.
+- **`ConfigList`:** `divide-y border-b`, rows `py-3` with a 14px 600 name, optional badges, 12px muted description and a single ellipsis menu. An editing row becomes beige (`bg-sidebar -mx-3 rounded-lg px-3 py-4`) with white fields.
 
 ### Accordion (FAQ)
 
@@ -544,7 +544,7 @@ Motion is feedback: it answers an action and stops. No decorative or scroll-link
 
 ## Accessibility
 
-- WCAG AA is the target. Text pairs: foreground 17.5:1, muted-foreground 4.80:1 on white, `primary-text` 6.38:1, semantic solids on their soft grounds 5.4–5.9:1 (light) and 8.8–10:1 (dark).
+- WCAG AA is the target. Text pairs: foreground 17.5:1, muted-foreground 5.42:1 on white, `primary-text` 6.38:1, semantic solids on their soft grounds 5.4–5.9:1 (light) and 8.8–10:1 (dark).
 - Focus is always visible: a 3px ring at 50% alpha plus a `ring` border colour. Custom controls use a 2px ring with offset.
 - Lists of comparable records are real tables with a caption, `scope="col"` headers and `aria-sort`. Current nav uses `aria-current`. Toggles expose `aria-pressed` / `aria-expanded`.
 - Decorative icons are `aria-hidden`; icon-only buttons carry an `aria-label` or sr-only text.
@@ -669,7 +669,7 @@ Motion is feedback: it answers an action and stops. No decorative or scroll-link
   --secondary: #f4f2ea;
   --secondary-foreground: #1c1917;
   --muted: #f4f2ea;
-  --muted-foreground: #78716c;
+  --muted-foreground: #6f6963;
   --accent: #fdefe7;
   --accent-foreground: #a93a03;
 
@@ -687,10 +687,10 @@ Motion is feedback: it answers an action and stops. No decorative or scroll-link
   --input: #e8ddc8;
   --ring: #c74504;
 
-  --surface: #fffaef;
+  --surface: #f4f2ea;
   --surface-raised: #ffffff;
 
-  --sidebar: #fffaef;
+  --sidebar: #f4f2ea;
   --sidebar-foreground: #1c1917;
   --sidebar-border: #e8ddc8;
   --sidebar-primary: #c74504;

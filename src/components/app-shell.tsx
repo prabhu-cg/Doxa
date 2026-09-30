@@ -91,7 +91,7 @@ export function AppShell({
       </div>
 
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="bg-sidebar w-64 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex h-14 items-center border-b px-4">
             <DoxaLogo />

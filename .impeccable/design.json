@@ -64,24 +64,9 @@
           "#eeeeee"
         ]
       },
-      "surface-cream": {
-        "role": "neutral",
-        "displayName": "Cream",
-        "canonical": "#fffaef / oklch(98.6% 0.015 86)",
-        "tonalRamp": [
-          "#19160e",
-          "#312d25",
-          "#4b473e",
-          "#676359",
-          "#938f85",
-          "#bcb7ad",
-          "#dcd7cc",
-          "#f0eeea"
-        ]
-      },
       "surface-muted": {
         "role": "neutral",
-        "displayName": "Oat",
+        "displayName": "Oat (the one warm ground: sidebar, asides, marketing bands)",
         "canonical": "#f4f2ea / oklch(96.0% 0.011 95)",
         "tonalRamp": [
           "#171611",
@@ -112,7 +97,7 @@
       "ink-muted": {
         "role": "neutral",
         "displayName": "Stone",
-        "canonical": "#78716c / oklch(55.3% 0.012 58)",
+        "canonical": "#6f6963",
         "tonalRamp": [
           "#1a1511",
           "#322c28",
@@ -344,10 +329,10 @@
   ],
   "narrative": {
     "northStar": "The Working Ledger",
-    "overview": "**Creative North Star: \"The Working Ledger\"**\n\nDoxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy, and so does every movement: a vote rolls its count, a re-ranked row glides to its place, the drawer slides in. Nothing travels between one element and another.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.\n\n- One accent, organisation-owned on public pages, terracotta by default.\n- Warm neutrals: cream (#fffaef) chrome, white grid, hairline (#e8ddc8) rules.\n- Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.\n- Flat depth; the drawer carries the only shadow.\n- Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.\n- The team's decision is first-class content, sitting beside status in the grid.",
+    "overview": "**Creative North Star: \"The Working Ledger\"**\n\nDoxa's world is warm paper and one burnt-orange voice: white working surfaces, cream chrome, hairline borders the colour of old parchment, Manrope throughout, and a single terracotta accent (`primary`, #c74504) that means \"act here\" or \"this is yours\". The public board surface extends that world rather than replacing it: it is organisation-led, so the accent, the mark and the name belong to whichever organisation owns the page, while Doxa's typography, spacing and component language stay constant and Doxa's own mark is reduced to one small footer line.\n\nThe mode is Operate. Visitors scan, vote and read the team's answer, so the surface is a dense, full-width ledger (a real table) rather than a feed of boxed cards. Depth is tonal and hairline: flat surfaces, 1px warm borders, a tinted masthead, and a drawer that slides over the list. Nothing decorates; every colour, weight and size is carrying state or hierarchy, and so does every movement: a vote rolls its count, a re-ranked row glides to its place, the drawer slides in. Nothing travels between one element and another.\n\nThe system has two layers. The incumbent Doxa tokens live in `src/app/globals.css` and the shadcn/base-ui components in `src/components/ui`. On `/b/[orgSlug]` and `/r/[orgSlug]` a `BrandStyle` element re-points the accent tokens at the organisation's colour at runtime, after correcting it for contrast (see Colors). Terracotta is what you see when nothing is configured, and that unbranded page is a designed state, not a fallback.\n\n- One accent, organisation-owned on public pages, terracotta by default.\n- Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.\n- Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.\n- Flat depth; the drawer carries the only shadow.\n- Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.\n- The team's decision is first-class content, sitting beside status in the grid.",
     "keyCharacteristics": [
       "One accent, organisation-owned on public pages, terracotta by default.",
-      "Warm neutrals: cream (#fffaef) chrome, white grid, hairline (#e8ddc8) rules.",
+      "Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.",
       "Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.",
       "Flat depth; the drawer carries the only shadow.",
       "Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.",
