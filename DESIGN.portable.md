@@ -206,8 +206,8 @@ components:
     textColor: "{colors.foreground}"
     width: "240px"
   sidebar-item-active:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.primary-text}"
+    backgroundColor: "#e9e7e0"
+    textColor: "{colors.foreground}"
     rounded: "{rounded.control}"
     padding: "8px 12px"
   cta-banner:
@@ -260,14 +260,14 @@ A cream-and-white ledger with one orange accent. Every colour is a semantic toke
 
 ### Brand and accent
 
-| Token                | Light     | Dark      | Role                                                                                                            |
-| -------------------- | --------- | --------- | --------------------------------------------------------------------------------------------------------------- |
-| `primary`            | `#c74504` | `#c74504` | Fill for the primary button, voted chip, CTA banner, monogram, icon glyphs. White text on it is **4.90:1**.     |
-| `primary-hover`      | `#a93a03` | `#dd5211` | Hover of the primary fill.                                                                                      |
-| `primary-text`       | `#a93a03` | `#ff8a5c` | The accent when it is _text_: active nav, soft badges, links. **6.38:1** on white, **5.67:1** on its soft tint. |
-| `primary-soft`       | `#fdefe7` | `#26130a` | The accent as a ground: selected row, active nav item, soft badge, text selection.                              |
-| `primary-foreground` | `#ffffff` | `#ffffff` | Text on `primary`.                                                                                              |
-| `ring`               | `#c74504` | `#ff8a5c` | Focus ring colour (used at 50% alpha).                                                                          |
+| Token                | Light     | Dark      | Role                                                                                                                                |
+| -------------------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `primary`            | `#c74504` | `#c74504` | Fill for the primary button, voted chip, CTA banner, monogram, icon glyphs. White text on it is **4.90:1**.                         |
+| `primary-hover`      | `#a93a03` | `#dd5211` | Hover of the primary fill.                                                                                                          |
+| `primary-text`       | `#a93a03` | `#ff8a5c` | The accent when it is _text_: soft badges, links, the public board's current tab. **6.38:1** on white, **5.67:1** on its soft tint. |
+| `primary-soft`       | `#fdefe7` | `#26130a` | The accent as a ground: selected row, soft badge, text selection, the public board's current tab.                                   |
+| `primary-foreground` | `#ffffff` | `#ffffff` | Text on `primary`.                                                                                                                  |
+| `ring`               | `#c74504` | `#ff8a5c` | Focus ring colour (used at 50% alpha).                                                                                              |
 
 `primary` itself is never used as small text. Use `primary-text`.
 
@@ -470,7 +470,7 @@ Class strings below are Tailwind v4. They are the exact recipes used in the sour
 
 - **Marketing header:** `h-16 sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm`. Logo left; links 14px 500, `muted-foreground` → `foreground` on hover, current is `foreground`, `rounded-md px-3 py-2`; right side: ghost "Log in" + primary "Start Free". Below `md` a menu button opens a right sheet.
 - **Marketing footer:** `border-t py-10`, logo, centred 14px muted copyright line, 14px muted links with hover underline (`underline-offset-4`).
-- **App sidebar:** 240px `bg-sidebar border-r`; a 56px logo row, the org switcher in a `p-3` bordered block, then nav. Items `rounded-control px-3 py-2 gap-3 text-sm font-medium` with a 16px icon; **active** `bg-primary-soft text-primary-text`; idle `text-muted-foreground`, hover `bg-primary-soft text-primary-text`. Secondary items (Help) sit under a hairline at the bottom.
+- **App sidebar:** 240px `bg-sidebar border-r` (the beige); a 56px logo row, the org switcher in a `p-3` bordered block, then nav. Items `rounded-control px-3 py-2 gap-3 text-sm font-medium` with a 16px icon. **Active** is the same darker beige wash as hover (`bg-foreground/5`) with `text-foreground font-semibold`, so the current page reads without adding more orange to the screen; the heavier weight is what tells it from a hover. Idle is `text-muted-foreground`; hover is `bg-foreground/5 text-foreground`, the same wash. Secondary items (Help) sit under a hairline at the bottom.
 - **App top bar:** `h-14 sticky z-40 border-b bg-background/85 backdrop-blur-md`; notification bell and a 32px avatar menu on the right.
 - **Breadcrumbs:** 14px muted, 14px chevrons, current page `foreground` 500, links underline on hover, truncated at `max-w-56`/`72`.
 - **Tabs:** default list is an oat pill (`bg-muted`, 32px, `p-[3px]`, `rounded-lg`) with the active tab on `bg-background` and `shadow-sm`; `line` variant is transparent with a 2px foreground underline on the active tab.
@@ -510,6 +510,10 @@ Rows separated by a bottom hairline, trigger `py-2.5 text-sm font-medium` with a
 - **CTA, card variant:** `rounded-2xl border bg-card px-6 py-14 sm:px-12`. **Banner variant:** full-bleed `bg-primary`, title `text-primary-foreground`, lead at 80% white, primary button inverted to `bg-background text-foreground` with a trailing arrow, secondary button a transparent outline with a 30% white border.
 - **Legal shell:** `max-w-2xl`, title 30px 700, "Last updated" 14px muted, `h2` 18px 600 with `mt-8 mb-2`, paragraphs and lists `muted-foreground leading-relaxed`.
 - **Auth frame:** two columns. Left (lg only, 58%) is a full-bleed `primary` panel with `p-12`, a white-filtered logo, a huge 10rem white/15 quote mark, a 1.6rem 600 white quote, a 14px white/60 attribution, and a white/15 oversized logo bleeding off the right edge. Right is `bg-muted`, centred, form at `max-w-sm`, with the logo, `h1` 24px 700 and tagline above. When a visitor arrives from a public board, the Doxa panel steps aside and the organisation's mark, name and accent lead instead.
+
+### Not-found page
+
+A `surface` radial wash (`radial-gradient(60% 50% at 50% 38%, surface, background 70%)`) behind a centred stack: a soft "Error 404" pill (`bg-primary-soft text-primary-text`, 11px 700, uppercase, `tracking-widest`), then a 4, the brand mark as the 0 inside a dashed `border-strong` circle (80px, 112px from `sm`; mark 44px / 56px, tilted -6°, still), and a 4 (96px, 128px from `sm`, 700, `tracking-tighter`). Then a 20–24px 700 heading ("This page didn't get a reply."), 15px muted copy (`max-w-sm`), a filled and an outline button, and the failed path in a soft code chip. No looping animation and no extra accent colours.
 
 ### Vote chip (signature component)
 

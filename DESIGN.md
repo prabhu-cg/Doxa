@@ -176,6 +176,7 @@ The system has two layers. The incumbent Doxa tokens live in `src/app/globals.cs
 - Warm neutrals: oat (#f4f2ea) chrome, white grid, hairline (#e8ddc8) rules.
 - Manrope only; a fixed small type scale; tabular numerals wherever a number is compared.
 - Flat depth; the drawer carries the only shadow.
+- Light and dark: a Light / Dark / System switch sits in every header. Dark is a warm brown-black ramp (`#12100e` ground, `#1c1916` cards, `#181512` sidebar, `#302a25` hairlines), not neutral grey, and organisation accents get their own dark values.
 - Motion is feedback: it answers an action and stops, and reduced motion keeps the meaning without the travel.
 - The team's decision is first-class content, sitting beside status in the grid.
 
@@ -305,6 +306,7 @@ Gently rounded, never sharp, never bubbly, apart from pills. The base radius is 
 - **Top bar:** white, hairline bottom border, sticky. A 3px `primary` rule sits above a 56px bar: org identity left (30px mark), tabs (one per public board, then Roadmap), viewer menu right (sign-in links, or initial plus name plus Sign out). Below `md` the tabs wrap to a second row.
 - **Tabs:** 14px semibold, 4.8px radius; current is `primary-soft` fill with `primary-text`; others are Stone with an Oat hover; the current tab is read from the URL so it stays right inside an open drawer.
 - **On masthead pages** (`/b/org/board`, `/r/org`) the top bar shows only the org name, because the masthead carries the mark large.
+- **App sidebar** (the authenticated app, not the public board): the Oat ground with a hairline right edge. The current item is the same darker wash as hover (`bg-foreground/5`) with dark semibold text, never an accent tint: the screen already carries the accent on its primary button, so the current page is shown by weight and ground, not by more orange. Idle items are Stone; hover gives the wash and darkens the text.
 
 ### Masthead
 
@@ -325,6 +327,10 @@ Three stages (Now, Next, Later, from the decision's `roadmapStage`), each a sect
 ### Empty States
 
 A dashed hairline panel, 8.4px radius, centred, 64px vertical padding: a 14px semibold statement, one line of Stone copy at most `max-w-sm`, then the single next action. An empty board says "No ideas here yet", invites the visitor by naming the organisation, and offers the outline Submit; a filtered board says "No ideas match" and offers "Clear filters" as a text link. An empty roadmap says what will appear there and links to the first board. The noun is the organisation's own word for an item.
+
+### Not Found
+
+The app-wide 404. A `surface` radial wash behind a centred stack: a soft "Error 404" pill, then a 4, Doxa's own speech-bubble mark in a dashed `hairline-strong` halo as the 0, and a 4 (96px, 128px from `sm`, bold, tight tracking). Below: "This page didn't get a reply." (20–24px 700), one line of Stone copy, a filled "Back to home" and an outline "Open the app", and the address that failed in a soft `primary-text` code chip. The mark is tilted and still: no looping animation, in line with motion as feedback. No extra colours.
 
 ### Footer
 

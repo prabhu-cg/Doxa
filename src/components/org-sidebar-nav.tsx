@@ -67,8 +67,8 @@ export function OrgSidebarNav({
           className={cn(
             "rounded-control flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
             active
-              ? "bg-primary-soft text-primary-text"
-              : "text-muted-foreground hover:bg-primary-soft hover:text-primary-text",
+              ? "bg-foreground/5 text-foreground font-semibold"
+              : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
           )}
         >
           <Icon className="size-4 shrink-0" />
