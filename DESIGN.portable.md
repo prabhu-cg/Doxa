@@ -397,7 +397,7 @@ Borders are 1px `border`; dashed hairline is reserved for empty and upload zones
 
 ### Marketing composites
 
-- **MacBook mockup (`MacbookMockup`):** CSS laptop: charcoal bezel (`#1b1a1a`, lid 22px / 28px from `sm`), camera notch, aluminium deck (`#c9c5bd`), `device-shadow`. Holds a 2880 by 1800 capture, swapped by theme in CSS (`app-light.png` / `app-dark.png`). Capture a fictional sample board and retake it whenever the app chrome changes.
+- **MacBook mockup (`MacbookMockup`):** CSS laptop: charcoal bezel (`#1b1a1a`, lid 22px / 28px from `sm`), camera notch, aluminium deck (`#c9c5bd`), `device-shadow`. Holds a 2880 by 1800 capture, swapped by theme in CSS (`app-light-v2.png` / `app-dark-v2.png`). Capture a fictional sample board and retake it whenever the app chrome changes.
 - **Legal / About shell (`LegalPageShell`):** `desk` ground, `max-w-3xl`, a soft pill badge, Newsreader `h1` (36 to 48px), a muted line, then one white 20px card with a hairline holding all sections (`h2` 16px 600 DM Sans, muted body, ochre underlined links).
 - **Section heading:** title (Newsreader) and lead, centred in `max-w-2xl`. **CTA:** white band (`border-t`, `py-20`) or a 20px card.
 - **Auth frame:** left (lg only, 58%) a photograph under a flat charcoal scrim (`#353335` at 80%, no gradient, no tint) with white logo, quote and copyright; right is desk with the form at `max-w-sm`.
@@ -836,7 +836,7 @@ For dark, the same inputs produce a second set in a `.dark{...}` block written a
 | Fonts, root layout, theme init script                   | `src/app/layout.tsx`, `src/lib/theme.ts`, `src/components/theme-provider.tsx`, `theme-menu.tsx` |
 | Buttons, badges, inputs, cards, dialogs, menus, tabs    | `src/components/ui/*`                                                                           |
 | Marketing components, hero, MacBook, legal shell        | `src/components/marketing/*`, `src/app/(marketing)/_sections/*`, `about/page.tsx`               |
-| Marketing captures                                      | `public/marketing/app-light.png`, `app-dark.png`                                                |
+| Marketing captures                                      | `public/marketing/app-light-v2.png`, `app-dark-v2.png`                                                |
 | App sidebar, page shell, entity cards, drawer           | `src/components/org-sidebar-nav.tsx`, `page-shell.tsx`, `entity-card.tsx`, `drawer.tsx`         |
 | Auth frame                                              | `src/app/(auth)/layout.tsx`, `src/components/auth/auth-aside.tsx`                               |
 | Contrast-correcting colour helpers                      | `src/lib/brand-color.ts`, `src/components/public/brand-style.tsx`                               |

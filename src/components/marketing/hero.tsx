@@ -43,8 +43,8 @@ export function Hero() {
         <div className="relative">
           <MacbookMockup
             priority
-            lightSrc="/marketing/app-light.png"
-            darkSrc="/marketing/app-dark.png"
+            lightSrc="/marketing/app-light-v2.png"
+            darkSrc="/marketing/app-dark-v2.png"
             alt="A sample Doxa public board on a laptop: ideas ranked by votes, each with its status and the team's decision."
           />
           <p className="text-muted-foreground mt-6 mb-0 text-center text-xs">

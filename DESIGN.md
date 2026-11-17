@@ -371,7 +371,7 @@ A dashed hairline panel, centred, 64px vertical padding: a 14px 600 statement, o
 
 ### Marketing Hero and MacBook
 
-The hero is desk-grounded: a soft badge, a Newsreader display `h1` with one `text-primary-text` (ochre) phrase, a muted lead, a `lg` primary and a `lg` outline pill. Beneath, `MacbookMockup` (a CSS laptop: charcoal bezel, notch, aluminium deck, `device-shadow`) straddles the desk/white split holding real captures, `public/marketing/app-light.png` and `app-dark.png` (2880 by 1800, swapped by theme in CSS), of a fictional "Northwind" sample board. The caption says "Sample board with example data." Retake the captures whenever the board chrome changes.
+The hero is desk-grounded: a soft badge, a Newsreader display `h1` with one `text-primary-text` (ochre) phrase, a muted lead, a `lg` primary and a `lg` outline pill. Beneath, `MacbookMockup` (a CSS laptop: charcoal bezel, notch, aluminium deck, `device-shadow`) straddles the desk/white split holding real captures, `public/marketing/app-light-v2.png` and `app-dark-v2.png` (2880 by 1800, swapped by theme in CSS), of a fictional "Northwind" sample board. The caption says "Sample board with example data." Retake the captures whenever the board chrome changes.
 
 ### Legal and About Pages
 
