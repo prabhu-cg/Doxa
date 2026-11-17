@@ -191,7 +191,7 @@ Two modes share the language. Marketing persuades: desk and white bands alternat
 **Key Characteristics:**
 
 - One amber voice, a fill. Ochre (#826400) when the accent is text. Charcoal on amber. Org-owned on public pages (org accents get white foreground; the Doxa default gets charcoal).
-- Newsreader 400 (variable, optical-size axis) for every h1/h2 and `.font-display` (one unlayered rule, so per-page `font-bold` cannot change it); DM Sans for everything else; bold and extra-bold both resolve to 600.
+- Newsreader 500 (static, as Assessly) for every h1/h2 and `.font-display` (one unlayered rule, so per-page `font-bold` cannot change it); DM Sans for everything else; bold and extra-bold both resolve to 600.
 - Paper and desk: white for work, `desk` for chrome, `sand` (#f8f4e4) for hover and secondary tints.
 - Shape: every button is a pill; inputs 8px; menus and popovers 12px; cards, panels and dialogs 20px.
 - Selection is butter, not grey: selected tab, nav item, row = `accent-tint` with `accent-text`; hover = `sand`.
@@ -244,7 +244,7 @@ A white-and-butter ledger with one amber accent that any organisation may replac
 
 ## Typography
 
-**Display Font:** Newsreader 400, variable with the optical-size axis (`font-optical-sizing: auto`; Georgia fallback)
+**Display Font:** Newsreader 500, a static weight loaded exactly as Assessly loads it (no optical-size axis; Georgia fallback)
 **Body Font:** DM Sans (ui-sans-serif, system-ui fallback)
 **Label/Mono Font:** DM Sans; Geist Mono is loaded app-wide but not used on the public surface.
 
@@ -252,8 +252,8 @@ A white-and-butter ledger with one amber accent that any organisation may replac
 
 ### Hierarchy
 
-- **Display** (Newsreader 400, 48px base / 72px from `sm`, line-height 1, -0.02em): the marketing hero `h1`, with one `accent-text` phrase.
-- **Headline** (Newsreader 400, 28px, 1.25, -0.02em): the board, roadmap and item-page title; one per page. Marketing section titles and legal-page titles (36 to 48px) are also Newsreader 400.
+- **Display** (Newsreader 500, 48px base / 72px from `sm`, line-height 1, -0.02em): the marketing hero `h1`, with one `accent-text` phrase.
+- **Headline** (Newsreader 500, 28px, 1.25, -0.02em): the board, roadmap and item-page title; one per page. Marketing section titles and legal-page titles (36 to 48px) are also Newsreader 500.
 - **Title** (DM Sans 600, 15px, 1.375): item titles in the grid (two-line clamp) and on the roadmap; org name in the top bar is 15px 600. h3 and card titles are DM Sans 600.
 - **Body** (400, 14px): grid cells, controls, drawer copy. Masthead description is 15px at leading 24px, capped at `max-w-prose`. Marketing leads are 18px in `ink-muted`.
 - **Reading** (400, 15px, 1.75): the item description in the drawer and item page, capped at `max-w-prose`.
@@ -262,7 +262,7 @@ A white-and-butter ledger with one amber accent that any organisation may replac
 
 ### Named Rules
 
-**The One Heading Rule.** Every `h1` and `h2` (and `.font-display`) is Newsreader 400 (variable, optical-size axis on) at -0.02em, whatever weight class a page adds, enforced by one unlayered rule in `globals.css` that beats the utility layer. `h1.font-sans`, `h2.font-sans` and `.doc-card h2` opt out to DM Sans 600 with normal tracking (used for sentence-style headings inside the legal card and drawers).
+**The One Heading Rule.** Every `h1` and `h2` (and `.font-display`) is Newsreader 500 (static, as Assessly) at -0.02em, whatever weight class a page adds, enforced by one unlayered rule in `globals.css` that beats the utility layer. `h1.font-sans`, `h2.font-sans` and `.doc-card h2` opt out to DM Sans 600 with normal tracking (used for sentence-style headings inside the legal card and drawers).
 
 **The Fixed Scale Rule.** Sizes are 12, 13, 14, 15, 16 and 28px in the app and board; marketing steps display sizes by breakpoint. No fluid `clamp()` type.
 
@@ -433,3 +433,5 @@ Every create, edit and settings surface is a right-hand **drawer** (shared `Draw
 - **Motion:** drawer slides in over 220ms and out over 180ms, scrim fades 180ms in and 150ms out; dialog fades and scales from 97% over 180ms and out over 120ms. Reduced motion drops the travel.
 
 The drawer panel takes focus itself when it opens, so it carries `outline-none` (no focus ring around the sheet); the controls inside keep their own focus rings.
+
+The bold-to-600 rule excludes headings (`.font-bold:not(h1, h2, .font-display)`). A class selector outranks the `h1, h2` element selector in the same unlayered stylesheet, so without the exclusion any `h2` carrying `font-bold` rendered at 600 instead of the heading's 500 (the features page section titles did).

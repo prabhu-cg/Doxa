@@ -64,3 +64,5 @@ Opinions are evidence, not automatically decisions. Every item can end in a publ
 - About, Privacy and Terms share one layout (desk ground, small badge, Newsreader title, a single white card of sections), the same as the author's other project, getreqstudio.vercel.app. The About page's "Who built Doxa, and why" section is first-person from the independent builder, with a portfolio link and a contact line.
 - About's contact line is the builder's email only; there is no link from About to the contact page.
 - Section eyebrows across the marketing site share one style (ochre, sentence case) so they stay readable on white and on desk.
+- Headline type matches Assessly exactly: Newsreader loaded as a static weight 500 with no optical-size axis, so Doxa's titles read at the same weight as theirs. A lighter 400 variable cut was tried and rejected as too regular.
+- Every h1 and h2 renders at one weight (Newsreader 500) regardless of stray `font-bold` classes; the bold-to-600 override never applies to headings.

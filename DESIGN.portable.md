@@ -196,16 +196,16 @@ Extracted from the Doxa codebase (Next.js, Tailwind CSS v4, shadcn `base-nova` o
 
 White is paper (cards, grids, forms, inputs, drawers). Pale butter (`desk`, #fcfaf3) is the desk: sidebar, marketing bands, legal and auth grounds. `sand` (#f8f4e4) is the stronger butter wash for hover and secondary tints. Amber (`accent`, #e8b923) is a **fill** that marks what is actionable or selected; ochre (`accent-text`, #826400) is the only accent allowed as text and is also the focus colour. Newsreader carries headlines, DM Sans carries everything else. Depth is ground plus 1px hairline; nothing glows.
 
-| Surface      | Mode          | Density                      | Container                         | Signature                                                                              |
-| ------------ | ------------- | ---------------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
-| Marketing    | Persuade      | Airy: 64-80px section rhythm | 1152px, centred                   | Alternating desk / white bands, ochre phrase in the hero, MacBook holding real captures |
-| App          | Operate       | Medium: 24px stack rhythm    | 240px desk sidebar + 1440px page  | Desk sidebar with pill nav, bordered 20px cards, right-hand drawers for create/edit    |
-| Public board | Scan and vote | Dense: table rows            | 1400px, full-width ledger         | Real data table, vote chip, tinted masthead, org-owned accent                          |
+| Surface      | Mode          | Density                      | Container                        | Signature                                                                               |
+| ------------ | ------------- | ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| Marketing    | Persuade      | Airy: 64-80px section rhythm | 1152px, centred                  | Alternating desk / white bands, ochre phrase in the hero, MacBook holding real captures |
+| App          | Operate       | Medium: 24px stack rhythm    | 240px desk sidebar + 1440px page | Desk sidebar with pill nav, bordered 20px cards, right-hand drawers for create/edit     |
+| Public board | Scan and vote | Dense: table rows            | 1400px, full-width ledger        | Real data table, vote chip, tinted masthead, org-owned accent                           |
 
 **Key characteristics**
 
 - **One amber voice.** Fill, never small text. Text on amber is charcoal (`on-accent`, #353335), never white. Org accents on public boards get white foreground; the unbranded default keeps charcoal.
-- **Newsreader 400** (variable, optical-size axis) for every `h1`/`h2` and `.font-display`, enforced by one unlayered rule so a stray `font-bold` cannot change it; **DM Sans** for everything else; `font-bold` and `font-extrabold` resolve to 600.
+- **Newsreader 500** (static, as Assessly) for every `h1`/`h2` and `.font-display`, enforced by one unlayered rule so a stray `font-bold` cannot change it; **DM Sans** for everything else; `font-bold` and `font-extrabold` resolve to 600.
 - **Shape:** every button, chip and nav item is a pill; inputs, textareas, selects 8px; menus and popovers about 12px; cards, panels and dialogs 20px.
 - **Selection is butter:** selected tab, nav item, row = `accent-tint` with `accent-text`; hover = `sand`. No grey foreground-opacity washes.
 - **Light or dark only.** No system option. A sun/moon pill toggle in every header; stored in `localStorage` under `theme`; default light. Dark is a warm charcoal ramp, never neutral grey.
@@ -216,27 +216,27 @@ White is paper (cards, grids, forms, inputs, drawers). Pale butter (`desk`, #fcf
 
 ### Accent
 
-| Token (CSS var)                          | Light     | Dark      | Role                                                                                  |
-| ---------------------------------------- | --------- | --------- | ------------------------------------------------------------------------------------- |
-| `accent` (`--primary`)                   | `#e8b923` | `#e8b923` | Primary button, voted chip, monogram, logo mark, top-bar rule, chart fill.            |
-| `accent-hover` (`--primary-hover`)       | `#d4a615` | `#f0c94a` | Hover of the fill.                                                                    |
-| `accent-text` (`--primary-text`, `--accent-foreground`, `--ring`) | `#826400` | `#f0c94a` | Accent as text, links, focus ring, active nav text. |
-| `accent-tint` (`--primary-soft`, `--accent`) | `#faf4df` | `#2a2410` | Accent as a ground: selected items, soft badges, icon tiles, selection.            |
-| `on-accent` (`--primary-foreground`)     | `#353335` | `#353335` | Text on the amber fill.                                                               |
+| Token (CSS var)                                                   | Light     | Dark      | Role                                                                       |
+| ----------------------------------------------------------------- | --------- | --------- | -------------------------------------------------------------------------- |
+| `accent` (`--primary`)                                            | `#e8b923` | `#e8b923` | Primary button, voted chip, monogram, logo mark, top-bar rule, chart fill. |
+| `accent-hover` (`--primary-hover`)                                | `#d4a615` | `#f0c94a` | Hover of the fill.                                                         |
+| `accent-text` (`--primary-text`, `--accent-foreground`, `--ring`) | `#826400` | `#f0c94a` | Accent as text, links, focus ring, active nav text.                        |
+| `accent-tint` (`--primary-soft`, `--accent`)                      | `#faf4df` | `#2a2410` | Accent as a ground: selected items, soft badges, icon tiles, selection.    |
+| `on-accent` (`--primary-foreground`)                              | `#353335` | `#353335` | Text on the amber fill.                                                    |
 
 ### Neutrals
 
-| Token                                  | Light     | Dark      | Role                                                                 |
-| -------------------------------------- | --------- | --------- | -------------------------------------------------------------------- |
-| `background`, `card`, `popover`        | `#ffffff` | `#141312` / `#1c1b19` | Paper: page, cards, inputs, drawers (dark ground / dark cards). |
-| `desk` (`--surface`, `--sidebar`)      | `#fcfaf3` | `#181716` | Chrome: sidebar, marketing bands, legal and auth grounds.            |
-| `sand` (`--secondary`, `--muted`)      | `#f8f4e4` | `#262420` | Hover wash, secondary tint, disabled, skeletons.                     |
-| `ink` (`--ink`)                        | `#4d4a4d` | `#e6e2da` | Body text.                                                           |
-| `ink-strong` (`--foreground`)          | `#353335` | `#faf8f2` | Headings, button labels, vote counts.                                |
-| `ink-muted` (`--muted-foreground`)     | `#6b6b6b` | `#a8a399` | Secondary copy, meta, placeholders.                                  |
-| `hairline` (`--border`)                | `#ece5cc` | `#2e2b26` | Borders and dividers.                                                |
-| `hairline-strong` (`--border-strong`)  | `#dccfa6` | `#433e35` | Outline buttons, menus, scrollbar thumb, dashed zones.               |
-| `control-border` (`--input`)           | `#8a7f6e` | `#7d7569` | Outlines of text fields, selects, textareas (meets 3:1).             |
+| Token                                 | Light     | Dark                  | Role                                                            |
+| ------------------------------------- | --------- | --------------------- | --------------------------------------------------------------- |
+| `background`, `card`, `popover`       | `#ffffff` | `#141312` / `#1c1b19` | Paper: page, cards, inputs, drawers (dark ground / dark cards). |
+| `desk` (`--surface`, `--sidebar`)     | `#fcfaf3` | `#181716`             | Chrome: sidebar, marketing bands, legal and auth grounds.       |
+| `sand` (`--secondary`, `--muted`)     | `#f8f4e4` | `#262420`             | Hover wash, secondary tint, disabled, skeletons.                |
+| `ink` (`--ink`)                       | `#4d4a4d` | `#e6e2da`             | Body text.                                                      |
+| `ink-strong` (`--foreground`)         | `#353335` | `#faf8f2`             | Headings, button labels, vote counts.                           |
+| `ink-muted` (`--muted-foreground`)    | `#6b6b6b` | `#a8a399`             | Secondary copy, meta, placeholders.                             |
+| `hairline` (`--border`)               | `#ece5cc` | `#2e2b26`             | Borders and dividers.                                           |
+| `hairline-strong` (`--border-strong`) | `#dccfa6` | `#433e35`             | Outline buttons, menus, scrollbar thumb, dashed zones.          |
+| `control-border` (`--input`)          | `#8a7f6e` | `#7d7569`             | Outlines of text fields, selects, textareas (meets 3:1).        |
 
 ### Semantic
 
@@ -267,28 +267,28 @@ Charts: `#e8b923`, `#826400`, `#146c43`, `#1f5f9e`, `#8a7f6e` (dark: `#e8b923`, 
 
 ## Typography
 
-**Display:** Newsreader, weight 400, variable with the optical-size axis (`font-optical-sizing: auto`), Georgia fallback. **Body:** DM Sans, `ui-sans-serif, system-ui, sans-serif` fallback. **Mono:** Geist Mono (loaded app-wide; invite codes and step indices). Set `antialiased` on `<html>`.
+**Display:** Newsreader, static weight 500 (no optical-size axis, as Assessly), Georgia fallback. **Body:** DM Sans, `ui-sans-serif, system-ui, sans-serif` fallback. **Mono:** Geist Mono (loaded app-wide; invite codes and step indices). Set `antialiased` on `<html>`.
 
 **Character:** a quiet serif for headlines over a plain humanist sans for work. Hierarchy is the face switch plus weight (400/500/600) and a short size scale.
 
 ### Scale
 
-| Role          | Size / line                        | Face and weight          | Tracking | Where                                                        |
-| ------------- | ---------------------------------- | ------------------------ | -------- | ------------------------------------------------------------ |
-| Display       | 48 / 72px (base / sm), leading 1   | Newsreader 400           | -0.02em  | Marketing hero `h1`, `text-balance`, one ochre phrase        |
-| Section title | 30 / 36px                          | Newsreader 400           | -0.02em  | Marketing `h2`, legal `h1` (36 / 48px)                       |
-| Page title    | 24-28px                            | Newsreader 400           | -0.02em  | App page headers, board / roadmap / item title (28px)       |
-| Lead          | 18px / 28                          | DM Sans 400, muted       | normal   | Marketing sub-headline, `text-balance`                       |
-| Title         | 16-20px                            | DM Sans 600              | normal   | Card titles, drawer title (h3/h4 are DM Sans)                |
-| Body          | 14px / 20                          | DM Sans 400 (500 controls) | normal | App default, table cells, inputs at `md+`                    |
-| Reading       | 15px / 26-28                       | DM Sans 400              | normal   | Long descriptions, `max-w-prose`                             |
-| Caption       | 13px / 20                          | DM Sans 400              | normal   | One-line descriptions, bylines                               |
-| Label         | 12px / 16                          | DM Sans 600              | normal   | Column headers, badges, timestamps                           |
-| Stat numeral  | 13px                               | DM Sans 600, `tabular-nums` | normal | Vote counts, totals                                         |
+| Role          | Size / line                      | Face and weight             | Tracking | Where                                                 |
+| ------------- | -------------------------------- | --------------------------- | -------- | ----------------------------------------------------- |
+| Display       | 48 / 72px (base / sm), leading 1 | Newsreader 500              | -0.02em  | Marketing hero `h1`, `text-balance`, one ochre phrase |
+| Section title | 30 / 36px                        | Newsreader 500              | -0.02em  | Marketing `h2`, legal `h1` (36 / 48px)                |
+| Page title    | 24-28px                          | Newsreader 500              | -0.02em  | App page headers, board / roadmap / item title (28px) |
+| Lead          | 18px / 28                        | DM Sans 400, muted          | normal   | Marketing sub-headline, `text-balance`                |
+| Title         | 16-20px                          | DM Sans 600                 | normal   | Card titles, drawer title (h3/h4 are DM Sans)         |
+| Body          | 14px / 20                        | DM Sans 400 (500 controls)  | normal   | App default, table cells, inputs at `md+`             |
+| Reading       | 15px / 26-28                     | DM Sans 400                 | normal   | Long descriptions, `max-w-prose`                      |
+| Caption       | 13px / 20                        | DM Sans 400                 | normal   | One-line descriptions, bylines                        |
+| Label         | 12px / 16                        | DM Sans 600                 | normal   | Column headers, badges, timestamps                    |
+| Stat numeral  | 13px                             | DM Sans 600, `tabular-nums` | normal   | Vote counts, totals                                   |
 
 ### Named rules
 
-**The One Heading Rule.** Every `h1`/`h2`/`.font-display` is Newsreader 400 with optical sizing. Do not add `font-bold` to change it. Headings that must read as sans (inside cards or drawers) carry `font-sans` (or live in `.doc-card`) and render DM Sans 600.
+**The One Heading Rule.** Every `h1`/`h2`/`.font-display` is Newsreader 500 (static, as Assessly). Do not add `font-bold` to change it. Headings that must read as sans (inside cards or drawers) carry `font-sans` (or live in `.doc-card`) and render DM Sans 600.
 
 **The Fixed Scale Rule.** App and board sizes are 12, 13, 14, 15, 16, 28px; marketing steps display sizes by breakpoint. No fluid `clamp()`.
 
@@ -302,13 +302,13 @@ Charts: `#e8b923`, `#826400`, `#146c43`, `#1f5f9e`, `#8a7f6e` (dark: `#e8b923`, 
 
 **Base unit 4px.** Common steps: 4, 8, 12, 16, 20, 24, 32, 40, 64, 80.
 
-| Surface                    | Max width           | Gutters (base / sm / lg)                   |
-| -------------------------- | ------------------- | ------------------------------------------ |
-| Marketing                  | `max-w-6xl` 1152px  | 16 / 24 / 24                               |
-| App page (`PageContainer`) | `max-w-[1440px]`    | 16 / 24 / 32, `py-8`, children `space-y-6` |
-| Public board               | 1400px              | 16 / 24 / 32                               |
-| Legal / About              | `max-w-3xl` 768px   | 16 / 24, `py-16 sm:py-20`                  |
-| Auth form                  | `max-w-sm` 384px    | 24                                         |
+| Surface                    | Max width          | Gutters (base / sm / lg)                   |
+| -------------------------- | ------------------ | ------------------------------------------ |
+| Marketing                  | `max-w-6xl` 1152px | 16 / 24 / 24                               |
+| App page (`PageContainer`) | `max-w-[1440px]`   | 16 / 24 / 32, `py-8`, children `space-y-6` |
+| Public board               | 1400px             | 16 / 24 / 32                               |
+| Legal / About              | `max-w-3xl` 768px  | 16 / 24, `py-16 sm:py-20`                  |
+| Auth form                  | `max-w-sm` 384px   | 24                                         |
 
 ### Marketing rhythm
 
@@ -332,14 +332,14 @@ Tailwind defaults: `sm` 640, `md` 768, `lg` 1024, `xl` 1280.
 
 Flat and tonal. Surfaces separate by 1px hairline and by ground (white and desk).
 
-| Token                   | Value                                                          | Used for                                                |
-| ----------------------- | -------------------------------------------------------------- | ------------------------------------------------------- |
-| `.device-shadow`        | `0 2px 4px -1px #1b1a1a14, 0 40px 80px -24px #1b1a1a40`         | The MacBook mockup only                                 |
-| `shadow-raised`         | `0 2px 4px -1px #1010140f, 0 8px 24px -6px #1010141f`           | App entity card on hover                                |
-| `shadow-md` + `ring-1 ring-foreground/10` | Tailwind                                      | Menus, selects, popovers                                |
-| `shadow-drawer`         | `-12px 0 40px -12px #1b1a1a33`                                 | Sheets and drawers                                      |
-| `shadow-raised`         | (as above)                                                     | Dialogs                                                 |
-| Overlay                 | `bg-black/40`, no blur                                         | Behind sheets and dialogs                               |
+| Token                                     | Value                                                   | Used for                  |
+| ----------------------------------------- | ------------------------------------------------------- | ------------------------- |
+| `.device-shadow`                          | `0 2px 4px -1px #1b1a1a14, 0 40px 80px -24px #1b1a1a40` | The MacBook mockup only   |
+| `shadow-raised`                           | `0 2px 4px -1px #1010140f, 0 8px 24px -6px #1010141f`   | App entity card on hover  |
+| `shadow-md` + `ring-1 ring-foreground/10` | Tailwind                                                | Menus, selects, popovers  |
+| `shadow-drawer`                           | `-12px 0 40px -12px #1b1a1a33`                          | Sheets and drawers        |
+| `shadow-raised`                           | (as above)                                              | Dialogs                   |
+| Overlay                                   | `bg-black/40`, no blur                                  | Behind sheets and dialogs |
 
 **The Flat At Rest Rule.** Rows, controls, chips, badges, resting cards carry no shadow. Selected is a tint, not a lift. Lift belongs to hover on clickable app cards, overlays, and the device mockup.
 
@@ -347,12 +347,12 @@ Flat and tonal. Surfaces separate by 1px hairline and by ground (white and desk)
 
 `--radius: 0.5rem` (8px); everything derives from it.
 
-| Token                | Value  | Used for                                                  |
-| -------------------- | ------ | --------------------------------------------------------- |
-| `radius-control` / `lg` | 8px | Inputs, textareas, selects, vote chip, icon tiles, monogram |
-| `xl`                 | 11.2px | Menus, selects, popovers (the "12px" class)               |
-| `card`               | 20px   | Cards, panels, dialogs, legal card                        |
-| pill (`full`, `4xl`) | 9999px / 20.8px | Buttons, chips, nav items, badges, tabs list     |
+| Token                   | Value           | Used for                                                    |
+| ----------------------- | --------------- | ----------------------------------------------------------- |
+| `radius-control` / `lg` | 8px             | Inputs, textareas, selects, vote chip, icon tiles, monogram |
+| `xl`                    | 11.2px          | Menus, selects, popovers (the "12px" class)                 |
+| `card`                  | 20px            | Cards, panels, dialogs, legal card                          |
+| pill (`full`, `4xl`)    | 9999px / 20.8px | Buttons, chips, nav items, badges, tabs list                |
 
 Borders are 1px `border`; dashed hairline is reserved for empty and upload zones. The MacBook lid is 22px (28px from `sm`).
 
@@ -418,16 +418,16 @@ A `surface` wash behind a centred stack: soft "Error 404" pill, a 4, the brand m
 
 Motion is feedback: it answers an action and stops.
 
-| Interaction                   | Duration   | Easing                          | Notes                                                    |
-| ----------------------------- | ---------- | ------------------------------- | -------------------------------------------------------- |
-| Hover / colour transitions    | 150ms      | ease                            | `transition-colors` / `transition-all`                   |
-| Button press                  | instant    | n/a                             | `scale(0.98)`                                            |
-| Menus, selects, popovers      | 100ms      | ease-out                        | fade + zoom-95                                           |
-| Sheet / drawer                | 220ms in, 180ms out | ease-out               | slide-in-from-right; close slides out first              |
-| Dialog                        | 180ms in, 120ms out | ease-out               | fade + scale from 97%                                    |
-| Vote count roll               | 280ms      | `cubic-bezier(0.16, 1, 0.3, 1)` | 0.9em, clipped in the chip                               |
-| First-vote ring               | 520ms      | same expo-out                   | 1px ring expands 10px, fading                            |
-| Re-rank glide                 | 380ms      | same expo-out                   | rows that move within ~3s of a vote                      |
+| Interaction                | Duration            | Easing                          | Notes                                       |
+| -------------------------- | ------------------- | ------------------------------- | ------------------------------------------- |
+| Hover / colour transitions | 150ms               | ease                            | `transition-colors` / `transition-all`      |
+| Button press               | instant             | n/a                             | `scale(0.98)`                               |
+| Menus, selects, popovers   | 100ms               | ease-out                        | fade + zoom-95                              |
+| Sheet / drawer             | 220ms in, 180ms out | ease-out                        | slide-in-from-right; close slides out first |
+| Dialog                     | 180ms in, 120ms out | ease-out                        | fade + scale from 97%                       |
+| Vote count roll            | 280ms               | `cubic-bezier(0.16, 1, 0.3, 1)` | 0.9em, clipped in the chip                  |
+| First-vote ring            | 520ms               | same expo-out                   | 1px ring expands 10px, fading               |
+| Re-rank glide              | 380ms               | same expo-out                   | rows that move within ~3s of a vote         |
 
 **Reduced motion:** a global rule sets animation and transition durations to `0.01ms` and `scroll-behavior: auto`; the vote roll becomes a 200ms in-place fade.
 
@@ -682,12 +682,11 @@ h2,
 .font-display {
   font-family: var(--font-display), Georgia, serif;
   font-weight: 400;
-  font-optical-sizing: auto;
   letter-spacing: -0.02em;
   color: var(--foreground);
 }
-.font-bold,
-.font-extrabold {
+.font-bold:not(h1, h2, .font-display),
+.font-extrabold:not(h1, h2, .font-display) {
   font-weight: 600;
 }
 h1.font-sans,
@@ -737,7 +736,7 @@ const dmSans = DM_Sans({ variable: "--font-sans", subsets: ["latin"] });
 const newsreader = Newsreader({
   variable: "--font-display",
   subsets: ["latin"],
-  axes: ["opsz"], // variable weight with the optical-size axis
+  weight: ["500"], // static, as Assessly
 });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -831,14 +830,14 @@ For dark, the same inputs produce a second set in a `.dark{...}` block written a
 
 ## Source map
 
-| Topic                                                         | Location                                                                                                 |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Tokens, dark mode, heading rule, motion, public helpers       | `src/app/globals.css`                                                                                    |
-| Fonts, root layout, theme init script                         | `src/app/layout.tsx`, `src/lib/theme.ts`, `src/components/theme-provider.tsx`, `theme-menu.tsx`         |
-| Buttons, badges, inputs, cards, dialogs, menus, tabs          | `src/components/ui/*`                                                                                    |
-| Marketing components, hero, MacBook, legal shell              | `src/components/marketing/*`, `src/app/(marketing)/_sections/*`, `about/page.tsx`                        |
-| Marketing captures                                            | `public/marketing/app-light.png`, `app-dark.png`                                                         |
-| App sidebar, page shell, entity cards, drawer                 | `src/components/org-sidebar-nav.tsx`, `page-shell.tsx`, `entity-card.tsx`, `drawer.tsx`                  |
-| Auth frame                                                    | `src/app/(auth)/layout.tsx`, `src/components/auth/auth-aside.tsx`                                        |
-| Contrast-correcting colour helpers                            | `src/lib/brand-color.ts`, `src/components/public/brand-style.tsx`                                        |
-| Public board detail (repo-specific)                           | `DESIGN.md`                                                                                              |
+| Topic                                                   | Location                                                                                        |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Tokens, dark mode, heading rule, motion, public helpers | `src/app/globals.css`                                                                           |
+| Fonts, root layout, theme init script                   | `src/app/layout.tsx`, `src/lib/theme.ts`, `src/components/theme-provider.tsx`, `theme-menu.tsx` |
+| Buttons, badges, inputs, cards, dialogs, menus, tabs    | `src/components/ui/*`                                                                           |
+| Marketing components, hero, MacBook, legal shell        | `src/components/marketing/*`, `src/app/(marketing)/_sections/*`, `about/page.tsx`               |
+| Marketing captures                                      | `public/marketing/app-light.png`, `app-dark.png`                                                |
+| App sidebar, page shell, entity cards, drawer           | `src/components/org-sidebar-nav.tsx`, `page-shell.tsx`, `entity-card.tsx`, `drawer.tsx`         |
+| Auth frame                                              | `src/app/(auth)/layout.tsx`, `src/components/auth/auth-aside.tsx`                               |
+| Contrast-correcting colour helpers                      | `src/lib/brand-color.ts`, `src/components/public/brand-style.tsx`                               |
+| Public board detail (repo-specific)                     | `DESIGN.md`                                                                                     |

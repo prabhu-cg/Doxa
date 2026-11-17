@@ -15,9 +15,8 @@ const dmSans = DM_Sans({
 const newsreader = Newsreader({
   variable: "--font-display",
   subsets: ["latin"],
-  // Variable with the optical-size axis, so large headlines get the finer
-  // display cut instead of the sturdier text cut that a static 500 would give.
-  axes: ["opsz"],
+  // Static 500, exactly as Assessly loads it (no optical-size axis).
+  weight: ["500"],
 });
 
 const geistMono = Geist_Mono({
