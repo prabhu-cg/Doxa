@@ -117,8 +117,7 @@ export default function AboutPage() {
         </p>
         <p>
           Feedback, feature requests, or just want to say hello:{" "}
-          <a href="mailto:prabhu_cg@proton.me">prabhu_cg@proton.me</a>, or use
-          the <a href="/contact">contact page</a>.
+          <a href="mailto:prabhu_cg@proton.me">prabhu_cg@proton.me</a>.
         </p>
       </section>
     </LegalPageShell>

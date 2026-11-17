@@ -19,7 +19,7 @@ export function PricingPreviewSection() {
         <p className="mt-8 text-center text-sm">
           <Link
             href="/pricing"
-            className="text-primary underline underline-offset-4"
+            className="text-primary-text underline underline-offset-4"
           >
             See full plan comparison
           </Link>

@@ -53,7 +53,7 @@ export function BoardPreview() {
             {index > 0 ? <Separator className="mb-3" /> : null}
             <div className="flex items-start gap-3">
               <div className="border-border bg-muted/50 flex flex-col items-center rounded-md border px-2 py-1">
-                <ArrowUp className="text-primary size-3.5" />
+                <ArrowUp className="text-primary-text size-3.5" />
                 <span className="text-xs font-semibold">{item.votes}</span>
               </div>
               <div className="min-w-0 flex-1">

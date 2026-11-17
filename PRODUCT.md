@@ -62,3 +62,5 @@ Opinions are evidence, not automatically decisions. Every item can end in a publ
 
 - The marketing site (landing, features, pricing, About, Privacy, Terms) is Persuade mode. The landing's hero shows the product on a CSS MacBook holding a real capture of a public board, light or dark to match the theme; captures are of fictional sample data and are labelled as such.
 - About, Privacy and Terms share one layout (desk ground, small badge, Newsreader title, a single white card of sections), the same as the author's other project, getreqstudio.vercel.app. The About page's "Who built Doxa, and why" section is first-person from the independent builder, with a portfolio link and a contact line.
+- About's contact line is the builder's email only; there is no link from About to the contact page.
+- Section eyebrows across the marketing site share one style (ochre, sentence case) so they stay readable on white and on desk.

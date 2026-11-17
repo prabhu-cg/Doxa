@@ -226,7 +226,9 @@ A white-and-butter ledger with one amber accent that any organisation may replac
 
 ### Named Rules
 
-**The One Voice Rule.** Amber is the only brand accent and it is a fill. Anything that needs the accent as text uses ochre (`accent-text`); never use the fill colour as small text and never put white on the Doxa default amber.
+**The One Voice Rule.** Amber is the only brand accent and it is a fill. Anything that needs the accent as text uses ochre (`accent-text`); never use the fill colour as small text and never put white on the Doxa default amber. This covers icons and check marks too: on white they use `primary-text` (ochre), and their tinted tiles use `primary-soft`, never `text-primary` or `bg-primary/10`.
+
+**The One Eyebrow Rule.** Every section eyebrow is the same: 14px DM Sans 600, sentence case (never uppercase or letter-spaced), in `primary-text`, set by `SectionHeading`. A page that needs an eyebrow uses that component's styling, not its own.
 
 **The Org-Led Accent Rule.** On public pages never write an amber hex or a fixed amber class. Use `primary`, `primary-hover`, `primary-soft` and `primary-text` so the organisation's accent flows through, including into the portalled drawer. `BrandStyle` writes the variables on `:root` precisely because drawers render outside the page element. Because org accents are darkened until white text passes, `BrandStyle` also sets `--primary-foreground` to white for them; with no organisation colour the Doxa default keeps its charcoal foreground.
 
@@ -429,3 +431,5 @@ Every create, edit and settings surface is a right-hand **drawer** (shared `Draw
 - **Drawer:** 448px by default, 576px (`lg`), 768px (`xl`); full width below `sm`. Header on desk with a hairline beneath (`px-8 py-6`), title in Newsreader 24px (at most two lines), 14px muted description, a 36px outlined pill close. Body on paper, `px-8 py-8`. `SheetFooter` is a desk bar with a hairline: Cancel left of one primary on the right.
 - **Dialog:** 20px, `max-w-md`, Newsreader 20px title, 14px muted description, footer bar on desk with a hairline holding Cancel (outline) and the action (destructive is outline with red text).
 - **Motion:** drawer slides in over 220ms and out over 180ms, scrim fades 180ms in and 150ms out; dialog fades and scales from 97% over 180ms and out over 120ms. Reduced motion drops the travel.
+
+The drawer panel takes focus itself when it opens, so it carries `outline-none` (no focus ring around the sheet); the controls inside keep their own focus rings.

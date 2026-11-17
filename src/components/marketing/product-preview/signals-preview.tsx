@@ -40,7 +40,7 @@ export function SignalsPreview() {
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {SIGNALS.map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-center gap-2.5">
-              <div className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md">
+              <div className="bg-primary-soft text-primary-text flex size-7 shrink-0 items-center justify-center rounded-md">
                 <Icon className="size-3.5" aria-hidden="true" />
               </div>
               <div className="min-w-0">

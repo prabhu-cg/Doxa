@@ -191,7 +191,7 @@ function FeatureList({ features }: { features: Feature[] }) {
     <ul className="mt-6 space-y-4">
       {features.map(({ icon: Icon, title, description, planned }) => (
         <li key={title} className="flex gap-3">
-          <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
+          <div className="bg-primary-soft text-primary-text flex size-8 shrink-0 items-center justify-center rounded-lg">
             <Icon className="size-4" aria-hidden="true" />
           </div>
           <div>
@@ -273,7 +273,7 @@ export default function FeaturesPage() {
         </div>
 
         <div className="mt-20 border-t pt-16 text-center">
-          <p className="text-primary text-sm font-semibold tracking-wide uppercase">
+          <p className="text-primary-text text-sm font-semibold">
             Future &amp; advanced
           </p>
           <h2 className="mx-auto mt-3 max-w-md text-2xl font-bold tracking-tight text-balance">
@@ -289,7 +289,7 @@ export default function FeaturesPage() {
                 key={title}
                 className="border-border bg-card inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium"
               >
-                <Icon className="text-primary size-4" aria-hidden="true" />
+                <Icon className="text-primary-text size-4" aria-hidden="true" />
                 {title}
               </span>
             ))}

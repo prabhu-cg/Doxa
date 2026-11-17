@@ -116,7 +116,7 @@ const FAQ_ITEMS = [
 function ComparisonCell({ value }: { value: boolean | string }) {
   if (typeof value === "string") return <span>{value}</span>;
   return value ? (
-    <Check className="text-primary mx-auto size-4" aria-label="Included" />
+    <Check className="text-primary-text mx-auto size-4" aria-label="Included" />
   ) : (
     <Minus
       className="text-muted-foreground/50 mx-auto size-4"

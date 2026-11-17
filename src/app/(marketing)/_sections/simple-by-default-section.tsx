@@ -20,9 +20,7 @@ function StepList({
 }) {
   return (
     <div className="border-border bg-card w-full max-w-xs rounded-xl border p-6">
-      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        {label}
-      </p>
+      <p className="text-foreground text-sm font-semibold">{label}</p>
       <ul className="mt-4 space-y-3">
         {items.map((item) => (
           <li key={item} className="flex items-center gap-2.5 text-sm">
