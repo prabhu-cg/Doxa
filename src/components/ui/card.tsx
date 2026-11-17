@@ -11,7 +11,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card bg-card text-card-foreground shadow-card rounded-card *:[img:first-child]:rounded-t-card *:[img:last-child]:rounded-b-card flex flex-col gap-(--card-spacing) overflow-hidden border py-(--card-spacing) text-sm [--card-spacing:--spacing(5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0",
+        "group/card bg-card text-card-foreground rounded-card *:[img:first-child]:rounded-t-card *:[img:last-child]:rounded-b-card flex flex-col gap-(--card-spacing) overflow-hidden border py-(--card-spacing) text-sm [--card-spacing:--spacing(5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0",
         className,
       )}
       {...props}
@@ -37,7 +37,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
     <h3
       data-slot="card-title"
       className={cn(
-        "font-heading text-lg leading-snug font-semibold group-data-[size=sm]/card:text-base",
+        "text-lg leading-snug font-semibold group-data-[size=sm]/card:text-base",
         className,
       )}
       {...props}
@@ -83,7 +83,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "bg-muted/50 rounded-b-card flex items-center border-t p-(--card-spacing)",
+        "bg-surface rounded-b-card flex items-center border-t p-(--card-spacing)",
         className,
       )}
       {...props}

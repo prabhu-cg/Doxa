@@ -23,7 +23,7 @@ const PROBLEMS: { icon: LucideIcon; text: string }[] = [
 
 export function ProblemSection() {
   return (
-    <section className="bg-secondary border-t">
+    <section className="bg-surface border-t">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <SectionHeading
           eyebrow="The problem"
@@ -35,7 +35,7 @@ export function ProblemSection() {
               key={text}
               className="border-border bg-card flex items-start gap-4 rounded-xl border p-5"
             >
-              <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <div className="bg-primary-soft text-primary-text flex size-9 shrink-0 items-center justify-center rounded-lg">
                 <Icon className="size-5" aria-hidden="true" />
               </div>
               <p className="text-sm leading-relaxed">{text}</p>

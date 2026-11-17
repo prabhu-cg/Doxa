@@ -34,8 +34,7 @@ export function useItemDrawer() {
   return context;
 }
 
-const titleClassName =
-  "line-clamp-4 text-xl leading-snug font-bold tracking-tight";
+const titleClassName = "line-clamp-4 text-2xl leading-tight";
 
 /**
  * An item opened from the grid, in a right-hand drawer over the list. The drawer

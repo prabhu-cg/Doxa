@@ -4,9 +4,9 @@ import Link from "next/link";
 const WHITE_LOGO_FILTER = { filter: "brightness(0) invert(1)" };
 
 /**
- * Doxa's own panel on the sign-in and sign-up pages: a photograph of a terracotta wall
- * in low sun with the logo, the quote and the copyright over it. A terracotta tint
- * and a dark scrim keep the white text readable on every part of the image.
+ * Doxa's own panel on the sign-in and sign-up pages: a photograph with the logo, the quote
+ * and the copyright over it. A flat charcoal scrim (no gradient, no tint) keeps
+ * the white text readable on every part of the image.
  * Only shown from `lg` up, and not at all when the page belongs to an
  * organisation (see `AuthFrame`).
  */
@@ -14,7 +14,7 @@ export function AuthAside() {
   const year = new Date().getFullYear();
 
   return (
-    <div className="relative hidden flex-col justify-between overflow-hidden bg-[#3a1605] p-12 lg:flex lg:w-[58%]">
+    <div className="relative hidden flex-col justify-between overflow-hidden bg-[#353335] p-12 lg:flex lg:w-[58%]">
       <Image
         src="/auth/panel.jpg"
         alt=""
@@ -25,11 +25,7 @@ export function AuthAside() {
       />
       <div
         aria-hidden="true"
-        className="bg-primary absolute inset-0 opacity-35 mix-blend-multiply"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-[#180902]/62 via-[#180902]/38 via-52% to-[#180902]/86"
+        className="absolute inset-0 bg-[#353335]/80"
       />
 
       <Link href="/" className="relative flex items-center gap-3">

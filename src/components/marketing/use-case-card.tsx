@@ -11,7 +11,7 @@ export function UseCaseCard({
 }) {
   return (
     <div className="border-border bg-card flex items-start gap-3 rounded-xl border p-5">
-      <div className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+      <div className="bg-primary-soft text-primary-text flex size-9 shrink-0 items-center justify-center rounded-lg">
         <Icon className="size-5" aria-hidden="true" />
       </div>
       <div>

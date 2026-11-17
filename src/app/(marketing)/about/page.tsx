@@ -1,75 +1,126 @@
 import type { Metadata } from "next";
-import { SectionHeading } from "@/components/marketing/section-heading";
-import { CTASection } from "@/components/marketing/cta-section";
+import { LegalPageShell } from "@/components/marketing/legal-page-shell";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Why Doxa exists: organisations receive more input than ever, but collecting it is only the beginning.",
+    "Why Doxa exists, how it is built, and who is building it: a community feedback and decision platform.",
   alternates: { canonical: "/about" },
 };
 
+const STACK = [
+  ["Framework", "Next.js (App Router), React 19, TypeScript (strict)"],
+  ["Styling", "Tailwind CSS v4, shadcn-style components on Base UI primitives"],
+  ["Icons & Type", "Lucide, Newsreader and DM Sans"],
+  ["Forms & Validation", "React Hook Form with Zod schemas"],
+  ["Data", "PostgreSQL on Supabase, accessed through Prisma"],
+  [
+    "Identity",
+    "Supabase Auth, with membership and roles checked on every request",
+  ],
+  ["Billing", "Stripe, with plans enforced on the server"],
+  ["Hosting", "Vercel"],
+] as const;
+
 export default function AboutPage() {
   return (
-    <>
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-        <SectionHeading eyebrow="About" title="Why Doxa exists" />
-        <div className="[&_p]:text-muted-foreground mx-auto mt-10 max-w-2xl text-lg [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_p]:leading-relaxed [&_p+p]:mt-4">
-          <h2 className="text-foreground">What Doxa is</h2>
-          <p>
-            Organisations receive more input than ever — from customers,
-            employees, and the communities they serve. Collecting that input is
-            only the beginning. The difficult part is turning it into useful
-            decisions.
-          </p>
-          <p>
-            Most tools stop at collection: a list of requests, a vote count, a
-            status that changes without explanation. Doxa is built around the
-            rest of the loop — understanding what matters, prioritising with
-            real signals, deciding explicitly, and telling people what happened.
-          </p>
-          <p>
-            Doxa is intentionally generic. The core object is an Item, not a
-            &quot;feature request&quot; — because a product team, a customer
-            community, an internal team, and a public organisation all have
-            input worth collecting, in their own words.
-          </p>
+    <LegalPageShell
+      eyebrow="V1"
+      title="About Doxa"
+      subtitle="Listen. Understand. Decide."
+    >
+      <section>
+        <h2>What it is</h2>
+        <p>
+          Doxa is a community feedback, prioritisation and decision platform.
+          Organisations receive more input than ever, from customers, employees
+          and the communities they serve. Collecting it is only the beginning;
+          the difficult part is turning it into decisions people can see.
+        </p>
+        <p>
+          Most tools stop at a list of requests, a vote count and a status that
+          changes without explanation. Doxa is built around the whole loop:
+          collect, discuss, understand, prioritise, decide and communicate.
+          Every item can end in a public decision and the reason behind it.
+        </p>
+        <p>
+          It is intentionally generic. The core object is an item, not a
+          &quot;feature request&quot;, so a product team, a customer community
+          and an internal team can each use their own words. Pricing is per
+          team, so the number of people giving feedback never raises
+          anyone&apos;s bill.
+        </p>
+      </section>
 
-          <h2 className="text-foreground">How it&apos;s built</h2>
-          <p>
-            Doxa runs on Next.js, with Supabase (PostgreSQL and Auth) for
-            storage and identity, and is hosted on Vercel. It&apos;s
-            multi-tenant from the ground up — organisations, membership and
-            roles are core primitives, not bolted on afterwards. Every request
-            that touches an organisation&apos;s data re-verifies who&apos;s
-            asking and whether they belong to that organisation, rather than
-            trusting an ID supplied by the browser.
-          </p>
+      <section>
+        <h2>How it is built</h2>
+        <dl className="mb-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+          {STACK.map(([term, detail]) => (
+            <div key={term}>
+              <dt className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                {term}
+              </dt>
+              <dd className="text-foreground mt-1">{detail}</dd>
+            </div>
+          ))}
+        </dl>
+        <p>
+          Doxa is multi-tenant from the ground up: organisations, membership and
+          roles are core primitives, and every request that touches an
+          organisation&apos;s data re-verifies who is asking and whether they
+          belong, rather than trusting an ID supplied by the browser.
+        </p>
+      </section>
 
-          <h2 className="text-foreground">
-            What&apos;s live, and what&apos;s next
-          </h2>
-          <p>
-            Live today: organisations, spaces and boards; feedback with voting
-            and discussion; prioritisation against impact and effort; decisions
-            recorded with their rationale and shared publicly; roadmaps, both
-            for your team and public; and in-app notifications.
-          </p>
-          <p>
-            Customers can sign in to vote, comment and submit on public boards,
-            with new submissions held for your review. Next: email
-            notifications, integrations and an API.
-          </p>
+      <section>
+        <h2>What is live, and what is next</h2>
+        <p>
+          Live today: organisations, spaces and boards; feedback with voting and
+          discussion; prioritisation against impact and effort; decisions
+          recorded with their rationale and shared publicly; team and public
+          roadmaps; and in-app notifications. Customers can sign in to vote,
+          comment and submit on public boards, with new submissions held for
+          your review.
+        </p>
+        <p>
+          Next: email notifications for the people who took part, integrations
+          and an API.
+        </p>
+      </section>
 
-          <h2 className="text-foreground">Who&apos;s building it</h2>
-          <p>
-            Doxa is an independently built product, still early. If you want to
-            see where it&apos;s headed, or have a say in what gets built next,
-            the <a href="/contact">contact page</a> reaches the team directly.
-          </p>
-        </div>
-      </div>
-      <CTASection variant="banner" title="Start collecting input today." />
-    </>
+      <section>
+        <h2>Who built Doxa, and why</h2>
+        <p>
+          Doxa was built by me, Prabhu Raja, a senior designer with 15+ years of
+          experience across enterprise and B2B software. I work on enterprise
+          products, design systems and digital experiences, with a simple aim:
+          designing clarity from complexity.
+        </p>
+        <p>
+          I built it because most feedback tools stop at collecting. People
+          vote, a status changes, and nobody learns what was decided or why.
+          Doxa puts the team&apos;s answer on the same page as the question,
+          with a decision, a reason and a roadmap anyone can read.
+        </p>
+        <p>
+          It is an independent project. I scoped, designed and built it myself,
+          with AI in the loop, as part of how I now take products from idea to
+          shipped. You can see more of my work at{" "}
+          <a
+            href="https://prabhuraja.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            prabhuraja.vercel.app
+          </a>
+          .
+        </p>
+        <p>
+          Feedback, feature requests, or just want to say hello:{" "}
+          <a href="mailto:prabhu_cg@proton.me">prabhu_cg@proton.me</a>, or use
+          the <a href="/contact">contact page</a>.
+        </p>
+      </section>
+    </LegalPageShell>
   );
 }

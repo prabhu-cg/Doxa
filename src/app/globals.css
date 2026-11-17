@@ -9,7 +9,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
+  --color-ink: var(--ink);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -52,9 +54,10 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-destructive-soft: var(--destructive-soft);
-  --radius-control: 6px;
-  --radius-card: 16px;
+  --radius-control: 8px;
+  --radius-card: 20px;
   --shadow-card: 0 1px 2px 0 #1010140a, 0 1px 3px 0 #1010140f;
+  --shadow-drawer: -12px 0 40px -12px #1b1a1a33;
   --shadow-raised: 0 2px 4px -1px #1010140f, 0 8px 24px -6px #1010141f;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -68,43 +71,44 @@
 :root {
   color-scheme: light;
   --background: #ffffff;
-  --foreground: #1c1917;
+  --foreground: #353335;
+  --ink: #4d4a4d;
   --card: #ffffff;
-  --card-foreground: #1c1917;
+  --card-foreground: #4d4a4d;
   --popover: #ffffff;
-  --popover-foreground: #1c1917;
-  --primary: #c74504;
-  --primary-foreground: #ffffff;
-  --secondary: #f4f2ea;
-  --secondary-foreground: #1c1917;
-  --muted: #f4f2ea;
-  --muted-foreground: #6f6963;
-  --accent: #fdefe7;
-  --accent-foreground: #a93a03;
+  --popover-foreground: #4d4a4d;
+  --primary: #e8b923;
+  --primary-foreground: #353335;
+  --secondary: #f8f4e4;
+  --secondary-foreground: #353335;
+  --muted: #f8f4e4;
+  --muted-foreground: #6b6b6b;
+  --accent: #faf4df;
+  --accent-foreground: #826400;
   --destructive: #b3261e;
-  --border: #e8ddc8;
-  --input: #e8ddc8;
-  --ring: #c74504;
-  --chart-1: #c74504;
-  --chart-2: #f59e0b;
-  --chart-3: #84cc16;
-  --chart-4: #06b6d4;
-  --chart-5: #8b5cf6;
-  --radius: 0.375rem;
-  --sidebar: #f4f2ea;
-  --sidebar-foreground: #1c1917;
-  --sidebar-primary: #c74504;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fdefe7;
-  --sidebar-accent-foreground: #a93a03;
-  --sidebar-border: #e8ddc8;
-  --sidebar-ring: #c74504;
-  --primary-hover: #a93a03;
-  --primary-soft: #fdefe7;
-  --primary-text: #a93a03;
-  --surface: #f4f2ea;
+  --border: #ece5cc;
+  --input: #8a7f6e;
+  --ring: #826400;
+  --chart-1: #e8b923;
+  --chart-2: #826400;
+  --chart-3: #146c43;
+  --chart-4: #1f5f9e;
+  --chart-5: #8a7f6e;
+  --radius: 0.5rem;
+  --sidebar: #fcfaf3;
+  --sidebar-foreground: #4d4a4d;
+  --sidebar-primary: #e8b923;
+  --sidebar-primary-foreground: #353335;
+  --sidebar-accent: #faf4df;
+  --sidebar-accent-foreground: #826400;
+  --sidebar-border: #ece5cc;
+  --sidebar-ring: #826400;
+  --primary-hover: #d4a615;
+  --primary-soft: #faf4df;
+  --primary-text: #826400;
+  --surface: #fcfaf3;
   --surface-raised: #ffffff;
-  --border-strong: #d6c7ab;
+  --border-strong: #dccfa6;
   --success: #146c43;
   --success-soft: #e6f4ec;
   --warning: #8a5a00;
@@ -116,43 +120,44 @@
 
 .dark {
   color-scheme: dark;
-  --background: #12100e;
-  --foreground: #faf7f2;
-  --card: #1c1916;
-  --card-foreground: #faf7f2;
-  --popover: #1c1916;
-  --popover-foreground: #faf7f2;
-  --primary: #c74504;
-  --primary-foreground: #ffffff;
-  --secondary: #27221e;
-  --secondary-foreground: #faf7f2;
-  --muted: #27221e;
-  --muted-foreground: #a8a097;
-  --accent: #26130a;
-  --accent-foreground: #ff8a5c;
+  --background: #141312;
+  --foreground: #faf8f2;
+  --ink: #e6e2da;
+  --card: #1c1b19;
+  --card-foreground: #e6e2da;
+  --popover: #1c1b19;
+  --popover-foreground: #e6e2da;
+  --primary: #e8b923;
+  --primary-foreground: #353335;
+  --secondary: #262420;
+  --secondary-foreground: #faf8f2;
+  --muted: #262420;
+  --muted-foreground: #a8a399;
+  --accent: #2a2410;
+  --accent-foreground: #f0c94a;
   --destructive: #ff9d95;
-  --border: #302a25;
-  --input: #302a25;
-  --ring: #ff8a5c;
-  --chart-1: #e2680f;
-  --chart-2: #f59e0b;
-  --chart-3: #84cc16;
-  --chart-4: #06b6d4;
-  --chart-5: #8b5cf6;
-  --sidebar: #181512;
-  --sidebar-foreground: #faf7f2;
-  --sidebar-primary: #c74504;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #26130a;
-  --sidebar-accent-foreground: #ff8a5c;
-  --sidebar-border: #302a25;
-  --sidebar-ring: #ff8a5c;
-  --primary-hover: #dd5211;
-  --primary-soft: #26130a;
-  --primary-text: #ff8a5c;
-  --surface: #181512;
-  --surface-raised: #1c1916;
-  --border-strong: #453d35;
+  --border: #2e2b26;
+  --input: #7d7569;
+  --ring: #f0c94a;
+  --chart-1: #e8b923;
+  --chart-2: #f0c94a;
+  --chart-3: #7ee2ab;
+  --chart-4: #8cc2f5;
+  --chart-5: #a8a399;
+  --sidebar: #181716;
+  --sidebar-foreground: #e6e2da;
+  --sidebar-primary: #e8b923;
+  --sidebar-primary-foreground: #353335;
+  --sidebar-accent: #2a2410;
+  --sidebar-accent-foreground: #f0c94a;
+  --sidebar-border: #2e2b26;
+  --sidebar-ring: #f0c94a;
+  --primary-hover: #f0c94a;
+  --primary-soft: #2a2410;
+  --primary-text: #f0c94a;
+  --surface: #181716;
+  --surface-raised: #1c1b19;
+  --border-strong: #433e35;
   --success: #7ee2ab;
   --success-soft: #10281c;
   --warning: #f5c26b;
@@ -167,7 +172,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background;
+    color: var(--ink);
   }
   html {
     @apply font-sans;
@@ -261,4 +267,56 @@
       opacity: 0.2;
     }
   }
+}
+
+/* One Heading Rule: every h1/h2 (and .font-display) is Newsreader 500, whatever
+   weight class a page adds. Unlayered, so it beats the utility layer. Bold and
+   extra-bold resolve to 600 (DM Sans has no heavier voice in this system). */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.font-bold,
+.font-extrabold {
+  font-weight: 600;
+}
+h1.font-sans,
+h2.font-sans,
+.doc-card h2 {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+/* Marketing: the page is paper and desk bands. */
+.band-desk {
+  background: var(--surface);
+}
+
+/* The MacBook mockup is a picture of a device, so it carries the one deep shadow. */
+.device-shadow {
+  box-shadow:
+    0 2px 4px -1px #1b1a1a14,
+    0 40px 80px -24px #1b1a1a40;
+}
+
+/* Native selects (board toolbar, filters, decision forms): one custom chevron
+   with room to breathe, instead of the browser arrow jammed against the edge.
+   Unlayered so it beats the px-* utilities on each control. */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+  padding-left: 0.875rem;
+}
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a8a399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }

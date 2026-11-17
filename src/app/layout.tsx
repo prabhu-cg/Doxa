@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Geist_Mono } from "next/font/google";
+import { DM_Sans, Newsreader, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,9 +7,17 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { clientEnv } from "@/lib/env/client";
 import "./globals.css";
 
-const manrope = Manrope({
+const dmSans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
+});
+
+const newsreader = Newsreader({
+  variable: "--font-display",
+  subsets: ["latin"],
+  // Variable with the optical-size axis, so large headlines get the finer
+  // display cut instead of the sturdier text cut that a static 500 would give.
+  axes: ["opsz"],
 });
 
 const geistMono = Geist_Mono({
@@ -45,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${newsreader.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

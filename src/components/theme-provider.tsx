@@ -10,16 +10,17 @@ import {
 } from "react";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 
-export type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 
 const listeners = new Set<() => void>();
 
 function readTheme(): Theme {
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === "light" || stored === "dark" ? stored : "system";
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark"
+      ? "dark"
+      : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -35,10 +36,7 @@ function subscribe(onChange: () => void) {
 /** Puts the `dark` class on <html>, which is what the `.dark` tokens in
  * globals.css key off, and tells the browser so native controls follow. */
 function applyTheme(theme: Theme) {
-  const dark =
-    theme === "dark" ||
-    (theme === "system" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark = theme === "dark";
   const root = document.documentElement;
   root.classList.toggle("dark", dark);
   root.style.colorScheme = dark ? "dark" : "light";
@@ -57,24 +55,24 @@ function withoutTransitions(change: () => void) {
 const ThemeContext = createContext<{
   theme: Theme;
   setTheme: (theme: Theme) => void;
-}>({ theme: "system", setTheme: () => {} });
+}>({ theme: "light", setTheme: () => {} });
 
 /**
- * Light, dark or the system's choice, "system" being the default so a first
- * visit follows the visitor's OS. The stored choice is read with
- * `useSyncExternalStore`, so the server render and the first client render agree
- * ("system") and the real value arrives right after hydration.
+ * Light or dark, nothing else. Light is the default: there is no system
+ * option. The stored choice is read with `useSyncExternalStore`, so the server
+ * render and the first client render agree ("light") and the real value
+ * arrives right after hydration.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useSyncExternalStore<Theme>(
     subscribe,
     readTheme,
-    () => "system",
+    () => "light",
   );
 
   const setTheme = useCallback((next: Theme) => {
     try {
-      if (next === "system") localStorage.removeItem(THEME_STORAGE_KEY);
+      if (next === "light") localStorage.removeItem(THEME_STORAGE_KEY);
       else localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {
       // Private mode: the choice lasts until the page closes.
@@ -85,11 +83,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     applyTheme(theme);
-    if (theme !== "system") return;
-    const query = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyTheme("system");
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);

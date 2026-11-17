@@ -12,16 +12,23 @@ export function MarketingFooter() {
 
   return (
     <footer className="bg-background border-t">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-10 sm:flex-row sm:justify-between sm:px-6">
-        <Link href="/" aria-label="Doxa home">
-          <DoxaLogo markClassName="size-9" />
+      <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-10 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
+        <Link
+          href="/"
+          aria-label="Doxa home"
+          className="justify-self-center md:justify-self-start"
+        >
+          <DoxaLogo tagline markClassName="size-8" />
         </Link>
 
         <p className="text-muted-foreground text-center text-sm">
           © {year} Doxa. Listen. Understand. Decide.
         </p>
 
-        <nav className="flex items-center gap-5 text-sm" aria-label="Footer">
+        <nav
+          className="flex items-center justify-center gap-5 text-sm md:justify-end"
+          aria-label="Footer"
+        >
           {FOOTER_LINKS.map((link) => (
             <Link
               key={link.href}

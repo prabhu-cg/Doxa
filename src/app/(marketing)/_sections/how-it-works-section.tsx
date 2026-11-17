@@ -13,7 +13,7 @@ const FLOW = [
 
 export function HowItWorksSection() {
   return (
-    <section className="bg-secondary border-t">
+    <section className="bg-surface border-t">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <SectionHeading
           eyebrow="How it works"

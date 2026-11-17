@@ -20,7 +20,7 @@ const EXAMPLES: { icon: LucideIcon; label: string }[] = [
 
 export function GenericByDesignSection() {
   return (
-    <section className="bg-secondary border-t">
+    <section className="bg-surface border-t">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <SectionHeading
           eyebrow="Generic by design"

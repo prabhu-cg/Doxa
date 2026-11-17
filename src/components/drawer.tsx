@@ -58,16 +58,16 @@ export function Drawer({
           "gap-0 overflow-hidden",
           // Below sm the sheet's own 3/4 width is too narrow to read in.
           "max-sm:data-[side=right]:w-full",
-          // Sheet caps its width with `data-[side=right]:sm:max-w-sm`; a plain
+          // Sheet caps its width with `data-[side=right]:sm:max-w-md`; a plain
           // `sm:max-w-*` loses to it, so the override needs the same prefix.
-          size === "lg" && "data-[side=right]:sm:max-w-lg",
-          size === "xl" && "data-[side=right]:sm:max-w-2xl",
+          size === "lg" && "data-[side=right]:sm:max-w-xl",
+          size === "xl" && "data-[side=right]:sm:max-w-3xl",
         )}
       >
         <SheetHeader
           className={cn(
-            "relative shrink-0 gap-1.5 border-b pr-12",
-            headerAction && "pr-36",
+            "bg-surface relative shrink-0 gap-1.5 border-b px-5 py-5 pr-16 sm:px-8 sm:py-6 sm:pr-20",
+            headerAction && "pr-44 sm:pr-48",
           )}
         >
           <SheetTitle className={titleClassName}>{title}</SheetTitle>
@@ -77,18 +77,20 @@ export function Drawer({
           {subheader}
           {headerAction ? (
             <>
-              <div className="absolute top-3.5 right-14 flex h-7 items-center">
+              <div className="absolute top-5 right-16 flex h-9 items-center sm:top-6 sm:right-20">
                 {headerAction}
               </div>
               {/* Centred in the gap between the action and the close button. */}
               <span
                 aria-hidden="true"
-                className="bg-border-strong absolute top-4 right-12 h-5 w-px"
+                className="bg-border-strong absolute top-7 right-[3.6rem] h-5 w-px sm:top-8 sm:right-[4.6rem]"
               />
             </>
           ) : null}
         </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+          {children}
+        </div>
       </SheetContent>
     </Sheet>
   );

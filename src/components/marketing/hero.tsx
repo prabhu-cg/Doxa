@@ -1,30 +1,55 @@
 import { LinkButton } from "@/components/link-button";
-import { BoardPreview } from "@/components/marketing/product-preview/board-preview";
+import { MacbookMockup } from "@/components/marketing/macbook-mockup";
 
+/**
+ * The first screen: desk ground, one Newsreader headline with a single ochre
+ * phrase, one primary action, and the product itself on a MacBook that
+ * straddles the desk and the white band beneath it.
+ */
 export function Hero() {
   return (
-    <section className="bg-background">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-28">
-        <div className="text-center lg:text-left">
-          <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-            Turn community input into better decisions.
+    <section>
+      <div className="bg-surface">
+        <div className="mx-auto max-w-6xl px-4 pt-16 text-center sm:px-6 sm:pt-24">
+          <p className="bg-primary-soft text-primary-text mx-auto inline-flex rounded-full px-3 py-1 text-xs font-semibold">
+            Listen. Understand. Decide.
+          </p>
+          <h1 className="mx-auto mt-5 max-w-4xl text-5xl leading-none text-balance sm:text-7xl">
+            Turn community input into{" "}
+            <span className="text-primary-text">better decisions.</span>
           </h1>
-          <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg text-balance lg:mx-0">
+          <p className="text-muted-foreground mx-auto mt-6 max-w-xl text-lg text-balance">
             Doxa brings feedback, discussion, prioritisation and decisions
-            together — so nothing gets lost, and everyone knows what happened to
+            together, so nothing gets lost and everyone knows what happened to
             what they asked for.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <LinkButton size="lg" href="/signup">
-              Start Free
+              Start free
             </LinkButton>
             <LinkButton size="lg" variant="outline" href="/why-doxa">
-              See How It Works
+              See how it works
             </LinkButton>
           </div>
         </div>
-        <div className="flex justify-center lg:justify-end">
-          <BoardPreview />
+      </div>
+
+      {/* Hard split, not a gradient: desk above, white below, the laptop across both. */}
+      <div className="relative px-4 pt-12 sm:px-6">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 bottom-0 -z-0 bg-[linear-gradient(to_bottom,var(--surface)_0,var(--surface)_30%,var(--background)_30%)]"
+        />
+        <div className="relative">
+          <MacbookMockup
+            priority
+            lightSrc="/marketing/app-light.png"
+            darkSrc="/marketing/app-dark.png"
+            alt="A sample Doxa public board on a laptop: ideas ranked by votes, each with its status and the team's decision."
+          />
+          <p className="text-muted-foreground mt-6 mb-0 text-center text-xs">
+            Sample board with example data.
+          </p>
         </div>
       </div>
     </section>

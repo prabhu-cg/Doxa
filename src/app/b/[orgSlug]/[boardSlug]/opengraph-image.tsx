@@ -6,7 +6,7 @@ export const alt = "Feedback board";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const DOXA_TERRACOTTA = "#c74504";
+const DOXA_AMBER = "#e8b923";
 
 /**
  * The card a shared link shows in chat and social apps: the organisation's
@@ -24,8 +24,10 @@ export default async function Image({
   const orgName = visible?.organization.name ?? "Feedback board";
   const boardName = visible?.board.name ?? "Feedback";
   const description = visible?.board.description ?? null;
-  const accent =
-    brandTokens(visible?.organization.accentColor)?.primary ?? DOXA_TERRACOTTA;
+  const branded = brandTokens(visible?.organization.accentColor)?.primary;
+  const accent = branded ?? DOXA_AMBER;
+  // Charcoal on Doxa's own amber, white on an organisation's corrected accent.
+  const onAccent = branded ? "#ffffff" : "#353335";
 
   return new ImageResponse(
     <div
@@ -38,7 +40,7 @@ export default async function Image({
         padding: 72,
         background: "#f4f2ea",
         borderTop: `14px solid ${accent}`,
-        color: "#1c1917",
+        color: "#353335",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -48,7 +50,7 @@ export default async function Image({
             height: 88,
             borderRadius: 20,
             background: accent,
-            color: "#ffffff",
+            color: onAccent,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -77,7 +79,7 @@ export default async function Image({
           <div
             style={{
               fontSize: 32,
-              color: "#6f6963",
+              color: "#6b6b6b",
               maxWidth: 900,
               lineHeight: 1.35,
             }}
@@ -87,7 +89,7 @@ export default async function Image({
               : description}
           </div>
         ) : (
-          <div style={{ fontSize: 32, color: "#6f6963" }}>
+          <div style={{ fontSize: 32, color: "#6b6b6b" }}>
             Vote on what matters and see how we respond.
           </div>
         )}
@@ -98,7 +100,7 @@ export default async function Image({
           display: "flex",
           justifyContent: "flex-end",
           fontSize: 24,
-          color: "#6f6963",
+          color: "#6b6b6b",
         }}
       >
         Powered by Doxa

@@ -65,10 +65,10 @@ export function OrgSidebarNav({
           href={item.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "rounded-control flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
+            "flex items-center gap-3 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
             active
-              ? "bg-foreground/5 text-foreground font-semibold"
-              : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
+              ? "bg-primary-soft text-primary-text font-semibold"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground",
           )}
         >
           <Icon className="size-4 shrink-0" />

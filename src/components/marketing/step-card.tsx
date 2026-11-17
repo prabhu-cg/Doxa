@@ -19,7 +19,7 @@ export function StepCard({
       >
         {String(index).padStart(2, "0")}
       </span>
-      <div className="bg-primary/10 text-primary mb-4 flex size-9 items-center justify-center rounded-lg">
+      <div className="bg-primary-soft text-primary-text mb-4 flex size-9 items-center justify-center rounded-lg">
         <Icon className="size-5" aria-hidden="true" />
       </div>
       <h3 className="mb-1.5 font-semibold">{title}</h3>

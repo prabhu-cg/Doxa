@@ -566,7 +566,7 @@ tags}` (inline create/rename/archive-or-delete list managers, linked
 
 - **Next.js 16 App Router project** scaffolded under `src/`, TypeScript
   strict mode, ESLint + Prettier (with Tailwind class sorting) configured.
-- **Design tokens** — colors, radius, and font (Manrope) extracted directly
+- **Design tokens** — colors, radius, and font (Newsreader and DM Sans) extracted directly
   from `assesslyapp.vercel.app` (shadcn/ui "New York" style, warm-neutral
   base + burnt-orange primary) and applied as the Tailwind/shadcn theme in
   `src/app/globals.css`, with light and dark variants. Core shadcn/ui
@@ -850,7 +850,7 @@ membership in that organisation.
   Doxa". The accent is `Organization.accentColor` run through
   `lib/brand-color.ts` (darkened until white text on it and it as text both
   reach 4.5:1) and applied as CSS variables for the whole page, drawers
-  included; with no colour set it stays Doxa's terracotta. Each board also
+  included; with no colour set it stays Doxa's butter amber. Each board also
   has a generated share card (`opengraph-image.tsx`, monogram and text only —
   it never fetches the logo URL) and the tab icon is the logo.
 - **The board is a data grid**, not cards: the vote first in every row

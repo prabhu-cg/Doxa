@@ -71,7 +71,7 @@ const WHITE: Rgb = [255, 255, 255];
 const BLACK: Rgb = [0, 0, 0];
 const MIN_CONTRAST = 4.5;
 /** The dark theme's `--background` in globals.css; dark tints are mixed into it. */
-const DARK_BACKGROUND: Rgb = [0x12, 0x10, 0x0e];
+const DARK_BACKGROUND: Rgb = [0x14, 0x13, 0x12];
 
 /** `color` moved toward white in 6% steps until it reaches 4.5:1 on `ground`. */
 function lightenUntilReadable(color: Rgb, ground: Rgb): Rgb {

@@ -30,7 +30,8 @@ Opinions are evidence, not automatically decisions. Every item can end in a publ
 ## Capabilities and Constraints
 
 - Organisation branding exists as data: `Organization.logoUrl` (an external URL) and `Organization.accentColor`. Setting either is gated by the Pro plan's `branding` entitlement; Free organisations have neither, so the public page must look complete with no logo and no accent colour.
-- Doxa's own identity is fixed: terracotta `#c74504` speech-bubble mark (`/doxa-logo.svg`), warm cream neutrals, Manrope. There is no dark-mode requirement recorded; the app supports both.
+- Doxa's own identity is the "Butter" system (shared with Assessly): a butter-amber `#e8b923` speech-bubble mark (`/doxa-logo.svg`), white paper on a pale butter desk, Newsreader for headlines and DM Sans for everything else. Amber is a fill, never text; accent-coloured text is ochre `#826400`. The app supports exactly two themes, light (default) and dark, with a sun/moon toggle and no "system" option. The mark and favicon are filled with the primary-button amber (`#e8b923`), the same value in both themes.
+- Layout widths: marketing content is capped at 1152px (`max-w-6xl`); the signed-in app's content container is 1440px, with entity cards (spaces, boards) four across from `xl`.
 - Public pages are server-rendered and dynamic (they read the visitor's session). Filters are plain GET forms today; the board can hold hundreds of items.
 - No email delivery exists yet, so a participant has no notification surface.
 - Undecided: whether "Powered by Doxa" becomes removable on paid plans (the user chose the org-led, Doxa-in-the-footer option without removability for now).
@@ -56,3 +57,8 @@ Opinions are evidence, not automatically decisions. Every item can end in a publ
 ## Accessibility & Inclusion
 
 - The public audience is unknown and broad: keyboard operable, screen-reader labelled, WCAG AA contrast including on organisation-chosen accent colours (the page must correct or fall back when an accent fails contrast).
+
+## Marketing Surface
+
+- The marketing site (landing, features, pricing, About, Privacy, Terms) is Persuade mode. The landing's hero shows the product on a CSS MacBook holding a real capture of a public board, light or dark to match the theme; captures are of fictional sample data and are labelled as such.
+- About, Privacy and Terms share one layout (desk ground, small badge, Newsreader title, a single white card of sections), the same as the author's other project, getreqstudio.vercel.app. The About page's "Who built Doxa, and why" section is first-person from the independent builder, with a portfolio link and a contact line.
